@@ -6,7 +6,7 @@ import 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 
 // ── PDF Export ─────────────────────────────────────────────────
-export function exportToPDF({ title, subtitle = 'Barangay Kayvaluganan · CY 2026', rows }) {
+export function exportToPDF({ title, subtitle = 'Barangay San Joaquin · CY 2026', rows }) {
   const doc = new jsPDF()
 
   // Header
@@ -69,7 +69,7 @@ export function exportResidentsToPDF(residents) {
   doc.setFontSize(10)
   doc.setFont(undefined, 'normal')
   doc.setTextColor(100)
-  doc.text('Barangay Kayvaluganan · Basco, Batanes · CY 2026', doc.internal.pageSize.width / 2, 22, { align: 'center' })
+  doc.text('Barangay San Joaquin · Basco, Batanes · CY 2026', doc.internal.pageSize.width / 2, 22, { align: 'center' })
 
   doc.autoTable({
     startY: 28,

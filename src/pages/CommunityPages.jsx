@@ -480,27 +480,13 @@ export function PredictiveGrowth() {
 // ── NEEDS ASSESSMENT ──────────────────────────────────────────
 export function NeedsAssessment() {
   const qc = useQueryClient()
-  const [submitted, setSubmitted] = useState(false)
-  const [form, setForm] = useState({ purok: 'Purok 1', priority_need: 'Health Services', comments: '' })
 
   const { data: responses = [] } = useQuery({
     queryKey: ['survey-responses'],
     queryFn: async () => {
       const { data } = await supabase.from('survey_responses').select('*')
-      return data || []
+      return data || mockResidents
     },
-  })
-
-  const submitMutation = useMutation({
-    mutationFn: async (payload) => {
-      const { error } = await supabase.from('survey_responses').insert(payload)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      setSubmitted(true)
-      qc.invalidateQueries(['survey-responses'])
-    },
-    onError: (e) => toast.error(e.message),
   })
 
   const needOptions = [
@@ -521,12 +507,40 @@ export function NeedsAssessment() {
   const maxCount = Math.max(...needCounts.map(n => n.count), 1)
   const topNeed = needCounts.sort((a, b) => b.count - a.count)[0]
 
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/resident-needs`
+    navigator.clipboard.writeText(link)
+    toast.success('Resident form link copied! Share this with community members.')
+  }
+
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4 mb-5">
+      {/* Resident Access Section */}
+      <SectionCard title="📱 Share Resident Form Link" subtitle="Residents can submit their needs from a simple form">
+        <div className="bg-gradient-to-r from-teal/10 to-blue/10 rounded-xl p-4 border border-teal/20 mb-4">
+          <p className="text-sm text-navy font-medium mb-3">Share this link with community members:</p>
+          <div className="flex gap-2 flex-wrap">
+            <button 
+              onClick={handleCopyLink}
+              className="btn btn-primary text-sm"
+            >
+              📋 Copy Resident Form Link
+            </button>
+            <button 
+              onClick={() => toast.info('QR code feature coming soon')}
+              className="btn btn-ghost text-sm"
+            >
+              📲 Generate QR Code
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-3">Residents can fill the form anytime without needing to log in. Their responses automatically appear below.</p>
+        </div>
+      </SectionCard>
+
+      <div className="grid grid-cols-3 gap-4 mb-5 mt-5">
         <StatCard icon="📋" value={responses.length} label="Survey Responses" color="teal" />
         <StatCard icon="🏆" value={responses.length > 0 ? topNeed.need.split(' ')[0] : '—'} label="Top Priority Need" color="gold" />
-        <StatCard icon="🗂️" value={[...new Set(responses.map(r => r.purok))].length || 0} label="Puroks Covered" color="blue" />
+        <StatCard icon="🗂️" value={[...new Set(responses.map(r => r.purok))].length || 0} label="Sitios Covered" color="blue" />
       </div>
 
       <div className="grid grid-cols-2 gap-5">
@@ -556,52 +570,18 @@ export function NeedsAssessment() {
           )}
         </SectionCard>
 
-        <SectionCard title="Submit Survey Response" action={<span className="badge badge-teal">{responses.length} submitted</span>}>
-          {submitted ? (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-2">✅</div>
-              <p className="text-navy font-semibold">Response submitted!</p>
-              <p className="text-sm text-gray-400 mt-1">Thank you for your community feedback.</p>
-              <button className="btn btn-ghost mt-4 text-xs" onClick={() => setSubmitted(false)}>
-                Submit another
-              </button>
-            </div>
-          ) : (
-            <form
-              onSubmit={e => {
-                e.preventDefault()
-                const sanitized = sanitizeSurveyForm(form)
-                submitMutation.mutate(sanitized)
-              }}
-              className="space-y-3"
+        <SectionCard title="Response Summary" action={<span className="badge badge-teal">{responses.length} responses</span>}>
+          <div className="text-center py-6">
+            <div className="text-4xl mb-3">📊</div>
+            <p className="text-sm text-navy font-medium mb-2">Community responses are being collected</p>
+            <p className="text-xs text-gray-400 mb-4">Residents submit their needs through the public form link (see above)</p>
+            <button 
+              onClick={handleCopyLink}
+              className="btn btn-ghost text-xs"
             >
-              <div>
-                <label className="form-label">Purok</label>
-                <select className="form-select mt-1" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
-                  {['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'].map(p => <option key={p}>{p}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="form-label">Top Priority Need</label>
-                <select className="form-select mt-1" value={form.priority_need} onChange={e => setForm({ ...form, priority_need: e.target.value })}>
-                  {needOptions.map(n => <option key={n.need}>{n.need}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="form-label">Comments (Optional)</label>
-                <textarea
-                  className="form-input mt-1"
-                  rows={3}
-                  placeholder="Share your community concerns..."
-                  value={form.comments}
-                  onChange={e => setForm({ ...form, comments: e.target.value })}
-                />
-              </div>
-              <button type="submit" className="btn btn-primary w-full" disabled={submitMutation.isPending}>
-                {submitMutation.isPending ? 'Submitting...' : 'Submit Response'}
-              </button>
-            </form>
-          )}
+              🔗 Copy resident form link again
+            </button>
+          </div>
         </SectionCard>
       </div>
     </div>
@@ -765,7 +745,7 @@ export function DILGReports() {
               <div className="text-[11px] text-gray-400 uppercase tracking-widest">Republic of the Philippines</div>
               <div className="text-[11px] text-gray-400">Province of Batanes · Municipality of Basco</div>
               <h2 className="font-display text-lg font-bold text-navy mt-2">{activeReport.title.toUpperCase()}</h2>
-              <p className="text-sm text-gray-400 mt-1">Barangay Kayvaluganan · CY {year}</p>
+              <p className="text-sm text-gray-400 mt-1">Barangay San Joaquin · CY {year}</p>
             </div>
             <table className="data-table">
               <thead><tr><th>Indicator</th><th>Value</th></tr></thead>
