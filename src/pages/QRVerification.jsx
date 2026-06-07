@@ -1,11 +1,12 @@
 // QRVerification.jsx
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import QRCode from 'react-qr-code'
 import { supabase } from '../lib/supabase'
 import { mockResidents } from '../lib/mockData'
 import { SectionCard, Badge } from '../components/ui/index'
 import { toast } from 'react-toastify'
+
 
 export default function QRVerification() {
   const [selected, setSelected] = useState(null)
@@ -39,6 +40,44 @@ export default function QRVerification() {
     issued: new Date().toISOString().split('T')[0],
   }) : ''
 
+  const qrWrapRef = useRef(null)
+
+  const downloadQR = () => {
+    try {
+      const wrap = qrWrapRef.current
+      if (!wrap) {
+        toast.error('QR not ready')
+        return
+      }
+
+      const svg = wrap.querySelector('svg')
+      if (!svg) {
+        toast.error('QR SVG not found')
+        return
+      }
+
+      const serializer = new XMLSerializer()
+      const svgString = serializer.serializeToString(svg)
+
+      const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+
+      const a = document.createElement('a')
+      a.href = url
+      const safeName = (selected?.resident_no || 'QR').toString().replace(/[^a-z0-9_-]/gi, '_')
+      a.download = `QR_${safeName}.svg`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+
+      URL.revokeObjectURL(url)
+      toast.success('QR downloaded')
+    } catch (err) {
+      toast.error('Failed to download QR')
+    }
+  }
+
+
   return (
     <div>
       <div className="grid grid-cols-2 gap-5">
@@ -58,10 +97,11 @@ export default function QRVerification() {
             {selected ? (
               <>
                 <div className="flex justify-center mb-3">
-                  <div className="p-3 bg-white rounded-xl shadow-sm">
+                  <div className="p-3 bg-white rounded-xl shadow-sm" ref={qrWrapRef}>
                     <QRCode value={qrData} size={150} />
                   </div>
                 </div>
+
                 <p className="text-sm font-semibold text-navy">{selected.first_name} {selected.last_name}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{selected.resident_no} · {selected.purok}</p>
               </>
@@ -69,9 +109,23 @@ export default function QRVerification() {
               <p className="text-sm text-gray-400 py-6">Select a resident to generate QR</p>
             )}
           </div>
-          <button className="btn btn-primary w-full mt-3" onClick={() => toast.info('Printing QR card...')}>
-            🖨️ Print QR Card
-          </button>
+          <div className="flex gap-2 mt-3">
+            <button
+              className="btn btn-primary flex-1"
+              onClick={() => toast.info('Printing QR card...')}
+            >
+              🖨️ Print QR Card
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={downloadQR}
+              disabled={!selected}
+              title={selected ? 'Download QR as SVG' : 'Select a resident first'}
+            >
+              ⬇️ Download
+            </button>
+          </div>
+
         </SectionCard>
 
         <SectionCard title="QR Scan & Verify">
