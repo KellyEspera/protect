@@ -35,7 +35,7 @@ export default function QRVerification() {
     id: selected.resident_no,
     name: `${selected.first_name} ${selected.last_name}`,
     purok: selected.purok,
-    barangay: 'Kayvaluganan',
+    barangay: 'San Joaquin',
     issued: new Date().toISOString().split('T')[0],
   }) : ''
 

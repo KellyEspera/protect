@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 import { useAuthStore } from './store/authStore'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
+import ResidentNeedsForm from './pages/ResidentNeedsForm'
 import Dashboard from './pages/Dashboard'
 import Residents from './pages/Residents'
 import QRVerification from './pages/QRVerification'
@@ -53,6 +54,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/resident-needs" element={<ResidentNeedsForm />} />
       <Route
         path="/"
         element={

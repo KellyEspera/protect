@@ -102,11 +102,12 @@ export function sanitizeIncidentForm(form) {
 
 /**
  * Sanitizes the survey response form.
+ * Do NOT sanitize select dropdown values (priority_need, purok) as they violate database constraints.
  */
 export function sanitizeSurveyForm(form) {
-  const base = sanitizeObject(form)
   return {
-    ...base,
-    comments: (base.comments || '').slice(0, 500),
+    purok: form.purok, // Dropdown value - don't sanitize
+    priority_need: form.priority_need, // Dropdown value - don't sanitize
+    comments: (form.comments || '').slice(0, 500), // Only sanitize free-text comments
   }
 }

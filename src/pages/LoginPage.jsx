@@ -64,7 +64,7 @@ export default function LoginPage() {
           {/* Card header band */}
           <div style={{ background: '#1A3A5C', borderBottom: '3px solid #C9A84C', padding: '14px 24px' }}>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Authorized Personnel Only</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Barangay Kayvaluganan · Basco, Batanes</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Barangay San Joaquin · Basco, Batanes</div>
           </div>
 
           <div style={{ padding: '24px 28px 28px' }}>
@@ -87,7 +87,7 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label className="form-label" style={{ display: 'block', marginBottom: 6 }}>User ID / Email</label>
-                <input type="email" className="form-input" placeholder="officer@kayvaluganan.gov.ph" value={email} onChange={e => setEmail(e.target.value)} disabled={isLocked} required style={{ opacity: isLocked ? 0.5 : 1 }} />
+                <input type="email" className="form-input" placeholder="officer@sanjoaquin.gov.ph" value={email} onChange={e => setEmail(e.target.value)} disabled={isLocked} required style={{ opacity: isLocked ? 0.5 : 1 }} />
               </div>
               <div>
                 <label className="form-label" style={{ display: 'block', marginBottom: 6 }}>Password</label>

@@ -3,7 +3,7 @@ import { useAuthStore } from '../../store/authStore'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Gift, Shield, BrainCircuit,
-  /*ClipboardList,*/ FileText, LogOut, Bell
+  ClipboardList, FileText, LogOut, Bell
 } from 'lucide-react'
 
 const navGroups = [
@@ -36,7 +36,7 @@ const navGroups = [
       { to: '/beneficiary', icon: Gift, label: 'Beneficiary Tracking' },
       { to: '/crime', icon: Shield, label: 'Crime & Incident' },
       { to: '/predictive', icon: BrainCircuit, label: 'Predictive Growth' },
-      // { to: '/needs', icon: ClipboardList, label: 'Needs Assessment' },
+      { to: '/needs', icon: ClipboardList, label: 'Needs Assessment' },
       { to: '/reports', icon: FileText, label: 'DILG Reports' },
     ],
   },
@@ -139,7 +139,7 @@ export default function Layout() {
               {pageTitles[location.pathname] || 'PROTECT'}
             </h1>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              Barangay Kayvaluganan, Basco, Batanes &bull; As of June 2026
+              Barangay San Joaquin, Basco, Batanes &bull; As of June 2026
             </p>
           </div>
           <div className="ml-auto flex items-center gap-3">
