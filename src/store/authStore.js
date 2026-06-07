@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -11,23 +11,17 @@ export const useAuthStore = create((set) => ({
   setLoading: (loading) => set({ loading }),
 
   signIn: async (email, password) => {
-    if (!isSupabaseConfigured) {
-      // Demo mode — accept any credentials
-      set({ user: { id: 'demo', email }, loading: false })
-      return
-    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
   },
 
   signOut: async () => {
-    if (isSupabaseConfigured) await supabase.auth.signOut()
+    await supabase.auth.signOut()
     set({ user: null, profile: null })
   },
 
   fetchProfile: async (userId) => {
-    if (!isSupabaseConfigured) return
     const { data } = await supabase
       .from('profiles')
       .select('*')
