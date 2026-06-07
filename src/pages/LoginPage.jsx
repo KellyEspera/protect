@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { isSupabaseConfigured } from '../lib/supabase'
 import { toast } from 'react-toastify'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, formatLockoutTime } from '../lib/rateLimiter'
 
@@ -39,6 +40,7 @@ export default function LoginPage() {
     } finally { setLoading(false) }
   }
   const isLocked = !!lockoutInfo
+  const isDisabled = isLocked || !isSupabaseConfigured
 
   return (
     <div style={{ minHeight: '100vh', background: '#0F2740', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
@@ -69,6 +71,14 @@ export default function LoginPage() {
 
           <div style={{ padding: '24px 28px 28px' }}>
 
+            {/* Supabase config warning */}
+            {!isSupabaseConfigured && (
+              <div style={{ background: '#FFF4E5', border: '1px solid #FFD8A8', borderRadius: 4, padding: '12px 14px', marginBottom: 16, textAlign: 'center' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#7A4D00' }}>⚠ Supabase is not configured</div>
+                <div style={{ fontSize: 11, color: '#7A4D00', marginTop: 4 }}>Live login is disabled because VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are missing in this deployment.</div>
+              </div>
+            )}
+
             {/* Lockout banner */}
             {isLocked && (
               <div style={{ background: '#FCE8E8', border: '1px solid #F4BABA', borderRadius: 4, padding: '10px 14px', marginBottom: 16, textAlign: 'center' }}>
@@ -87,14 +97,14 @@ export default function LoginPage() {
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <label className="form-label" style={{ display: 'block', marginBottom: 6 }}>User ID / Email</label>
-                <input type="email" className="form-input" placeholder="officer@sanjoaquin.gov.ph" value={email} onChange={e => setEmail(e.target.value)} disabled={isLocked} required style={{ opacity: isLocked ? 0.5 : 1 }} />
+                <input type="email" className="form-input" placeholder="officer@sanjoaquin.gov.ph" value={email} onChange={e => setEmail(e.target.value)} disabled={isDisabled} required style={{ opacity: isDisabled ? 0.5 : 1 }} />
               </div>
               <div>
                 <label className="form-label" style={{ display: 'block', marginBottom: 6 }}>Password</label>
-                <input type="password" className="form-input" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} disabled={isLocked} required style={{ opacity: isLocked ? 0.5 : 1 }} />
+                <input type="password" className="form-input" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} disabled={isDisabled} required style={{ opacity: isDisabled ? 0.5 : 1 }} />
               </div>
-              <button type="submit" disabled={loading || isLocked} style={{ marginTop: 4, padding: '11px 0', background: isLocked ? '#9AA8B8' : '#1A3A5C', color: '#fff', border: 'none', borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: isLocked ? 'not-allowed' : 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'background 0.15s', borderBottom: isLocked ? 'none' : '2px solid #C9A84C' }}>
-                {loading ? 'Verifying...' : isLocked ? '🔒 Access Suspended' : 'Sign In'}
+              <button type="submit" disabled={loading || isDisabled} style={{ marginTop: 4, padding: '11px 0', background: isDisabled ? '#9AA8B8' : '#1A3A5C', color: '#fff', border: 'none', borderRadius: 4, fontSize: 13, fontWeight: 600, cursor: isDisabled ? 'not-allowed' : 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'background 0.15s', borderBottom: isDisabled ? 'none' : '2px solid #C9A84C' }}>
+                {loading ? 'Verifying...' : isDisabled ? 'Login unavailable' : 'Sign In'}
               </button>
             </form>
           </div>
