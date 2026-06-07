@@ -3,7 +3,7 @@ import { useAuthStore } from '../../store/authStore'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Gift, Shield, BrainCircuit,
-  ClipboardList, FileText, LogOut, Bell
+  /*ClipboardList,*/ FileText, LogOut, Bell
 } from 'lucide-react'
 
 const navGroups = [
@@ -36,7 +36,7 @@ const navGroups = [
       { to: '/beneficiary', icon: Gift, label: 'Beneficiary Tracking' },
       { to: '/crime', icon: Shield, label: 'Crime & Incident' },
       { to: '/predictive', icon: BrainCircuit, label: 'Predictive Growth' },
-      { to: '/needs', icon: ClipboardList, label: 'Needs Assessment' },
+      // { to: '/needs', icon: ClipboardList, label: 'Needs Assessment' },
       { to: '/reports', icon: FileText, label: 'DILG Reports' },
     ],
   },
@@ -91,7 +91,7 @@ export default function Layout() {
         <nav className="flex-1 py-2">
           {navGroups.map((group) => (
             <div key={group.label}>
-              <div className="px-3 pt-3 pb-1 text-[10px] text-white/30 uppercase tracking-widest font-semibold">
+              <div className="px-3 pt-3 pb-1 text-[10px] text-white/50 uppercase tracking-widest font-semibold">
                 {group.label}
               </div>
               {group.items.map(({ to, icon: Icon, label }) => (

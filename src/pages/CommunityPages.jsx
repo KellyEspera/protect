@@ -1,259 +1,605 @@
-// BeneficiaryTracking.jsx
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bar, Line } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
 import { supabase } from '../lib/supabase'
-import { mockBeneficiaries } from '../lib/mockData'
 import { SectionCard, StatCard, Badge } from '../components/ui/index'
 import { toast } from 'react-toastify'
+import { exportToPDF } from '../lib/exportUtils'
+import { sanitizeIncidentForm, sanitizeSurveyForm } from '../lib/sanitize'
 
 Chart.register(...registerables)
 const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
 
+// ── BENEFICIARY TRACKING ──────────────────────────────────────
 export function BeneficiaryTracking() {
-  const { data: beneficiaries = mockBeneficiaries } = useQuery({
+  const qc = useQueryClient()
+
+  const { data: beneficiaries = [], isLoading } = useQuery({
     queryKey: ['beneficiaries'],
     queryFn: async () => {
-      const { data } = await supabase.from('beneficiaries').select('*, residents(first_name, last_name, resident_no), assistance_programs(name)')
-      return data || mockBeneficiaries
+      const { data } = await supabase
+        .from('beneficiaries')
+        .select('*, residents(first_name, last_name, resident_no, purok), assistance_programs(name)')
+        .order('enrolled_at', { ascending: false })
+      return data || []
     },
   })
 
-  const statusDot = { Active: 'bg-green-500', Pending: 'bg-amber-400', Completed: 'bg-blue-500', Suspended: 'bg-red-400' }
+  const { data: programs = [] } = useQuery({
+    queryKey: ['programs'],
+    queryFn: async () => {
+      const { data } = await supabase.from('assistance_programs').select('*').eq('is_active', true)
+      return data || []
+    },
+  })
 
-  return (
-    <div>
-      <div className="grid grid-cols-4 gap-4 mb-5">
-        <StatCard icon="👥" value="218" label="Active Beneficiaries" color="teal" />
-        <StatCard icon="💰" value="₱486K" label="Total Distributed (2026)" color="gold" />
-        <StatCard icon="📦" value="4" label="Active Programs" color="blue" />
-        <StatCard icon="⏳" value="12" label="Pending Claims" color="red" />
-      </div>
-      <div className="grid grid-cols-2 gap-5">
-        <SectionCard title="Assistance by Program">
-          <div className="h-52">
-            <Bar data={{ labels: ['4Ps','Rice Subsidy','Medical','Educational','Livelihood'], datasets: [{ data: [89,67,42,20,15], backgroundColor: '#0D9E8C', borderRadius: 6 }] }} options={{ ...opts, scales: { y: { beginAtZero: true } } }} />
-          </div>
-        </SectionCard>
-        <SectionCard title="Monthly Distribution Trend">
-          <div className="h-52">
-            <Line data={{ labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ data: [58000,62000,94000,71000,88000,113000], borderColor: '#F5A623', backgroundColor: 'rgba(245,166,35,.1)', tension: 0.4, fill: true }] }} options={{ ...opts, scales: { y: { ticks: { callback: v => '₱'+Math.round(v/1000)+'K' } } } }} />
-          </div>
-        </SectionCard>
-      </div>
-      <SectionCard title="Beneficiary Registry" action={<button className="btn btn-primary text-xs" onClick={() => toast.info('Enrollment form opened.')}>+ Enroll Beneficiary</button>}>
-        <table className="data-table">
-          <thead><tr><th>ID</th><th>Name</th><th>Program</th><th>Last Release</th><th>Amount</th><th>Status</th></tr></thead>
-          <tbody>
-            {mockBeneficiaries.map(b => (
-              <tr key={b.id}>
-                <td><span className="font-mono text-[11px] text-teal">BEN-00{b.id}</span></td>
-                <td>{b.name}</td><td>{b.program}</td>
-                <td className="text-xs text-gray-500">{b.last_release_date}</td>
-                <td>₱{b.total_released.toLocaleString()}</td>
-                <td><span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${statusDot[b.status]}`}></span>{b.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </SectionCard>
-    </div>
-  )
-}
+  const active = beneficiaries.filter(b => b.status === 'Active').length
+  const pending = beneficiaries.filter(b => b.status === 'Pending').length
+  const totalReleased = beneficiaries.reduce((s, b) => s + (b.total_released || 0), 0)
 
-// CrimeIncident.jsx
-export function CrimeIncident() {
-  const [incidents, setIncidents] = useState([
-    { id: 1, case_no: 'INC-2026-028', incident_type: 'Theft', purok: 'Purok 2', complainant: 'M. Santos', incident_date: '2026-06-03', status: 'Ongoing' },
-    { id: 2, case_no: 'INC-2026-027', incident_type: 'Noise/Disturbance', purok: 'Purok 1', complainant: 'P. Mabanag', incident_date: '2026-06-02', status: 'Resolved' },
-    { id: 3, case_no: 'INC-2026-026', incident_type: 'Accident', purok: 'Purok 4', complainant: 'Barangay', incident_date: '2026-06-01', status: 'Resolved' },
-    { id: 4, case_no: 'INC-2026-025', incident_type: 'Domestic Violence', purok: 'Purok 3', complainant: 'Anonymous', incident_date: '2026-05-29', status: 'Resolved' },
-    { id: 5, case_no: 'INC-2026-024', incident_type: 'Trespassing', purok: 'Purok 5', complainant: 'R. Domingo', incident_date: '2026-05-28', status: 'Escalated' },
-  ])
-  const [form, setForm] = useState({ incident_type: 'Noise/Disturbance', purok: 'Purok 1', complainant: '', incident_date: '' })
-  const statusColor = { Ongoing: 'gold', Resolved: 'blue', Escalated: 'red', Dismissed: 'gray' }
+  const programCounts = programs.map(p => ({
+    name: p.name,
+    count: beneficiaries.filter(b => b.program_id === p.id).length,
+  })).filter(p => p.count > 0)
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const newInc = { id: incidents.length + 1, case_no: `INC-2026-0${29 + incidents.length}`, ...form, status: 'Ongoing' }
-    setIncidents([newInc, ...incidents])
-    supabase.from('incidents').insert({ ...form, case_no: newInc.case_no, incident_date: new Date().toISOString(), status: 'Ongoing' }).then(() => {})
-    toast.success(`Incident logged: ${newInc.case_no}`)
+  const statusDot = {
+    Active: 'bg-green-500',
+    Pending: 'bg-amber-400',
+    Completed: 'bg-blue-500',
+    Suspended: 'bg-red-400',
   }
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4 mb-5">
-        <StatCard icon="📋" value="28" label="Incidents (2026)" color="red" />
-        <StatCard icon="⚖️" value="8" label="Criminal Cases" color="gold" />
-        <StatCard icon="🤝" value="71%" label="Resolution Rate" color="teal" />
+      <div className="grid grid-cols-4 gap-4 mb-5">
+        <StatCard icon="👥" value={active} label="Active Beneficiaries" color="teal" />
+        <StatCard icon="💰" value={`₱${totalReleased.toLocaleString()}`} label="Total Distributed" color="gold" />
+        <StatCard icon="📦" value={programs.length} label="Active Programs" color="blue" />
+        <StatCard icon="⏳" value={pending} label="Pending Claims" color="red" />
       </div>
-      <div className="grid grid-cols-2 gap-5">
-        <SectionCard title="Incident Type Breakdown">
-          <div className="h-52">
-            <Bar data={{ labels: ['Disturbance','Theft','Domestic','Accident','Trespassing'], datasets: [{ data: [9,6,5,5,3], backgroundColor: ['#EF4444','#F5A623','#8B5CF6','#3B82F6','#0D9E8C'], borderRadius: 6 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 2 } } } }} />
-          </div>
-        </SectionCard>
-        <SectionCard title="Monthly Incident Trend">
-          <div className="h-52">
-            <Line data={{ labels: ['Jan','Feb','Mar','Apr','May','Jun'], datasets: [{ data: [4,3,6,5,6,4], borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,.1)', tension: 0.4, fill: true, pointBackgroundColor: '#EF4444' }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} />
-          </div>
-        </SectionCard>
-      </div>
-      <SectionCard title="Log New Incident" action={<button className="btn btn-primary text-xs" form="incident-form" type="submit">+ Submit Report</button>}>
-        <form id="incident-form" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="form-label">Incident Type</label>
-              <select className="form-select mt-1" value={form.incident_type} onChange={e => setForm({...form, incident_type: e.target.value})}>
-                {['Noise/Disturbance','Theft','Physical Injury','Domestic Violence','Trespassing','Accident','Illegal Drugs','Others'].map(t => <option key={t}>{t}</option>)}
-              </select>
-            </div>
-            <div><label className="form-label">Purok</label>
-              <select className="form-select mt-1" value={form.purok} onChange={e => setForm({...form, purok: e.target.value})}>
-                {['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'].map(p => <option key={p}>{p}</option>)}
-              </select>
-            </div>
-            <div><label className="form-label">Date & Time</label>
-              <input type="datetime-local" className="form-input mt-1" onChange={e => setForm({...form, incident_date: e.target.value})} />
-            </div>
-            <div><label className="form-label">Complainant</label>
-              <input className="form-input mt-1" placeholder="Name of complainant" value={form.complainant} onChange={e => setForm({...form, complainant: e.target.value})} />
-            </div>
-          </div>
-        </form>
-      </SectionCard>
-      <SectionCard title="Incident Log">
-        <table className="data-table">
-          <thead><tr><th>Case No.</th><th>Type</th><th>Purok</th><th>Date</th><th>Complainant</th><th>Status</th></tr></thead>
-          <tbody>
-            {incidents.map(inc => (
-              <tr key={inc.id}>
-                <td><span className="font-mono text-[11px] text-teal">{inc.case_no}</span></td>
-                <td>{inc.incident_type}</td><td>{inc.purok}</td>
-                <td className="text-xs text-gray-500">{inc.incident_date}</td>
-                <td>{inc.complainant}</td>
-                <td><span className={`badge badge-${statusColor[inc.status] || 'gray'}`}>{inc.status}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </SectionCard>
-    </div>
-  )
-}
 
-// PredictiveGrowth.jsx
-export function PredictiveGrowth() {
-  const histY = [2019,2020,2021,2022,2023,2024,2025,2026]
-  const histD = [1134,1152,1171,1196,1218,1241,1261,1284]
-  const projY = [2026,2027,2028,2029,2030,2031,2032,2033,2034,2035]
-  const projD = [1284,1307,1330,1353,1412,1365,1388,1433,1456,1498]
-  return (
-    <div>
-      <div className="grid grid-cols-3 gap-4 mb-5">
-        <StatCard icon="📈" value="1,412" label="Projected 2030" color="teal" />
-        <StatCard icon="📊" value="1.8%" label="Annual Growth Rate" color="gold" />
-        <StatCard icon="🧮" value="R² = 0.985" label="Model Fit (Linear Reg.)" color="blue" />
-      </div>
-      <SectionCard title="Population Growth Forecast" subtitle="Historical + linear regression projection to 2035">
-        <div className="h-72">
-          <Line
-            data={{
-              labels: [...histY.slice(0,-1), ...projY],
-              datasets: [
-                { label: 'Historical', data: [...histD.slice(0,-1), ...Array(projY.length).fill(null)], borderColor: '#0D9E8C', backgroundColor: 'rgba(13,158,140,.1)', tension: 0.3, fill: true, pointRadius: 4, pointBackgroundColor: '#0D9E8C' },
-                { label: 'Projected', data: [...Array(histY.length-1).fill(null), ...projD], borderColor: '#F5A623', borderDash: [6,3], backgroundColor: 'rgba(245,166,35,.08)', tension: 0.3, fill: true, pointStyle: 'triangle', pointRadius: 5, pointBackgroundColor: '#F5A623' },
-              ],
-            }}
-            options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: false } } }}
-          />
+      <SectionCard title="Assistance by Program">
+        <div className="h-52">
+          {programCounts.length > 0 ? (
+            <Bar
+              data={{
+                labels: programCounts.map(p => p.name),
+                datasets: [{ data: programCounts.map(p => p.count), backgroundColor: '#0D9E8C', borderRadius: 6 }],
+              }}
+              options={{ ...opts, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }}
+            />
+          ) : (
+            <Empty message="No beneficiaries enrolled yet" />
+          )}
         </div>
       </SectionCard>
-      <div className="grid grid-cols-2 gap-5">
-        <SectionCard title="Projection Table">
+
+      <SectionCard
+        title="Beneficiary Registry"
+        action={
+          <button className="btn btn-primary text-xs" onClick={() => toast.info('Go to Residents page to enroll a beneficiary.')}>
+            + Enroll Beneficiary
+          </button>
+        }
+      >
+        {isLoading ? (
+          <p className="text-center text-gray-400 py-6 text-sm">Loading...</p>
+        ) : beneficiaries.length > 0 ? (
           <table className="data-table">
-            <thead><tr><th>Year</th><th>Projected Population</th><th>Net Growth</th><th>Confidence</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Name</th><th>Resident No.</th><th>Program</th>
+                <th>Purok</th><th>Last Release</th><th>Amount</th><th>Status</th>
+              </tr>
+            </thead>
             <tbody>
-              {[['2026 (actual)',1284,23,'—'],['2027',1307,23,'High'],['2028',1330,23,'High'],['2029',1353,23,'Medium'],['2030',1412,59,'Medium'],['2035',1498,86,'Low']].map(([yr,pop,gr,conf]) => (
-                <tr key={yr}><td>{yr}</td><td>{pop.toLocaleString()}</td><td>+{gr}</td>
-                  <td>{conf === '—' ? '—' : <span className={`badge ${conf==='High'?'badge-teal':conf==='Medium'?'badge-gold':'badge-gray'}`}>{conf}</span>}</td>
+              {beneficiaries.map(b => (
+                <tr key={b.id}>
+                  <td><strong>{b.residents?.first_name} {b.residents?.last_name}</strong></td>
+                  <td><span className="font-mono text-[11px] text-teal">{b.residents?.resident_no}</span></td>
+                  <td>{b.assistance_programs?.name}</td>
+                  <td>{b.residents?.purok}</td>
+                  <td className="text-xs text-gray-500">{b.last_release_date || '—'}</td>
+                  <td>₱{(b.total_released || 0).toLocaleString()}</td>
+                  <td>
+                    <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${statusDot[b.status]}`}></span>
+                    {b.status}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </SectionCard>
-        <SectionCard title="Model Parameters">
-          {[['Model Type','Linear Regression'],['R² Value','0.9847'],['Slope (β₁)','23.14 residents/year'],['Y-Intercept (β₀)','-45,369'],['Data Points','8 years (2019-2026)']].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-2.5 border-b border-gray-100 last:border-0">
-              <span className="text-xs text-gray-500">{k}</span>
-              <span className="text-[13px] font-semibold text-navy">{v}</span>
-            </div>
-          ))}
-        </SectionCard>
-      </div>
+        ) : (
+          <p className="text-center text-gray-400 text-sm py-6">No beneficiaries enrolled yet.</p>
+        )}
+      </SectionCard>
     </div>
   )
 }
 
-// NeedsAssessment.jsx
-export function NeedsAssessment() {
-  const [submitted, setSubmitted] = useState(false)
-  const needs = [
-    { need: 'Health Services', count: 187, icon: '🏥' },
-    { need: 'Road / Infrastructure', count: 142, icon: '🛣️' },
-    { need: 'Educational Support', count: 118, icon: '🎓' },
-    { need: 'Livelihood Programs', count: 97, icon: '💼' },
-    { need: 'Water Supply', count: 74, icon: '💧' },
-    { need: 'Peace & Order', count: 52, icon: '🚔' },
+// ── CRIME & INCIDENT ──────────────────────────────────────────
+export function CrimeIncident() {
+  const qc = useQueryClient()
+  const [form, setForm] = useState({
+    incident_type: 'Noise/Disturbance',
+    purok: 'Purok 1',
+    complainant: '',
+    incident_date: '',
+  })
+
+  const { data: incidents = [], isLoading } = useQuery({
+    queryKey: ['incidents'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('incidents')
+        .select('*')
+        .order('incident_date', { ascending: false })
+      return data || []
+    },
+  })
+
+  const addMutation = useMutation({
+    mutationFn: async (payload) => {
+      const caseNo = `INC-${new Date().getFullYear()}-${String(incidents.length + 1).padStart(3, '0')}`
+      const { error } = await supabase.from('incidents').insert({
+        ...payload,
+        case_no: caseNo,
+        status: 'Ongoing',
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      toast.success('Incident logged!')
+      qc.invalidateQueries(['incidents'])
+      setForm({ incident_type: 'Noise/Disturbance', purok: 'Purok 1', complainant: '', incident_date: '' })
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }) => {
+      const { error } = await supabase.from('incidents').update({ status }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries(['incidents']),
+  })
+
+  const ongoing = incidents.filter(i => i.status === 'Ongoing').length
+  const resolved = incidents.filter(i => i.status === 'Resolved').length
+  const resolutionRate = incidents.length > 0 ? Math.round((resolved / incidents.length) * 100) : 0
+
+  const typeLabels = [
+    'Noise/Disturbance', 'Theft', 'Physical Injury', 'Domestic Violence',
+    'Trespassing', 'Accident', 'Illegal Drugs', 'Others',
   ]
+  const typeCounts = typeLabels.map(t => incidents.filter(i => i.incident_type === t).length)
+
+  const statusColor = { Ongoing: 'gold', Resolved: 'blue', Escalated: 'red', Dismissed: 'gray' }
+
   return (
     <div>
       <div className="grid grid-cols-3 gap-4 mb-5">
-        <StatCard icon="📋" value="287" label="Survey Responses" color="teal" />
-        <StatCard icon="🏆" value="Health" label="Top Priority Need" color="gold" />
-        <StatCard icon="📊" value="83.9%" label="Response Rate" color="blue" />
+        <StatCard icon="📋" value={incidents.length} label="Total Incidents" color="red" />
+        <StatCard icon="⏳" value={ongoing} label="Ongoing Cases" color="gold" />
+        <StatCard icon="🤝" value={`${resolutionRate}%`} label="Resolution Rate" color="teal" />
       </div>
-      <div className="grid grid-cols-2 gap-5">
-        <SectionCard title="Priority Needs Ranking" subtitle="Based on 287 responses">
-          <div className="space-y-3">
-            {needs.map((n, i) => (
-              <div key={n.need} className="flex items-center gap-3">
-                <span className="text-lg">{n.icon}</span>
-                <div className="flex-1">
-                  <div className="flex justify-between text-[13px] mb-1">
-                    <span className="text-navy font-medium">{n.need}</span>
-                    <span className="text-gray-500">{n.count}</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full">
-                    <div className="h-2 bg-teal rounded-full transition-all" style={{ width: `${(n.count/187)*100}%` }}></div>
-                  </div>
-                </div>
+
+      <SectionCard title="Incident Type Breakdown">
+        <div className="h-52">
+          {incidents.length > 0 ? (
+            <Bar
+              data={{
+                labels: typeLabels,
+                datasets: [{
+                  data: typeCounts,
+                  backgroundColor: [
+                    '#EF4444','#F5A623','#8B5CF6','#3B82F6',
+                    '#0D9E8C','#EC4899','#6B7280','#94A3B8',
+                  ],
+                  borderRadius: 6,
+                }],
+              }}
+              options={{ ...opts, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }}
+            />
+          ) : (
+            <Empty message="No incidents recorded yet" />
+          )}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Log New Incident"
+        action={
+          <button
+            className="btn btn-primary text-xs"
+            disabled={addMutation.isPending}
+            onClick={() => {
+              if (!form.incident_date) { toast.error('Please set a date and time.'); return }
+              const sanitized = sanitizeIncidentForm(form)
+              addMutation.mutate({ ...sanitized, incident_date: new Date(form.incident_date).toISOString() })
+            }}
+          >
+            {addMutation.isPending ? 'Saving...' : '+ Submit Report'}
+          </button>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="form-label">Incident Type</label>
+            <select className="form-select mt-1" value={form.incident_type} onChange={e => setForm({ ...form, incident_type: e.target.value })}>
+              {typeLabels.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="form-label">Purok</label>
+            <select className="form-select mt-1" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
+              {['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'].map(p => <option key={p}>{p}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="form-label">Date &amp; Time *</label>
+            <input
+              type="datetime-local"
+              className="form-input mt-1"
+              value={form.incident_date}
+              onChange={e => setForm({ ...form, incident_date: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="form-label">Complainant</label>
+            <input
+              className="form-input mt-1"
+              placeholder="Name or Anonymous"
+              value={form.complainant}
+              onChange={e => setForm({ ...form, complainant: e.target.value })}
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Incident Log">
+        {isLoading ? (
+          <p className="text-center text-gray-400 py-6 text-sm">Loading...</p>
+        ) : incidents.length > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Case No.</th><th>Type</th><th>Purok</th>
+                <th>Date</th><th>Complainant</th><th>Status</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {incidents.map(inc => (
+                <tr key={inc.id}>
+                  <td><span className="font-mono text-[11px] text-teal">{inc.case_no}</span></td>
+                  <td>{inc.incident_type}</td>
+                  <td>{inc.purok}</td>
+                  <td className="text-xs text-gray-500">
+                    {new Date(inc.incident_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                  <td>{inc.complainant || '—'}</td>
+                  <td><Badge variant={statusColor[inc.status] || 'gray'}>{inc.status}</Badge></td>
+                  <td>
+                    {inc.status === 'Ongoing' && (
+                      <button
+                        className="btn btn-ghost px-2 py-1 text-xs"
+                        onClick={() => updateStatus.mutate({ id: inc.id, status: 'Resolved' })}
+                      >
+                        Mark Resolved
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-center text-gray-400 text-sm py-6">No incidents recorded yet.</p>
+        )}
+      </SectionCard>
+    </div>
+  )
+}
+
+// ── PREDICTIVE GROWTH ─────────────────────────────────────────
+export function PredictiveGrowth() {
+  // Fetch all residents to compute actual population count per year (by reg date)
+  // and run a simple linear regression
+  const { data: residents = [] } = useQuery({
+    queryKey: ['residents-predictive'],
+    queryFn: async () => {
+      const { data } = await supabase.from('residents').select('created_at')
+      return data || []
+    },
+  })
+
+  // Group residents by registration year to build historical series
+  const yearCounts = {}
+  residents.forEach(r => {
+    const yr = new Date(r.created_at).getFullYear()
+    yearCounts[yr] = (yearCounts[yr] || 0) + 1
+  })
+
+  // Build cumulative series
+  const sortedYears = Object.keys(yearCounts).map(Number).sort()
+  let cumulative = 0
+  const historical = sortedYears.map(yr => {
+    cumulative += yearCounts[yr]
+    return { year: yr, count: cumulative }
+  })
+
+  // Fallback: if no data yet, show placeholder message
+  const hasData = historical.length >= 2
+
+  // Simple linear regression
+  let slope = 0, intercept = 0, r2 = 0
+  if (hasData) {
+    const n = historical.length
+    const sumX = historical.reduce((s, d) => s + d.year, 0)
+    const sumY = historical.reduce((s, d) => s + d.count, 0)
+    const sumXY = historical.reduce((s, d) => s + d.year * d.count, 0)
+    const sumX2 = historical.reduce((s, d) => s + d.year * d.year, 0)
+    slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+    intercept = (sumY - slope * sumX) / n
+
+    const meanY = sumY / n
+    const ssTot = historical.reduce((s, d) => s + Math.pow(d.count - meanY, 2), 0)
+    const ssRes = historical.reduce((s, d) => s + Math.pow(d.count - (slope * d.year + intercept), 2), 0)
+    r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0
+  }
+
+  // Projection years
+  const lastYear = hasData ? historical[historical.length - 1].year : new Date().getFullYear()
+  const lastCount = hasData ? historical[historical.length - 1].count : 0
+  const projYears = [1,2,3,4,5,10].map(n => lastYear + n)
+  const projCounts = projYears.map(yr => Math.round(slope * yr + intercept))
+  const projected2030 = Math.round(slope * (lastYear + 4) + intercept)
+  const annualGrowthRate = lastCount > 0 ? ((slope / lastCount) * 100).toFixed(1) : '—'
+
+  const chartLabels = [
+    ...historical.slice(0, -1).map(d => d.year),
+    lastYear,
+    ...projYears,
+  ]
+  const histData = [
+    ...historical.slice(0, -1).map(d => d.count),
+    lastCount,
+    ...Array(projYears.length).fill(null),
+  ]
+  const projData = [
+    ...Array(historical.length).fill(null),
+    lastCount,
+    ...projCounts,
+  ]
+
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-4 mb-5">
+        <StatCard icon="📈" value={hasData ? projected2030.toLocaleString() : '—'} label={`Projected ${lastYear + 4}`} color="teal" />
+        <StatCard icon="📊" value={hasData ? `${annualGrowthRate}%` : '—'} label="Annual Growth Rate" color="gold" />
+        <StatCard icon="🧮" value={hasData ? `R² = ${r2.toFixed(3)}` : '—'} label="Model Fit (Linear Reg.)" color="blue" />
+      </div>
+
+      <SectionCard title="Population Growth Forecast" subtitle="Based on resident registration data + linear regression projection">
+        <div className="h-72">
+          {hasData ? (
+            <Line
+              data={{
+                labels: chartLabels,
+                datasets: [
+                  {
+                    label: 'Registered (Historical)',
+                    data: histData,
+                    borderColor: '#0D9E8C',
+                    backgroundColor: 'rgba(13,158,140,.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#0D9E8C',
+                  },
+                  {
+                    label: 'Projected',
+                    data: projData,
+                    borderColor: '#F5A623',
+                    borderDash: [6, 3],
+                    backgroundColor: 'rgba(245,166,35,.08)',
+                    tension: 0.3,
+                    fill: true,
+                    pointStyle: 'triangle',
+                    pointRadius: 5,
+                    pointBackgroundColor: '#F5A623',
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: false } },
+              }}
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center text-center text-gray-300 text-sm px-8">
+              Not enough data yet for projection.<br />Add at least 2 years' worth of resident records.
+            </div>
+          )}
+        </div>
+      </SectionCard>
+
+      {hasData && (
+        <div className="grid grid-cols-2 gap-5">
+          <SectionCard title="Projection Table">
+            <table className="data-table">
+              <thead>
+                <tr><th>Year</th><th>Projected Population</th><th>Net Growth</th><th>Confidence</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{lastYear} (actual)</td>
+                  <td>{lastCount.toLocaleString()}</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+                {projYears.slice(0, 5).map((yr, i) => (
+                  <tr key={yr}>
+                    <td>{yr}</td>
+                    <td>{projCounts[i].toLocaleString()}</td>
+                    <td>+{(projCounts[i] - (i === 0 ? lastCount : projCounts[i-1])).toLocaleString()}</td>
+                    <td>
+                      <span className={`badge ${i < 2 ? 'badge-teal' : i < 4 ? 'badge-gold' : 'badge-gray'}`}>
+                        {i < 2 ? 'High' : i < 4 ? 'Medium' : 'Low'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </SectionCard>
+
+          <SectionCard title="Model Parameters">
+            {[
+              ['Model Type', 'Linear Regression'],
+              ['R² Value', r2.toFixed(4)],
+              ['Slope (β₁)', `${slope.toFixed(2)} residents/year`],
+              ['Y-Intercept (β₀)', intercept.toFixed(0)],
+              ['Data Points', `${historical.length} year(s)`],
+            ].map(([k, v]) => (
+              <div key={k} className="flex justify-between py-2.5 border-b border-gray-100 last:border-0">
+                <span className="text-xs text-gray-500">{k}</span>
+                <span className="text-[13px] font-semibold text-navy">{v}</span>
               </div>
             ))}
-          </div>
+          </SectionCard>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── NEEDS ASSESSMENT ──────────────────────────────────────────
+export function NeedsAssessment() {
+  const qc = useQueryClient()
+  const [submitted, setSubmitted] = useState(false)
+  const [form, setForm] = useState({ purok: 'Purok 1', priority_need: 'Health Services', comments: '' })
+
+  const { data: responses = [] } = useQuery({
+    queryKey: ['survey-responses'],
+    queryFn: async () => {
+      const { data } = await supabase.from('survey_responses').select('*')
+      return data || []
+    },
+  })
+
+  const submitMutation = useMutation({
+    mutationFn: async (payload) => {
+      const { error } = await supabase.from('survey_responses').insert(payload)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      setSubmitted(true)
+      qc.invalidateQueries(['survey-responses'])
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  const needOptions = [
+    { need: 'Health Services', icon: '🏥' },
+    { need: 'Road / Infrastructure', icon: '🛣️' },
+    { need: 'Educational Support', icon: '🎓' },
+    { need: 'Livelihood Programs', icon: '💼' },
+    { need: 'Water Supply', icon: '💧' },
+    { need: 'Peace & Order', icon: '🚔' },
+    { need: 'Others', icon: '📌' },
+  ]
+
+  // Count responses per need from live data
+  const needCounts = needOptions.map(n => ({
+    ...n,
+    count: responses.filter(r => r.priority_need === n.need).length,
+  }))
+  const maxCount = Math.max(...needCounts.map(n => n.count), 1)
+  const topNeed = needCounts.sort((a, b) => b.count - a.count)[0]
+
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-4 mb-5">
+        <StatCard icon="📋" value={responses.length} label="Survey Responses" color="teal" />
+        <StatCard icon="🏆" value={responses.length > 0 ? topNeed.need.split(' ')[0] : '—'} label="Top Priority Need" color="gold" />
+        <StatCard icon="🗂️" value={[...new Set(responses.map(r => r.purok))].length || 0} label="Puroks Covered" color="blue" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-5">
+        <SectionCard title="Priority Needs Ranking" subtitle={`Based on ${responses.length} response${responses.length !== 1 ? 's' : ''}`}>
+          {responses.length > 0 ? (
+            <div className="space-y-3">
+              {needCounts.sort((a, b) => b.count - a.count).map(n => (
+                <div key={n.need} className="flex items-center gap-3">
+                  <span className="text-lg w-7 text-center">{n.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex justify-between text-[13px] mb-1">
+                      <span className="text-navy font-medium">{n.need}</span>
+                      <span className="text-gray-500">{n.count}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full">
+                      <div
+                        className="h-2 bg-teal rounded-full transition-all"
+                        style={{ width: `${(n.count / maxCount) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-300 text-sm py-8">No survey responses yet.</p>
+          )}
         </SectionCard>
-        <SectionCard title="Community Survey Form" action={<span className="badge badge-teal">287 submitted</span>}>
+
+        <SectionCard title="Submit Survey Response" action={<span className="badge badge-teal">{responses.length} submitted</span>}>
           {submitted ? (
             <div className="text-center py-8">
               <div className="text-4xl mb-2">✅</div>
               <p className="text-navy font-semibold">Response submitted!</p>
               <p className="text-sm text-gray-400 mt-1">Thank you for your community feedback.</p>
-              <button className="btn btn-ghost mt-3 text-xs" onClick={() => setSubmitted(false)}>Submit another</button>
+              <button className="btn btn-ghost mt-4 text-xs" onClick={() => setSubmitted(false)}>
+                Submit another
+              </button>
             </div>
           ) : (
-            <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); supabase.from('survey_responses').insert({ purok: 'Purok 1', priority_need: 'Health Services' }).then(() => {}) }}>
-              <div className="space-y-3">
-                <div><label className="form-label">Resident Name (Optional)</label><input className="form-input mt-1" placeholder="Anonymous" /></div>
-                <div><label className="form-label">Purok</label>
-                  <select className="form-select mt-1">{['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'].map(p=><option key={p}>{p}</option>)}</select>
-                </div>
-                <div><label className="form-label">Top Priority Need</label>
-                  <select className="form-select mt-1">{needs.map(n=><option key={n.need}>{n.need}</option>)}<option>Others</option></select>
-                </div>
-                <div><label className="form-label">Comments</label><textarea className="form-input mt-1" rows={3} placeholder="Share your concerns..."></textarea></div>
-                <button type="submit" className="btn btn-primary w-full">Submit Response</button>
+            <form
+              onSubmit={e => {
+                e.preventDefault()
+                const sanitized = sanitizeSurveyForm(form)
+                submitMutation.mutate(sanitized)
+              }}
+              className="space-y-3"
+            >
+              <div>
+                <label className="form-label">Purok</label>
+                <select className="form-select mt-1" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
+                  {['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'].map(p => <option key={p}>{p}</option>)}
+                </select>
               </div>
+              <div>
+                <label className="form-label">Top Priority Need</label>
+                <select className="form-select mt-1" value={form.priority_need} onChange={e => setForm({ ...form, priority_need: e.target.value })}>
+                  {needOptions.map(n => <option key={n.need}>{n.need}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Comments (Optional)</label>
+                <textarea
+                  className="form-input mt-1"
+                  rows={3}
+                  placeholder="Share your community concerns..."
+                  value={form.comments}
+                  onChange={e => setForm({ ...form, comments: e.target.value })}
+                />
+              </div>
+              <button type="submit" className="btn btn-primary w-full" disabled={submitMutation.isPending}>
+                {submitMutation.isPending ? 'Submitting...' : 'Submit Response'}
+              </button>
             </form>
           )}
         </SectionCard>
@@ -262,11 +608,110 @@ export function NeedsAssessment() {
   )
 }
 
-// DILGReports.jsx
-import { exportToPDF } from '../lib/exportUtils'
-
+// ── DILG REPORTS ──────────────────────────────────────────────
 export function DILGReports() {
   const [preview, setPreview] = useState(null)
+
+  // Pull live data for reports
+  const { data: residents = [] } = useQuery({
+    queryKey: ['residents-report'],
+    queryFn: async () => {
+      const { data } = await supabase.from('residents').select('*')
+      return data || []
+    },
+  })
+
+  const { data: incidents = [] } = useQuery({
+    queryKey: ['incidents-report'],
+    queryFn: async () => {
+      const { data } = await supabase.from('incidents').select('*')
+      return data || []
+    },
+  })
+
+  const { data: beneficiaries = [] } = useQuery({
+    queryKey: ['beneficiaries-report'],
+    queryFn: async () => {
+      const { data } = await supabase.from('beneficiaries').select('*, assistance_programs(name)')
+      return data || []
+    },
+  })
+
+  const total = residents.length
+  const now = new Date()
+  const getAge = dob => Math.floor((now - new Date(dob)) / 31557600000)
+  const males = residents.filter(r => r.sex === 'Male').length
+  const females = residents.filter(r => r.sex === 'Female').length
+  const seniors = residents.filter(r => r.is_senior_citizen).length
+  const pwds = residents.filter(r => r.is_pwd).length
+  const soloParents = residents.filter(r => r.is_solo_parent).length
+  const hhHeads = residents.filter(r => r.is_household_head).length
+  const poorHH = residents.filter(r => r.is_household_head && (r.monthly_income || 0) < 10000).length
+  const povertyRate = hhHeads > 0 ? ((poorHH / hhHeads) * 100).toFixed(1) : '—'
+  const activeBen = beneficiaries.filter(b => b.status === 'Active').length
+  const totalReleased = beneficiaries.reduce((s, b) => s + (b.total_released || 0), 0)
+  const resolvedInc = incidents.filter(i => i.status === 'Resolved').length
+  const resRate = incidents.length > 0 ? Math.round((resolvedInc / incidents.length) * 100) : 0
+  const year = now.getFullYear()
+
+  // Dynamic report data built from live Supabase values
+  const previewData = {
+    barangay: [
+      ['Total Registered Population', total.toLocaleString()],
+      ['Total Household Heads', hhHeads.toString()],
+      ['Male', `${males} (${total ? ((males/total)*100).toFixed(1) : 0}%)`],
+      ['Female', `${females} (${total ? ((females/total)*100).toFixed(1) : 0}%)`],
+      ['Senior Citizens', `${seniors} (${total ? ((seniors/total)*100).toFixed(1) : 0}%)`],
+      ['Persons with Disability (PWD)', `${pwds} (${total ? ((pwds/total)*100).toFixed(1) : 0}%)`],
+      ['Solo Parents', `${soloParents} (${total ? ((soloParents/total)*100).toFixed(1) : 0}%)`],
+      ['Poverty Incidence (HH Heads < ₱10K)', `${povertyRate}%`],
+      ['Number of Puroks', '5'],
+      ['Report Period', `CY ${year}`],
+    ],
+    cbms: [
+      ['Total Population', total.toLocaleString()],
+      ['Senior Citizens', seniors.toString()],
+      ['PWD', pwds.toString()],
+      ['Solo Parents', soloParents.toString()],
+      ['HH Heads below poverty line', poorHH.toString()],
+      ['Active Beneficiaries', activeBen.toString()],
+      ['Total Assistance Distributed', `₱${totalReleased.toLocaleString()}`],
+    ],
+    peace: [
+      ['Total Incidents (YTD)', incidents.length.toString()],
+      ['Ongoing Cases', incidents.filter(i => i.status === 'Ongoing').length.toString()],
+      ['Resolved Cases', resolvedInc.toString()],
+      ['Escalated Cases', incidents.filter(i => i.status === 'Escalated').length.toString()],
+      ['Resolution Rate', `${resRate}%`],
+      ['Most Common Type', (() => {
+        if (!incidents.length) return '—'
+        const counts = {}
+        incidents.forEach(i => { counts[i.incident_type] = (counts[i.incident_type] || 0) + 1 })
+        return Object.entries(counts).sort((a,b) => b[1]-a[1])[0]?.[0] || '—'
+      })()],
+    ],
+    assist: [
+      ['Active Beneficiaries', activeBen.toString()],
+      ['Pending Claims', beneficiaries.filter(b => b.status === 'Pending').length.toString()],
+      ['Completed', beneficiaries.filter(b => b.status === 'Completed').length.toString()],
+      ['Total Distributed', `₱${totalReleased.toLocaleString()}`],
+      ['Report Period', `CY ${year}`],
+    ],
+    sector: [
+      ['Senior Citizens', `${seniors} (${total ? ((seniors/total)*100).toFixed(1) : 0}%)`],
+      ['Solo Parents', `${soloParents} (${total ? ((soloParents/total)*100).toFixed(1) : 0}%)`],
+      ['Persons with Disability', `${pwds} (${total ? ((pwds/total)*100).toFixed(1) : 0}%)`],
+      ['Report Period', `CY ${year}`],
+    ],
+    disaster: [
+      ['Typhoon Risk Level', 'High'],
+      ['Flood Risk Level', 'Medium'],
+      ['Landslide Risk Level', 'Low'],
+      ['Total Households', hhHeads.toString()],
+      ['Report Period', `CY ${year}`],
+    ],
+  }
+
   const reports = [
     { id: 'barangay', icon: '🏛️', title: 'Barangay Profile Report', desc: 'Demographic and socioeconomic profile', badge: 'DILG Standard', badgeColor: 'teal' },
     { id: 'cbms', icon: '📊', title: 'CBMS Statistical Report', desc: 'Community-Based Monitoring System', badge: 'Required', badgeColor: 'blue' },
@@ -275,18 +720,12 @@ export function DILGReports() {
     { id: 'sector', icon: '♿', title: 'Vulnerable Sector Report', desc: 'SC, Solo Parent, PWD statistics', badge: 'Semi-Annual', badgeColor: 'gray' },
     { id: 'disaster', icon: '🌀', title: 'Disaster Risk Assessment', desc: 'Vulnerability mapping and evacuation data', badge: 'Annual', badgeColor: 'gold' },
   ]
-  const previewData = {
-    barangay: [['Total Population','1,284'],['Total Households','342'],['Male Population','636 (49.5%)'],['Female Population','648 (50.5%)'],['Senior Citizens','207 (16.1%)'],['PWD','48 (3.7%)'],['Solo Parents','34 (2.6%)'],['Poverty Incidence','18.4%'],['Number of Puroks','5'],['Report Period','CY 2026 (as of June)']],
-    cbms: [['Health — HH with safe water','88.3%'],['Nutrition — Children 0-5 underweight','7.2%'],['Education — Attendance rate (6-15)','94.1%'],['Income — HH below poverty threshold','18.4%'],['Employment — Employed HH heads','78.6%'],['Housing — Makeshift housing','11.2%']],
-    peace: [['Total Incidents (YTD)','28'],['Criminal Cases','8'],['Resolution Rate','71%'],['Most Common — Noise/Disturbance','9 cases'],['Ongoing Cases','3'],['Escalated Cases','1']],
-    assist: [['4Ps Beneficiaries','89 households'],['Rice Subsidy','67 households'],['Medical Assistance','42 persons'],['Educational Grant','20 students'],['Total Distributed','₱486,000'],['Active Programs','4']],
-    sector: [['Senior Citizens','207 (16.1%)'],['Solo Parents','34 (2.6%)'],['Persons with Disability','48 (3.7%)'],['SC with OSCA Pension','198'],['PWD with ID','48'],['Solo Parents with ID','29']],
-    disaster: [['Typhoon Risk Level','High'],['Flood Risk Level','Medium'],['Landslide Risk Level','Low'],['High-Risk Households','98'],['Evacuation-Ready HH','89'],['Nearest Evac. Center','BSC Gymnasium']],
-  }
+
+  const activeReport = reports.find(r => r.id === preview)
 
   return (
     <div>
-      <SectionCard title="Automated DILG Report Generation" subtitle="Reports are auto-compiled from live system data">
+      <SectionCard title="Automated DILG Report Generation" subtitle="All figures pulled live from your Supabase database">
         <div className="grid grid-cols-2 gap-3">
           {reports.map(r => (
             <div
@@ -305,17 +744,18 @@ export function DILGReports() {
         </div>
       </SectionCard>
 
-      {preview && (
+      {preview && activeReport && (
         <SectionCard
-          title={`${reports.find(r => r.id === preview)?.title} — Preview`}
-          subtitle="Auto-generated · June 2026"
+          title={`${activeReport.title} — Preview`}
+          subtitle={`Auto-generated from live data · ${now.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}`}
           action={
             <div className="flex gap-2">
-              <button className="btn btn-ghost text-xs" onClick={() => {
-                const r = reports.find(rep => rep.id === preview)
-                exportToPDF({ title: r?.title || 'Report', rows: previewData[preview] || [] })
-              }}>📄 Export PDF</button>
-              <button className="btn btn-primary text-xs" onClick={() => toast.info('Exporting Excel...')}>📊 Export Excel</button>
+              <button
+                className="btn btn-ghost text-xs"
+                onClick={() => exportToPDF({ title: activeReport.title, rows: previewData[preview] || [] })}
+              >
+                📄 Export PDF
+              </button>
               <button className="btn btn-ghost text-xs" onClick={() => setPreview(null)}>✕ Close</button>
             </div>
           }
@@ -324,20 +764,32 @@ export function DILGReports() {
             <div className="text-center mb-5 pb-4 border-b-2 border-navy">
               <div className="text-[11px] text-gray-400 uppercase tracking-widest">Republic of the Philippines</div>
               <div className="text-[11px] text-gray-400">Province of Batanes · Municipality of Basco</div>
-              <h2 className="font-display text-lg font-bold text-navy mt-2">{reports.find(r => r.id === preview)?.title?.toUpperCase()}</h2>
-              <p className="text-sm text-gray-400 mt-1">Barangay Kayvaluganan · CY 2026</p>
+              <h2 className="font-display text-lg font-bold text-navy mt-2">{activeReport.title.toUpperCase()}</h2>
+              <p className="text-sm text-gray-400 mt-1">Barangay Kayvaluganan · CY {year}</p>
             </div>
             <table className="data-table">
               <thead><tr><th>Indicator</th><th>Value</th></tr></thead>
               <tbody>
-                {(previewData[preview] || []).map(([k,v]) => (
-                  <tr key={k}><td>{k}</td><td><strong>{v}</strong></td></tr>
+                {(previewData[preview] || []).map(([k, v]) => (
+                  <tr key={k}>
+                    <td>{k}</td>
+                    <td><strong>{v}</strong></td>
+                  </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </SectionCard>
       )}
+    </div>
+  )
+}
+
+// Shared empty state
+function Empty({ message = 'No data yet' }) {
+  return (
+    <div className="h-full flex items-center justify-center text-gray-300 text-sm">
+      {message}
     </div>
   )
 }
