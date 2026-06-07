@@ -54,7 +54,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/resident-needs" element={<ResidentNeedsForm />} />
+      <Route path="/resident-needs/*" element={<ResidentNeedsForm />} />
       <Route
         path="/"
         element={
