@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { supabase, isSupabaseConfigured } from './lib/supabase'
+import { supabase } from './lib/supabase'
 import { useAuthStore } from './store/authStore'
 import Layout from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
@@ -35,13 +35,6 @@ export default function App() {
   const { setUser, setLoading, fetchProfile } = useAuthStore()
 
   useEffect(() => {
-    // Demo mode — no Supabase configured, skip auth and go straight in
-    if (!isSupabaseConfigured) {
-      setUser({ id: 'demo', email: 'demo@protect.local' })
-      setLoading(false)
-      return
-    }
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
