@@ -6,6 +6,7 @@ import { mockResidents } from '../lib/mockData'
 import { SectionCard, Badge, Modal, Loader, EmptyState } from '../components/ui/index'
 import { Plus, Search, Eye, Edit2, Download, FileSpreadsheet } from 'lucide-react'
 import { exportResidentsToPDF, exportResidentsToExcel } from '../lib/exportUtils'
+import { sanitizeResidentForm } from '../lib/sanitize'
 
 const PUROKS = ['Purok 1', 'Purok 2', 'Purok 3', 'Purok 4', 'Purok 5']
 const CIVIL = ['Single', 'Married', 'Widowed', 'Separated', 'Annulled']
@@ -67,7 +68,8 @@ export default function Residents() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!form.resident_no) form.resident_no = `RES-${String(residents.length + 1).padStart(4, '0')}`
-    saveMutation.mutate(form)
+    const sanitized = sanitizeResidentForm(form)
+    saveMutation.mutate(sanitized)
   }
 
   const filtered = residents.filter(r =>
