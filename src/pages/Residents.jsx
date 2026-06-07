@@ -83,7 +83,7 @@ export default function Residents() {
     if (r.is_pwd) badges.push(<Badge key="pwd" variant="gold">PWD</Badge>)
     if (r.is_solo_parent) badges.push(<Badge key="solo" variant="teal">Solo Parent</Badge>)
     // if (r.is_household_head) badges.push(<Badge key="head" variant="teal">HH Head</Badge>)
-    if (r.is_voter) badges.push(<Badge key="voter" variant="gray">Voter</Badge>)
+    // if (r.is_voter) badges.push(<Badge key="voter" variant="gray">Voter</Badge>)
     if (!badges.length) return null
     return <div style={{ display: 'flex', gap: 6 }}>{badges}</div>
   }
