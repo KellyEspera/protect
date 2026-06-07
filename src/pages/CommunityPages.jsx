@@ -506,11 +506,27 @@ export function NeedsAssessment() {
   }))
   const maxCount = Math.max(...needCounts.map(n => n.count), 1)
   const topNeed = needCounts.sort((a, b) => b.count - a.count)[0]
+  const residentNeedsLink = `${window.location.origin}/resident-needs`
 
-  const handleCopyLink = () => {
-    const link = `${window.location.origin}/resident-needs`
-    navigator.clipboard.writeText(link)
-    toast.success('Resident form link copied! Share this with community members.')
+  const handleCopyLink = async () => {
+    const link = residentNeedsLink
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = link
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+      toast.success('Resident form link copied! Share this with community members.')
+    } catch (error) {
+      toast.error('Unable to copy link. Please copy it manually.')
+    }
   }
 
   return (
@@ -519,19 +535,42 @@ export function NeedsAssessment() {
       <SectionCard title="📱 Share Resident Form Link" subtitle="Residents can submit their needs from a simple form">
         <div className="bg-gradient-to-r from-teal/10 to-blue/10 rounded-xl p-4 border border-teal/20 mb-4">
           <p className="text-sm text-navy font-medium mb-3">Share this link with community members:</p>
-          <div className="flex gap-2 flex-wrap">
-            <button 
-              onClick={handleCopyLink}
-              className="btn btn-primary text-sm"
-            >
-              📋 Copy Resident Form Link
-            </button>
-            <button 
-              onClick={() => toast.info('QR code feature coming soon')}
-              className="btn btn-ghost text-sm"
-            >
-              📲 Generate QR Code
-            </button>
+          <div className="grid gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex-1 min-w-0">
+                <label className="text-[13px] text-gray-500 mb-2 block">Resident form URL</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={residentNeedsLink}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-800"
+                />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={handleCopyLink}
+                  className="btn btn-primary text-sm whitespace-nowrap"
+                >
+                  📋 Copy link
+                </button>
+                <a
+                  href={residentNeedsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost text-sm whitespace-nowrap"
+                >
+                  🔗 Open form
+                </a>
+              </div>
+            </div>
+            <div>
+              <button
+                onClick={() => toast.info('QR code feature coming soon')}
+                className="btn btn-ghost text-sm"
+              >
+                📲 Generate QR Code
+              </button>
+            </div>
           </div>
           <p className="text-xs text-gray-400 mt-3">Residents can fill the form anytime without needing to log in. Their responses automatically appear below.</p>
         </div>
