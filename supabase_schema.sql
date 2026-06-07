@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS households (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   household_no TEXT UNIQUE NOT NULL,
-  purok TEXT NOT NULL CHECK (purok IN ('Purok 1','Purok 2','Purok 3','Purok 4','Purok 5')),
+  purok TEXT NOT NULL CHECK (purok IN ('Sitio Hunan','Sitio Hagu','Sitio Tuva')),
   address TEXT,
   latitude NUMERIC(10,7),
   longitude NUMERIC(10,7),
@@ -163,11 +163,11 @@ ON CONFLICT DO NOTHING;
 
 -- Sample Households
 INSERT INTO households (household_no, purok, address, latitude, longitude, housing_type) VALUES
-  ('HH-001', 'Purok 1', 'Sitio Norte, Purok 1', 20.4490, 121.9685, 'Concrete'),
-  ('HH-002', 'Purok 2', 'Sitio Sur, Purok 2', 20.4475, 121.9680, 'Concrete'),
-  ('HH-003', 'Purok 3', 'Sitio Centro, Purok 3', 20.4462, 121.9710, 'Semi-concrete'),
-  ('HH-004', 'Purok 4', 'Sitio Este, Purok 4', 20.4510, 121.9725, 'Concrete'),
-  ('HH-005', 'Purok 5', 'Sitio Oeste, Purok 5', 20.4530, 121.9745, 'Wood')
+  ('HH-001', 'Sitio Hunan', 'Sitio Norte, Sitio Hunan', 20.4490, 121.9685, 'Concrete'),
+  ('HH-002', 'Sitio Hagu', 'Sitio Sur, Sitio Hagu', 20.4475, 121.9680, 'Concrete'),
+  ('HH-003', 'Sitio Tuva', 'Sitio Centro, Sitio Tuva', 20.4462, 121.9710, 'Semi-concrete'),
+  ('HH-004', 'Sitio Hunan', 'Sitio Este, Sitio Hunan', 20.4510, 121.9725, 'Concrete'),
+  ('HH-005', 'Sitio Hagu', 'Sitio Oeste, Sitio Hagu', 20.4530, 121.9745, 'Wood')
 ON CONFLICT DO NOTHING;
 
 -- ============================================================
