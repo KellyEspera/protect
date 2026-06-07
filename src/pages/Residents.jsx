@@ -8,13 +8,13 @@ import { Plus, Search, Eye, Edit2, Download, FileSpreadsheet } from 'lucide-reac
 import { exportResidentsToPDF, exportResidentsToExcel } from '../lib/exportUtils'
 import { sanitizeResidentForm } from '../lib/sanitize'
 
-const PUROKS = ['Purok 1', 'Purok 2', 'Purok 3', 'Purok 4', 'Purok 5']
+const PUROKS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
 const CIVIL = ['Single', 'Married', 'Widowed', 'Separated', 'Annulled']
 const EDU = ['Elementary', 'High School', 'Senior High School', 'College', 'Vocational', 'Post-Graduate', 'None']
 
 const emptyForm = {
   resident_no: '', first_name: '', last_name: '', middle_name: '', date_of_birth: '',
-  sex: 'Male', civil_status: 'Single', purok: 'Purok 1', monthly_income: '',
+  sex: 'Male', civil_status: 'Single', purok: 'Sitio Hunan', monthly_income: '',
   occupation: '', educational_attainment: 'High School', contact_number: '',
   is_household_head: false, is_pwd: false, pwd_type: '', is_solo_parent: false,
   is_senior_citizen: false, is_voter: false,
@@ -107,7 +107,7 @@ export default function Residents() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             className="form-input pl-8"
-            placeholder="Search name, ID, or purok..."
+            placeholder="Search name, ID, or sitio..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -118,7 +118,7 @@ export default function Residents() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Res. ID</th><th>Name</th><th>Purok</th><th>Age</th>
+                  <th>Res. ID</th><th>Name</th><th>Sitio</th><th>Age</th>
                   <th>Sex</th><th>Civil Status</th><th>HH Head</th><th>Category</th><th>Actions</th>
                 </tr>
               </thead>
@@ -180,7 +180,7 @@ export default function Residents() {
               </select>
             </div>
             <div>
-              <label className="form-label">Purok *</label>
+              <label className="form-label">Sitio *</label>
               <select className="form-select mt-1" value={form.purok} onChange={e => setForm({...form, purok: e.target.value})}>
                 {PUROKS.map(p => <option key={p}>{p}</option>)}
               </select>

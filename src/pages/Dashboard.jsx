@@ -71,7 +71,7 @@ export default function Dashboard() {
   const adults   = residents.filter(r => { const a = getAge(r.date_of_birth); return a >= 31 && a <= 59 }).length
 
   // Purok breakdown
-  const purokCounts = ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'].map(p =>
+  const purokCounts = ['Sitio Hunan','Sitio Hagu','Sitio Tuva'].map(p =>
     residents.filter(r => r.purok === p).length
   )
 
@@ -118,13 +118,13 @@ export default function Dashboard() {
           </div>
         </SectionCard>
 
-        {/* Residents by purok */}
-        <SectionCard title="Residents by Purok">
+        {/* Residents by sitio */}
+        <SectionCard title="Residents by Sitio">
           <div className="h-48">
             {total > 0 ? (
               <Bar
                 data={{
-                  labels: ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'],
+                  labels: ['Sitio Hunan','Sitio Hagu','Sitio Tuva'],
                   datasets: [{ data: purokCounts, backgroundColor: TEAL, borderRadius: 6 }],
                 }}
                 options={{ ...chartDefaults, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' } } } }}
@@ -158,7 +158,7 @@ export default function Dashboard() {
       >
         {incidents.length > 0 ? (
           <table className="data-table">
-            <thead><tr><th>Case No.</th><th>Type</th><th>Purok</th><th>Date</th><th>Status</th></tr></thead>
+            <thead><tr><th>Case No.</th><th>Type</th><th>Sitio</th><th>Date</th><th>Status</th></tr></thead>
             <tbody>
               {incidents.map(inc => (
                 <tr key={inc.id}>
