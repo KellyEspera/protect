@@ -219,7 +219,7 @@ export function useResidentStats() {
         // Compute from mock data
         return {
           total: mockResidents.length,
-          byPurok: { 'Purok 1': 287, 'Purok 2': 265, 'Purok 3': 241, 'Purok 4': 298, 'Purok 5': 193 },
+          byPurok: { 'Sitio Hunan': 287, 'Sitio Hagu': 265, 'Sitio Tuva': 241 },
           male: 636, female: 648,
           pwd: mockResidents.filter(r => r.is_pwd).length,
           soloParent: mockResidents.filter(r => r.is_solo_parent).length,

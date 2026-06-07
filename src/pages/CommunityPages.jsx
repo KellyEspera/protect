@@ -90,7 +90,7 @@ export function BeneficiaryTracking() {
             <thead>
               <tr>
                 <th>Name</th><th>Resident No.</th><th>Program</th>
-                <th>Purok</th><th>Last Release</th><th>Amount</th><th>Status</th>
+                <th>Sitio</th><th>Last Release</th><th>Amount</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -123,7 +123,7 @@ export function CrimeIncident() {
   const qc = useQueryClient()
   const [form, setForm] = useState({
     incident_type: 'Noise/Disturbance',
-    purok: 'Purok 1',
+    purok: 'Sitio Hunan',
     complainant: '',
     incident_date: '',
   })
@@ -152,7 +152,7 @@ export function CrimeIncident() {
     onSuccess: () => {
       toast.success('Incident logged!')
       qc.invalidateQueries(['incidents'])
-      setForm({ incident_type: 'Noise/Disturbance', purok: 'Purok 1', complainant: '', incident_date: '' })
+      setForm({ incident_type: 'Noise/Disturbance', purok: 'Sitio Hunan', complainant: '', incident_date: '' })
     },
     onError: (e) => toast.error(e.message),
   })
@@ -232,9 +232,9 @@ export function CrimeIncident() {
             </select>
           </div>
           <div>
-            <label className="form-label">Purok</label>
+            <label className="form-label">Sitio</label>
             <select className="form-select mt-1" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
-              {['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5'].map(p => <option key={p}>{p}</option>)}
+              {['Sitio Hunan','Sitio Hagu','Sitio Tuva'].map(p => <option key={p}>{p}</option>)}
             </select>
           </div>
           <div>
@@ -265,7 +265,7 @@ export function CrimeIncident() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Case No.</th><th>Type</th><th>Purok</th>
+                <th>Case No.</th><th>Type</th><th>Sitio</th>
                 <th>Date</th><th>Complainant</th><th>Status</th><th>Action</th>
               </tr>
             </thead>
@@ -684,7 +684,7 @@ export function DILGReports() {
       ['Persons with Disability (PWD)', `${pwds} (${total ? ((pwds/total)*100).toFixed(1) : 0}%)`],
       ['Solo Parents', `${soloParents} (${total ? ((soloParents/total)*100).toFixed(1) : 0}%)`],
       ['Poverty Incidence (HH Heads < ₱10K)', `${povertyRate}%`],
-      ['Number of Puroks', '5'],
+      ['Number of Sitios', '3'],
       ['Report Period', `CY ${year}`],
     ],
     cbms: [

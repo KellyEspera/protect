@@ -226,7 +226,7 @@ export default function GISMap() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
         <StatCard icon="🏠" value={mapped} label="Mapped Households" color="navy" />
-        <StatCard icon="📍" value="5" label="Puroks / Zones" color="gold" />
+        <StatCard icon="📍" value="3" label="Sitios / Zones" color="gold" />
         <StatCard icon="🗺️" value={mapped > 0 ? '✓ Live' : 'Pending'} label="Map Data" color="teal" />
         <StatCard icon="📌" value={pendingPin ? 'Placing...' : 'Ready'} label="Pin Status" color={pendingPin ? 'gold' : 'navy'} />
       </div>
@@ -244,7 +244,7 @@ export default function GISMap() {
                 onChange={e => setFilterPurok(e.target.value)}
                 style={{ fontSize: 11, padding: '4px 8px', border: '1px solid #D4D0C8', borderRadius: 4, color: '#1A1A2E', fontFamily: 'Inter, sans-serif' }}
               >
-                <option value="All">All Puroks</option>
+                <option value="All">All Sitios</option>
                 {PUROKS.map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
@@ -283,7 +283,7 @@ export default function GISMap() {
                   <input className="form-input" placeholder="e.g. HH-001" value={form.household_no} onChange={e => setForm({ ...form, household_no: e.target.value })} />
                 </div>
                 <div>
-                  <label className="form-label" style={{ display: 'block', marginBottom: 4 }}>Purok *</label>
+                  <label className="form-label" style={{ display: 'block', marginBottom: 4 }}>Sitio *</label>
                   <select className="form-select" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
                     {PUROKS.map(p => <option key={p}>{p}</option>)}
                   </select>
@@ -331,7 +331,7 @@ export default function GISMap() {
                   <input className="form-input" value={form.household_no} onChange={e => setForm({ ...form, household_no: e.target.value })} />
                 </div>
                 <div>
-                  <label className="form-label" style={{ display: 'block', marginBottom: 4 }}>Purok</label>
+                  <label className="form-label" style={{ display: 'block', marginBottom: 4 }}>Sitio</label>
                   <select className="form-select" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
                     {PUROKS.map(p => <option key={p}>{p}</option>)}
                   </select>

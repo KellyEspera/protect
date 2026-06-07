@@ -30,7 +30,7 @@ export function PopulationAnalytics() {
   const under18 = residents.filter(r => getAge(r.date_of_birth) < 18).length
   const seniors = residents.filter(r => r.is_senior_citizen).length
 
-  const purokLabels = ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5']
+  const purokLabels = ['Sitio Hunan','Sitio Hagu','Sitio Tuva']
   const purokData = purokLabels.map(p => residents.filter(r => r.purok === p).length)
 
   return (
@@ -80,7 +80,7 @@ export function PopulationAnalytics() {
         </SectionCard>
       </div>
 
-      <SectionCard title="Population by Purok">
+      <SectionCard title="Population by Sitio">
         <div className="h-48">
           {total > 0 ? (
             <Bar
@@ -106,7 +106,7 @@ export function PovertyIncidence() {
     : 0
   const povertyRate = total > 0 ? ((poorHH / residents.filter(r => r.is_household_head).length) * 100).toFixed(1) : '—'
 
-  const purokLabels = ['Purok 1','Purok 2','Purok 3','Purok 4','Purok 5']
+  const purokLabels = ['Sitio Hunan','Sitio Hagu','Sitio Tuva']
   const purokPoverty = purokLabels.map(p => {
     const hhInPurok = residents.filter(r => r.purok === p && r.is_household_head)
     if (!hhInPurok.length) return 0
@@ -134,7 +134,7 @@ export function PovertyIncidence() {
       </div>
 
       <div className="grid grid-cols-2 gap-5">
-        <SectionCard title="Poverty Rate by Purok" subtitle="% of HH heads below ₱10,000/mo">
+        <SectionCard title="Poverty Rate by Sitio" subtitle="% of HH heads below ₱10,000/mo">
           <div className="h-52">
             {total > 0 ? (
               <Bar
@@ -163,7 +163,7 @@ export function PovertyIncidence() {
       <SectionCard title="Household Heads Below Poverty Line" action={<span className="badge badge-red">{poorHH} households</span>}>
         {poorResidents.length > 0 ? (
           <table className="data-table">
-            <thead><tr><th>Name</th><th>Purok</th><th>Monthly Income</th><th>PWD</th><th>Solo Parent</th><th>Senior</th></tr></thead>
+            <thead><tr><th>Name</th><th>Sitio</th><th>Monthly Income</th><th>PWD</th><th>Solo Parent</th><th>Senior</th></tr></thead>
             <tbody>
               {poorResidents.map(r => (
                 <tr key={r.id}>
@@ -244,7 +244,7 @@ export function SectorStatistics() {
       <SectionCard title="Vulnerable Sector Registry">
         {sectorList.length > 0 ? (
           <table className="data-table">
-            <thead><tr><th>Name</th><th>Category</th><th>Purok</th><th>Age</th><th>Civil Status</th></tr></thead>
+            <thead><tr><th>Name</th><th>Category</th><th>Sitio</th><th>Age</th><th>Civil Status</th></tr></thead>
             <tbody>
               {sectorList.map(r => (
                 <tr key={r.id + r.cat}>
