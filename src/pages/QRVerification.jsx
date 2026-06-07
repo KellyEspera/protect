@@ -1,5 +1,5 @@
 // QRVerification.jsx
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 import QRCode from 'react-qr-code'
@@ -12,6 +12,35 @@ import { toast } from 'react-toastify'
 export default function QRVerification() {
   const [selected, setSelected] = useState(null)
   const [scanned, setScanned] = useState(null)
+  const qrRef = useRef(null)
+
+  const downloadQR = () => {
+    if (!qrRef.current) return
+    const svg = qrRef.current
+    const data = new XMLSerializer().serializeToString(svg)
+    const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(svgBlob)
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 500
+      canvas.height = 500
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      canvas.toBlob((blob) => {
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = `${selected.first_name}-${selected.last_name}-QR.png`.replace(/\s+/g, '-')
+        a.click()
+        URL.revokeObjectURL(a.href)
+        URL.revokeObjectURL(url)
+        toast.success('QR code downloaded successfully!')
+      }, 'image/png')
+    }
+    img.src = url
+  }
 
   const { data: residents = mockResidents } = useQuery({
     queryKey: ['residents-qr'],
@@ -63,7 +92,7 @@ export default function QRVerification() {
               <>
                 <div className="flex justify-center mb-3">
                   <div className="p-3 bg-white rounded-xl shadow-sm">
-                    <QRCode value={qrData} size={150} />
+                    <QRCode ref={qrRef} value={qrData} size={150} />
                   </div>
 
                 </div>
@@ -81,6 +110,13 @@ export default function QRVerification() {
               onClick={() => toast.info('Printing QR card...')}
             >
               🖨️ Print QR Card
+            </button>
+            <button
+              className="btn btn-primary flex-1"
+              onClick={downloadQR}
+              disabled={!selected}
+            >
+              ⬇️ Download QR
             </button>
 
           </div>
