@@ -1,14 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
-if (!import.meta.env.VITE_SUPABASE_URL) {
+if (!isSupabaseConfigured) {
   console.warn(
     '[PROTECT] Supabase env vars not set. Running in demo/mock mode.\n' +
-    'Copy .env.example to .env and fill in your credentials to enable live data.'
+    'Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env or Vercel dashboard and redeploy.'
   )
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-export const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL
+export const supabase = createClient(
+  isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co',
+  isSupabaseConfigured ? supabaseAnonKey : 'placeholder-key'
+)

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -11,6 +11,9 @@ export const useAuthStore = create((set) => ({
   setLoading: (loading) => set({ loading }),
 
   signIn: async (email, password) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Live Supabase login is disabled. Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data
