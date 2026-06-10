@@ -23,6 +23,7 @@ const emptyForm = {
 export default function Residents() {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [viewResident, setViewResident] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [editId, setEditId] = useState(null)
   const qc = useQueryClient()
@@ -139,7 +140,7 @@ export default function Residents() {
                     <td>{statusBadge(r)}</td>
                     <td>
                       <div className="flex gap-1">
-                        <button className="btn btn-ghost px-2 py-1 text-xs" title="View"><Eye size={13} /></button>
+                        <button className="btn btn-ghost px-2 py-1 text-xs" title="View" onClick={() => setViewResident(r)}><Eye size={13} /></button>
                         <button className="btn btn-ghost px-2 py-1 text-xs" title="Edit" onClick={() => handleEdit(r)}><Edit2 size={13} /></button>
                       </div>
                     </td>
@@ -237,6 +238,93 @@ export default function Residents() {
           </div>
         </form>
       </Modal>
+      {/* View Resident Modal */}
+      {viewResident && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15,39,64,0.6)', padding: 24 }}
+          onClick={() => setViewResident(null)}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: 6, width: '100%', maxWidth: 560, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ background: '#1A3A5C', borderBottom: '3px solid #C9A84C', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 700, color: '#fff' }}>
+                  {viewResident.first_name} {viewResident.last_name}
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                  {viewResident.resident_no} · {viewResident.purok}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  onClick={() => { setViewResident(null); handleEdit(viewResident) }}
+                  style={{ padding: '5px 12px', background: '#C9A84C', border: 'none', borderRadius: 4, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setViewResident(null)}
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 20, lineHeight: 1 }}
+                >
+                  &times;
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '20px 24px', maxHeight: '70vh', overflowY: 'auto' }}>
+
+              {/* Category badges */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                {viewResident.is_household_head && <span className="badge badge-teal">Household Head</span>}
+                {viewResident.is_senior_citizen  && <span className="badge badge-blue">Senior Citizen</span>}
+                {viewResident.is_pwd             && <span className="badge badge-gold">PWD{viewResident.pwd_type ? ` — ${viewResident.pwd_type}` : ''}</span>}
+                {viewResident.is_solo_parent     && <span className="badge badge-teal">Solo Parent</span>}
+                {viewResident.is_voter           && <span className="badge badge-gray">Registered Voter</span>}
+              </div>
+
+              {/* Info sections */}
+              {[
+                ['Personal Information', [
+                  ['Resident No.',   viewResident.resident_no],
+                  ['Full Name',      `${viewResident.last_name}, ${viewResident.first_name}${viewResident.middle_name ? ' ' + viewResident.middle_name : ''}`],
+                  ['Date of Birth',  viewResident.date_of_birth ? new Date(viewResident.date_of_birth).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'],
+                  ['Age',            viewResident.age ?? Math.floor((Date.now() - new Date(viewResident.date_of_birth)) / 31557600000)],
+                  ['Sex',            viewResident.sex],
+                  ['Civil Status',   viewResident.civil_status],
+                ]],
+                ['Residence & Contact', [
+                  ['Sitio / Purok',   viewResident.purok],
+                  ['Contact Number',  viewResident.contact_number || '—'],
+                  ['PhilHealth No.',  viewResident.philhealth_no  || '—'],
+                ]],
+                ['Socioeconomic', [
+                  ['Occupation',     viewResident.occupation             || '—'],
+                  ['Monthly Income', viewResident.monthly_income ? `₱${Number(viewResident.monthly_income).toLocaleString()}` : '—'],
+                  ['Education',      viewResident.educational_attainment || '—'],
+                ]],
+              ].map(([section, rows]) => (
+                <div key={section} style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#8A8478', marginBottom: 8, paddingBottom: 4, borderBottom: '1px solid #F0EDE4' }}>
+                    {section}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+                    {rows.map(([label, value]) => (
+                      <div key={label} style={{ padding: '4px 0' }}>
+                        <div style={{ fontSize: 10, color: '#9A9488', marginBottom: 1 }}>{label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: '#1A1A2E' }}>{value || '—'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
