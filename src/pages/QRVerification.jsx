@@ -80,10 +80,14 @@ export default function QRVerification() {
       await scanner.start(
         { facingMode: 'environment' }, // rear camera
         { fps: 10, qrbox: { width: 200, height: 200 } },
-        (decodedText) => {
-          // QR scanned successfully
+        async (decodedText) => {
+          // Stop scanner FIRST, then process result
+          try {
+            await scanner.stop()
+            html5QrRef.current = null
+            setScanning(false)
+          } catch {}
           handleScannedResult(decodedText)
-          stopScanner()
         },
         () => {} // ignore scan errors (fires constantly while searching)
       )
