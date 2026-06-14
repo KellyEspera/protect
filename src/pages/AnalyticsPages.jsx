@@ -100,11 +100,12 @@ export function PovertyIncidence() {
 
   const total = residents.length
   const poorThreshold = 10000
+  const hhHeads = residents.filter(r => r.is_household_head).length
   const poorHH = residents.filter(r => r.is_household_head && (r.monthly_income || 0) < poorThreshold).length
   const avgIncome = total > 0
     ? Math.round(residents.reduce((s, r) => s + (r.monthly_income || 0), 0) / total)
     : 0
-  const povertyRate = total > 0 ? ((poorHH / residents.filter(r => r.is_household_head).length) * 100).toFixed(1) : '—'
+  const povertyRate = hhHeads > 0 ? ((poorHH / hhHeads) * 100).toFixed(1) : '0'
 
   const purokLabels = ['Sitio Hunan','Sitio Hagu','Sitio Tuva']
   const purokPoverty = purokLabels.map(p => {
@@ -130,7 +131,7 @@ export function PovertyIncidence() {
         <StatCard icon="🤝" value={`${povertyRate}%`} label="Poverty Incidence (HH Heads)" color="red" />
         <StatCard icon="🏚️" value={poorHH} label="Below ₱10,000/mo HH Heads" color="gold" />
         <StatCard icon="💰" value={`₱${avgIncome.toLocaleString()}`} label="Avg Monthly Income" color="teal" />
-        <StatCard icon="📋" value={residents.filter(r => r.is_household_head).length} label="Registered HH Heads" color="blue" />
+        <StatCard icon="📋" value={hhHeads} label="Registered HH Heads" color="blue" />
       </div>
 
       <div className="grid grid-cols-2 gap-5">
