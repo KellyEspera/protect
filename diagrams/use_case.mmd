@@ -1,0 +1,99 @@
+flowchart LR
+    %% ===== Actors =====
+    Sec[" Barangay Secretary / Officer<br/>admin · officer · brgy_sec"]
+    Tanod[" Barangay Tanod"]
+    DILG[" DILG Representative<br/>read-only"]
+    Res[" Resident / Public<br/>no login"]
+
+    subgraph SYS[PROTECT System]
+      direction TB
+
+      UC_Login(["Authenticate / Login"])
+
+      subgraph G1[Resident & Identity]
+        direction TB
+        UC_Res(["Manage Resident &<br/>Household Profiles"])
+        UC_GIS(["Pin Households on GIS Map"])
+        UC_QR(["Verify Resident via QR"])
+        UC_Doc(["Issue Barangay Document"])
+      end
+
+      subgraph G2[Community Services]
+        direction TB
+        UC_Ben(["Manage Beneficiaries &<br/>Programs"])
+        UC_Aid(["Process Assistance Release"])
+        UC_Ann(["Post Announcements"])
+      end
+
+      subgraph G3[Peace & Order / Safety]
+        direction TB
+        UC_Log(["Log Crime / Incident"])
+        UC_Stat(["Update Incident Status"])
+        UC_Hot(["View Crime Hotspot Map"])
+        UC_Dis(["Mark Disaster Risk Zones"])
+      end
+
+      subgraph G4[Analytics & Reports]
+        direction TB
+        UC_Ana(["View Analytics Dashboards"])
+        UC_Pred(["View Predictive Growth"])
+        UC_Needs(["View Needs Assessment"])
+        UC_Rep(["Generate DILG Reports"])
+      end
+
+      subgraph G5[Public Portal]
+        direction TB
+        UC_Submit(["Submit Community Needs"])
+        UC_PubAnn(["View Public Announcements"])
+      end
+    end
+
+    %% ===== Secretary / Officer — full access =====
+    Sec --- UC_Login
+    Sec --- UC_Res
+    Sec --- UC_GIS
+    Sec --- UC_QR
+    Sec --- UC_Doc
+    Sec --- UC_Ben
+    Sec --- UC_Aid
+    Sec --- UC_Ann
+    Sec --- UC_Log
+    Sec --- UC_Stat
+    Sec --- UC_Hot
+    Sec --- UC_Dis
+    Sec --- UC_Ana
+    Sec --- UC_Pred
+    Sec --- UC_Needs
+    Sec --- UC_Rep
+
+    %% ===== Tanod — peace & order only =====
+    Tanod --- UC_Login
+    Tanod --- UC_Log
+    Tanod --- UC_Stat
+    Tanod --- UC_Hot
+
+    %% ===== DILG Rep — read-only review =====
+    DILG --- UC_Login
+    DILG --- UC_Rep
+    DILG --- UC_Needs
+
+    %% ===== Resident / Public — no login =====
+    Res --- UC_Submit
+    Res --- UC_PubAnn
+
+    %% ===== Styling =====
+    classDef actor fill:#1A3A5C,stroke:#10243a,color:#fff,font-weight:bold;
+    classDef resident fill:#0D9E8C,stroke:#0a7a6a,color:#fff;
+    classDef community fill:#FCEEDB,stroke:#C9A84C,color:#5A4A1A;
+    classDef safety fill:#FDEAEA,stroke:#D88888,color:#7A2A2A;
+    classDef analytics fill:#EAF0FB,stroke:#7FA3DB,color:#1A3A5C;
+    classDef auth fill:#EDE9DF,stroke:#9A9488,color:#3A3A32;
+    classDef public fill:#F0FBF9,stroke:#0D9E8C,color:#0a5a50;
+
+    class Sec,Tanod,DILG,Res actor;
+    class UC_Login auth;
+    class UC_Res,UC_GIS,UC_QR,UC_Doc resident;
+    class UC_Ben,UC_Aid,UC_Ann community;
+    class UC_Log,UC_Stat,UC_Hot,UC_Dis safety;
+    class UC_Ana,UC_Pred,UC_Needs,UC_Rep analytics;
+    class UC_Submit,UC_PubAnn public;
