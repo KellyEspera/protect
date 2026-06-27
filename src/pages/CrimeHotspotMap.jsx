@@ -44,6 +44,7 @@ export default function CrimeHotspotMap() {
 
   const [dateFilter, setDateFilter] = useState(null)
   const [typeFilter, setTypeFilter] = useState('All')
+  const [viewMode, setViewMode]     = useState('heat')  // 'heat' | 'pins'
 
   // Inject responsive CSS once
   useEffect(() => {
@@ -135,61 +136,97 @@ export default function CrimeHotspotMap() {
     }
   }, [])
 
-  // Sync crime circles + markers
+  // Sync crime layers (heatmap or numbered pins) + individual incident dots
   useEffect(() => {
     if (!mapInstance.current) return
-    import('leaflet').then(L => {
+    let cancelled = false
+    ;(async () => {
+      const L = (await import('leaflet')).default
+      // leaflet.heat attaches L.heatLayer to the global L; expose it first
+      if (typeof window !== 'undefined' && !window.L) window.L = L
+      if (!L.heatLayer) { try { await import('leaflet.heat') } catch {} }
+      if (cancelled || !mapInstance.current) return
+
       crimeRef.current.forEach(l => { try { mapInstance.current.removeLayer(l) } catch {} })
       crimeRef.current = []
 
-      sitioCounts.forEach(({ purok, total, byType }) => {
-        const center = SITIO_CENTERS[purok]
-        if (!center) return
-        const { fill, border } = getCrimeColor(total, maxCrime)
-        const radius = Math.max(80, Math.sqrt(total + 1) * 90)
+      // -------- HEATMAP MODE: density gradient from real incident locations --------
+      if (viewMode === 'heat' && L.heatLayer) {
+        const heatPoints = filtered.map(inc => {
+          let lat = inc.latitude, lng = inc.longitude
+          if (lat == null || lng == null) {
+            const c = SITIO_CENTERS[inc.purok]
+            if (!c) return null
+            ;[lat, lng] = c   // no exact pin → fall back to sitio centre
+          }
+          return [lat, lng, 1]
+        }).filter(Boolean)
 
-        if (total > 0) {
-          const outer = L.default.circle(center, { radius: radius * 2, color: 'none', fillColor: fill, fillOpacity: 0.07, interactive: false }).addTo(mapInstance.current)
-          const inner = L.default.circle(center, { radius, color: border, weight: 1.5, fillColor: fill, fillOpacity: 0.2, interactive: false }).addTo(mapInstance.current)
-          crimeRef.current.push(outer, inner)
+        if (heatPoints.length > 0) {
+          const heat = L.heatLayer(heatPoints, {
+            radius: 40,
+            blur: 30,
+            maxZoom: 17,
+            minOpacity: 0.35,
+            max: Math.max(3, maxCrime),   // busiest sitio reaches full red
+            gradient: { 0.2: '#22C55E', 0.45: '#FBBF24', 0.7: '#F97316', 1.0: '#EF4444' },
+          }).addTo(mapInstance.current)
+          crimeRef.current.push(heat)
         }
+      }
 
-        const ds = total > 0 ? Math.max(22, Math.min(48, 18 + total * 2.5)) : 18
-        const rs = ds + 16
-        const icon = L.default.divIcon({
-          html: `<div style="position:relative;width:${ds}px;height:${ds}px;display:flex;align-items:center;justify-content:center">
-            ${total > 0 ? `<div class="hs-ring" style="position:absolute;width:${rs}px;height:${rs}px;background:${fill};left:${-(rs-ds)/2}px;top:${-(rs-ds)/2}px;opacity:.35"></div>` : ''}
-            <div style="position:relative;z-index:1;width:${ds}px;height:${ds}px;border-radius:50%;background:${fill};border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:${ds>28?13:11}px;font-family:Inter,sans-serif">${total > 0 ? total : ''}</div>
-          </div>`,
-          className: '', iconAnchor: [ds / 2, ds / 2],
+      // -------- PINS MODE: numbered per-sitio clusters + density circles --------
+      if (viewMode === 'pins') {
+        sitioCounts.forEach(({ purok, total, byType }) => {
+          const center = SITIO_CENTERS[purok]
+          if (!center) return
+          const { fill, border } = getCrimeColor(total, maxCrime)
+          const radius = Math.max(80, Math.sqrt(total + 1) * 90)
+
+          if (total > 0) {
+            const outer = L.circle(center, { radius: radius * 2, color: 'none', fillColor: fill, fillOpacity: 0.07, interactive: false }).addTo(mapInstance.current)
+            const inner = L.circle(center, { radius, color: border, weight: 1.5, fillColor: fill, fillOpacity: 0.2, interactive: false }).addTo(mapInstance.current)
+            crimeRef.current.push(outer, inner)
+          }
+
+          const ds = total > 0 ? Math.max(22, Math.min(48, 18 + total * 2.5)) : 18
+          const rs = ds + 16
+          const icon = L.divIcon({
+            html: `<div style="position:relative;width:${ds}px;height:${ds}px;display:flex;align-items:center;justify-content:center">
+              ${total > 0 ? `<div class="hs-ring" style="position:absolute;width:${rs}px;height:${rs}px;background:${fill};left:${-(rs-ds)/2}px;top:${-(rs-ds)/2}px;opacity:.35"></div>` : ''}
+              <div style="position:relative;z-index:1;width:${ds}px;height:${ds}px;border-radius:50%;background:${fill};border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:${ds>28?13:11}px;font-family:Inter,sans-serif">${total > 0 ? total : ''}</div>
+            </div>`,
+            className: '', iconAnchor: [ds / 2, ds / 2],
+          })
+
+          const popup = `<div style="font-family:Inter,sans-serif;min-width:190px">
+            <div style="font-weight:700;font-size:13px;color:#1A1A2E;margin-bottom:6px;padding-bottom:5px;border-bottom:3px solid ${fill}">🔴 ${purok}</div>
+            <div style="font-size:12px;color:#5A5A52;margin-bottom:8px"><b style="color:${fill};font-size:17px">${total}</b> incident${total !== 1 ? 's' : ''}</div>
+            ${byType.length
+              ? byType.map(([t, c]) => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid #F5F2EC">
+                  <span style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:${TYPE_COLORS[t]||'#6B7280'};display:inline-block"></span>${t}</span>
+                  <b style="color:${TYPE_COLORS[t]||'#6B7280'}">${c}</b></div>`).join('')
+              : '<div style="font-size:11px;color:#9A9488">No incidents in period</div>'}
+          </div>`
+
+          const mk = L.marker(center, { icon })
+            .addTo(mapInstance.current)
+            .bindPopup(popup, { maxWidth: 240 })
+          crimeRef.current.push(mk)
         })
+      }
 
-        const popup = `<div style="font-family:Inter,sans-serif;min-width:190px">
-          <div style="font-weight:700;font-size:13px;color:#1A1A2E;margin-bottom:6px;padding-bottom:5px;border-bottom:3px solid ${fill}">🔴 ${purok}</div>
-          <div style="font-size:12px;color:#5A5A52;margin-bottom:8px"><b style="color:${fill};font-size:17px">${total}</b> incident${total !== 1 ? 's' : ''}</div>
-          ${byType.length
-            ? byType.map(([t, c]) => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid #F5F2EC">
-                <span style="display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:${TYPE_COLORS[t]||'#6B7280'};display:inline-block"></span>${t}</span>
-                <b style="color:${TYPE_COLORS[t]||'#6B7280'}">${c}</b></div>`).join('')
-            : '<div style="font-size:11px;color:#9A9488">No incidents in period</div>'}
-        </div>`
-
-        const mk = L.default.marker(center, { icon })
-          .addTo(mapInstance.current)
-          .bindPopup(popup, { maxWidth: 240 })
-        crimeRef.current.push(mk)
-      })
-
-      // Individual incident pins (only those with an exact location)
+      // -------- Individual incident dots (clickable details) in BOTH modes --------
       filtered.forEach(inc => {
         if (inc.latitude == null || inc.longitude == null) return
         const color = TYPE_COLORS[inc.incident_type] || '#6B7280'
-        const dot = L.default.divIcon({
-          html: `<div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5)"></div>`,
-          className: '', iconAnchor: [6, 6],
+        const size  = viewMode === 'heat' ? 9 : 12
+        const dot = L.divIcon({
+          html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5)"></div>`,
+          className: '', iconAnchor: [size / 2, size / 2],
         })
         const date = inc.incident_date ? new Date(inc.incident_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
-        const m = L.default.marker([inc.latitude, inc.longitude], { icon: dot })
+        const m = L.marker([inc.latitude, inc.longitude], { icon: dot })
           .addTo(mapInstance.current)
           .bindPopup(`<div style="font-family:Inter,sans-serif;min-width:150px">
             <div style="font-weight:700;font-size:12px;color:#1A1A2E;margin-bottom:3px">${inc.incident_type}</div>
@@ -198,8 +235,9 @@ export default function CrimeHotspotMap() {
           </div>`, { maxWidth: 220 })
         crimeRef.current.push(m)
       })
-    })
-  }, [sitioCounts, maxCrime, filtered])
+    })()
+    return () => { cancelled = true }
+  }, [sitioCounts, maxCrime, filtered, viewMode])
 
   return (
     <div>
@@ -215,29 +253,55 @@ export default function CrimeHotspotMap() {
 
         {/* Map */}
         <div style={{ background: '#fff', border: '1px solid #E8E4DA', borderRadius: 6, overflow: 'hidden' }}>
-          <div style={{ background: '#FAFAF7', borderBottom: '1px solid #E8E4DA', padding: '12px 16px' }}>
-            <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 600, color: '#1A1A2E' }}>Crime Hotspot Map</div>
-            <div style={{ fontSize: 10, color: '#9A9488', marginTop: 1 }}>Barangay San Joaquin · Click a marker to see details</div>
+          <div style={{ background: '#FAFAF7', borderBottom: '1px solid #E8E4DA', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 14, fontWeight: 600, color: '#1A1A2E' }}>Crime Hotspot Map</div>
+              <div style={{ fontSize: 10, color: '#9A9488', marginTop: 1 }}>Barangay San Joaquin · Click a dot to see details</div>
+            </div>
+            {/* Heatmap / Pins toggle */}
+            <div style={{ display: 'flex', background: '#EDE9DF', borderRadius: 6, padding: 2 }}>
+              {[
+                { key: 'heat', label: '🔥 Heatmap' },
+                { key: 'pins', label: '📍 Pins' },
+              ].map(m => (
+                <button key={m.key} onClick={() => setViewMode(m.key)} style={{
+                  fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 5, cursor: 'pointer',
+                  border: 'none', fontFamily: 'Inter,sans-serif',
+                  background: viewMode === m.key ? '#1A3A5C' : 'transparent',
+                  color: viewMode === m.key ? '#fff' : '#5A5A52',
+                }}>{m.label}</button>
+              ))}
+            </div>
           </div>
 
           {/* Legend */}
-          <div style={{ padding: '8px 14px', borderBottom: '1px solid #F0EDE4', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-            {[
-              { label: 'Low',      c: '#F59E0B' },
-              { label: 'Moderate', c: '#F97316' },
-              { label: 'High',     c: '#EF4444' },
-              { label: 'Safe',     c: '#22C55E' },
-            ].map(({ label, c }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#5A5A52' }}>
-                <div style={{ width: 9, height: 9, borderRadius: '50%', background: c, boxShadow: `0 0 5px ${c}88`, flexShrink: 0 }} />
-                {label}
-              </div>
-            ))}
-          </div>
+          {viewMode === 'heat' ? (
+            <div style={{ padding: '8px 14px', borderBottom: '1px solid #F0EDE4', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, color: '#9A9488' }}>Fewer</span>
+              <div style={{ flex: 1, minWidth: 120, height: 9, borderRadius: 5, background: 'linear-gradient(to right, #22C55E, #FBBF24, #F97316, #EF4444)' }} />
+              <span style={{ fontSize: 11, color: '#9A9488' }}>More crimes</span>
+            </div>
+          ) : (
+            <div style={{ padding: '8px 14px', borderBottom: '1px solid #F0EDE4', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Low',      c: '#F59E0B' },
+                { label: 'Moderate', c: '#F97316' },
+                { label: 'High',     c: '#EF4444' },
+                { label: 'Safe',     c: '#22C55E' },
+              ].map(({ label, c }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#5A5A52' }}>
+                  <div style={{ width: 9, height: 9, borderRadius: '50%', background: c, boxShadow: `0 0 5px ${c}88`, flexShrink: 0 }} />
+                  {label}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div ref={mapRef} className="map-canvas" />
           <p style={{ fontSize: 10, color: '#9A9488', textAlign: 'center', padding: '7px 0', margin: 0, background: '#FAFAF7', borderTop: '1px solid #F0EDE4' }}>
-            Pulsing circles show incident density per sitio
+            {viewMode === 'heat'
+              ? 'Red areas have the most reported incidents — the dots are individual cases'
+              : 'Numbered circles show the incident count per sitio'}
           </p>
         </div>
 
