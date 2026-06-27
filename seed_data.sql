@@ -420,68 +420,97 @@ ON CONFLICT (resident_id, program_id) DO NOTHING;
 -- ============================================================
 -- INCIDENTS / CRIME RECORDS
 -- ============================================================
-INSERT INTO incidents (case_no, incident_type, purok, complainant, respondent, description, incident_date, status, resolved_date) VALUES
-('INC-2025-001','Noise/Disturbance','Sitio Hunan','Ramon Gaje','Unknown neighbor',
+-- Each incident carries a latitude/longitude near its sitio centre so it
+-- drops an individual pin on the Crime Hotspot Map. Points are offset so
+-- they scatter instead of stacking on the same spot.
+--   Sitio Hunan ~ 20.44531, 121.98450
+--   Sitio Tuva  ~ 20.44600, 121.99050
+--   Sitio Hagu  ~ 20.44150, 121.98850
+INSERT INTO incidents (case_no, incident_type, purok, complainant, respondent, description, incident_date, status, resolved_date, latitude, longitude) VALUES
+('INC-2025-001','Noise Disturbance','Sitio Hunan','Ramon Gaje','Unknown neighbor',
  'Loud music and drinking past midnight near the creek area.',
- '2025-08-14 22:30:00+08','Resolved','2025-08-15'),
+ '2025-08-14 22:30:00+08','Resolved','2025-08-15', 20.4456000, 121.9841000),
 
-('INC-2025-002','Domestic Violence','Sitio Hagu','Erlinda Pagutayao','Emmanuel Pagutayao',
- 'Complainant reported verbal and physical abuse inside their residence.',
- '2025-09-02 19:45:00+08','Resolved','2025-09-05'),
+('INC-2025-002','Domestic Dispute','Sitio Hagu','Erlinda Pagutayao','Emmanuel Pagutayao',
+ 'Complainant reported a heated family argument inside their residence; settled at the barangay.',
+ '2025-09-02 19:45:00+08','Resolved','2025-09-05', 20.4418000, 121.9882000),
 
-('INC-2025-003','Theft','Sitio Tuva','Antonio Pilarte','Unknown suspect',
- 'Missing GI sheets and construction materials from the building site.',
- '2025-09-18 06:00:00+08','Escalated',NULL),
+('INC-2025-003','Property Damage (Typhoon-related)','Sitio Tuva','Antonio Pilarte','No respondent',
+ 'GI roofing sheets torn off and construction materials scattered after a strong typhoon.',
+ '2025-09-18 06:00:00+08','Escalated',NULL, 20.4463000, 121.9902000),
 
-('INC-2025-004','Trespassing','Sitio Hunan','Roberto Sacayan','Mariano Vitug',
- 'Respondent repeatedly enters complainant''s property without permission.',
- '2025-10-05 14:00:00+08','Resolved','2025-10-12'),
+('INC-2025-004','Environmental / Ordinance Violation','Sitio Hunan','Roberto Sacayan','Mariano Vitug',
+ 'Open burning of household waste, violating the barangay sanitation ordinance.',
+ '2025-10-05 14:00:00+08','Resolved','2025-10-12', 20.4450000, 121.9850000),
 
-('INC-2025-005','Physical Injury','Sitio Hagu','Danilo Narag','Jayson Flores',
- 'Altercation during a basketball game resulting in physical injuries.',
- '2025-10-22 16:20:00+08','Resolved','2025-11-03'),
+('INC-2025-005','Minor Physical Altercation','Sitio Hagu','Danilo Narag','Jayson Flores',
+ 'Scuffle during a basketball game resulting in minor injuries; both parties reconciled.',
+ '2025-10-22 16:20:00+08','Resolved','2025-11-03', 20.4412000, 121.9889000),
 
-('INC-2025-006','Noise/Disturbance','Sitio Tuva','Corazon Torres','Unknown group',
+('INC-2025-006','Noise Disturbance','Sitio Tuva','Corazon Torres','Unknown group',
  'Karaoke noise complaint from neighboring household until 2am.',
- '2025-11-01 23:00:00+08','Dismissed',NULL),
+ '2025-11-01 23:00:00+08','Dismissed',NULL, 20.4458000, 121.9909000),
 
-('INC-2025-007','Illegal Drugs','Sitio Hagu','Anonymous','Unidentified person',
- 'Tip received about suspected drug activity near the river bank.',
- '2025-11-10 20:00:00+08','Escalated',NULL),
+('INC-2025-007','Public Intoxication / Disorderly Conduct','Sitio Hagu','Anonymous','Unidentified person',
+ 'Intoxicated individual causing a disturbance and shouting near the river bank.',
+ '2025-11-10 20:00:00+08','Escalated',NULL, 20.4420000, 121.9887000),
 
-('INC-2025-008','Accident','Sitio Tuva','Alberto Fernandez','No respondent',
- 'Resident slipped on broken pavement near Purok 4, sustained minor injuries.',
- '2025-11-20 08:30:00+08','Resolved','2025-11-20'),
+('INC-2025-008','Stray Animal Complaint','Sitio Tuva','Alberto Fernandez','No respondent',
+ 'Stray livestock wandering onto the road near Purok 4, posing a hazard to passersby.',
+ '2025-11-20 08:30:00+08','Resolved','2025-11-20', 20.4465000, 121.9907000),
 
-('INC-2025-009','Theft','Sitio Hunan','Eduardo Sabado','Unknown suspect',
- 'Fishing nets and equipment stolen from the storage shed near the shore.',
- '2025-12-03 04:00:00+08','Ongoing',NULL),
+('INC-2025-009','Others','Sitio Hunan','Eduardo Sabado','Unknown suspect',
+ 'Fishing nets and equipment reported missing from the storage shed near the shore.',
+ '2025-12-03 04:00:00+08','Ongoing',NULL, 20.4458000, 121.9848000),
 
-('INC-2025-010','Domestic Violence','Sitio Tuva','Norma Palconit','Former partner',
- 'Ex-partner threatened and harassed complainant at her residence.',
- '2025-12-10 21:00:00+08','Ongoing',NULL),
+('INC-2025-010','Domestic Dispute','Sitio Tuva','Norma Palconit','Former partner',
+ 'Ex-partner caused a disturbance and harassed complainant at her residence.',
+ '2025-12-10 21:00:00+08','Ongoing',NULL, 20.4461000, 121.9911000),
 
-('INC-2025-011','Noise/Disturbance','Sitio Hagu','Carmen Santos','Unknown teenager',
- 'Group of teenagers creating disturbance in front of the chapel.',
- '2026-01-08 22:00:00+08','Resolved','2026-01-09'),
+('INC-2025-011','Noise Disturbance','Sitio Hagu','Carmen Santos','Unknown teenager',
+ 'Group of teenagers creating a disturbance in front of the chapel.',
+ '2026-01-08 22:00:00+08','Resolved','2026-01-09', 20.4414000, 121.9891000),
 
-('INC-2025-012','Physical Injury','Sitio Hunan','Renato Ismaquel','Unknown assailant',
- 'Victim was allegedly pushed and fell near the market area.',
- '2026-01-15 17:00:00+08','Ongoing',NULL),
+('INC-2025-012','Minor Physical Altercation','Sitio Hunan','Renato Ismaquel','Unknown assailant',
+ 'Complainant was allegedly pushed and fell near the market area.',
+ '2026-01-15 17:00:00+08','Ongoing',NULL, 20.4451000, 121.9842000),
 
-('INC-2025-013','Others','Sitio Tuva','Marie Fernandez','Unknown',
- 'Stray dogs attacking residents walking along the main road.',
- '2026-02-02 07:15:00+08','Resolved','2026-02-10'),
+('INC-2025-013','Stray Animal Complaint','Sitio Tuva','Marie Fernandez','No respondent',
+ 'Stray dogs reported chasing residents walking along the main road.',
+ '2026-02-02 07:15:00+08','Resolved','2026-02-10', 20.4456000, 121.9903000),
 
-('INC-2025-014','Trespassing','Sitio Hagu','Pedro Narag','Unknown person',
- 'Farmland and crops damaged by trespassers during harvest season.',
- '2026-02-20 06:00:00+08','Ongoing',NULL),
+('INC-2025-014','Property Damage (Typhoon-related)','Sitio Hagu','Pedro Narag','No respondent',
+ 'Fencing and standing crops damaged by strong winds during a storm.',
+ '2026-02-20 06:00:00+08','Ongoing',NULL, 20.4410000, 121.9883000),
 
-('INC-2025-015','Accident','Sitio Hunan','Fernando Chua','No respondent',
+('INC-2025-015','Others','Sitio Hunan','Fernando Chua','No respondent',
  'Minor vehicular accident along the barangay road, no serious injuries.',
- '2026-03-05 13:45:00+08','Resolved','2026-03-05')
+ '2026-03-05 13:45:00+08','Resolved','2026-03-05', 20.4454000, 121.9839000)
 
 ON CONFLICT (case_no) DO NOTHING;
+
+-- If incidents were already seeded WITHOUT coordinates, this back-fills the
+-- pins (ON CONFLICT above skips existing rows, so the INSERT alone won't).
+UPDATE incidents SET latitude = v.lat, longitude = v.lng
+FROM (VALUES
+  ('INC-2025-001', 20.4456000, 121.9841000),
+  ('INC-2025-002', 20.4418000, 121.9882000),
+  ('INC-2025-003', 20.4463000, 121.9902000),
+  ('INC-2025-004', 20.4450000, 121.9850000),
+  ('INC-2025-005', 20.4412000, 121.9889000),
+  ('INC-2025-006', 20.4458000, 121.9909000),
+  ('INC-2025-007', 20.4420000, 121.9887000),
+  ('INC-2025-008', 20.4465000, 121.9907000),
+  ('INC-2025-009', 20.4458000, 121.9848000),
+  ('INC-2025-010', 20.4461000, 121.9911000),
+  ('INC-2025-011', 20.4414000, 121.9891000),
+  ('INC-2025-012', 20.4451000, 121.9842000),
+  ('INC-2025-013', 20.4456000, 121.9903000),
+  ('INC-2025-014', 20.4410000, 121.9883000),
+  ('INC-2025-015', 20.4454000, 121.9839000)
+) AS v(case_no, lat, lng)
+WHERE incidents.case_no = v.case_no
+  AND (incidents.latitude IS NULL OR incidents.longitude IS NULL);
 
 -- ============================================================
 -- SURVEY RESPONSES (Community Needs Assessment)
