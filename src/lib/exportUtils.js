@@ -1,9 +1,17 @@
-// src/lib/exportUtils.js
-// PDF and Excel export helpers for DILG reports
+// ============================================================================
+//  exportUtils.js  —  PDF and Excel export helpers
+// ----------------------------------------------------------------------------
+//  Reusable functions to turn data into downloadable files:
+//    • exportToPDF()        — a generic 2-column report with a barangay header
+//    • exportResidentsToPDF — landscape resident masterlist
+//    • export*ToExcel()     — spreadsheet exports (residents/incidents/beneficiaries)
+//  Uses jsPDF (+autotable plugin) for PDFs and SheetJS (xlsx) for Excel — both
+//  run entirely in the browser, so no server is involved in generating files.
+// ============================================================================
 
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
-import * as XLSX from 'xlsx'
+import 'jspdf-autotable'           // plugin that adds doc.autoTable() for tables
+import * as XLSX from 'xlsx'        // SheetJS — builds .xlsx files in the browser
 
 // ── PDF Export ─────────────────────────────────────────────────
 export function exportToPDF({ title, subtitle = 'Barangay San Joaquin · CY 2026', rows }) {

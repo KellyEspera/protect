@@ -1,3 +1,13 @@
+// ============================================================================
+//  App.jsx  —  the app's router and access-control gatekeeper
+// ----------------------------------------------------------------------------
+//  Defines every route and wraps them in two guards:
+//    • PrivateRoute — must be logged in (else redirect to /login)
+//    • RoleRoute    — must have permission for that page (else "Access Restricted")
+//  It also runs the auth bootstrap on startup: checks for an existing session
+//  and subscribes to login/logout events so the UI reacts instantly.
+// ============================================================================
+
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
@@ -24,6 +34,8 @@ import PublicAnnouncements from './pages/PublicAnnouncements'
 import Announcements from './pages/Announcements'
 import UserManagement from './pages/UserManagement'
 
+// Gate 1: authentication. Shows a loading splash while the session is being
+// checked, then either renders the children (logged in) or redirects to /login.
 function PrivateRoute({ children }) {
   const { user, loading } = useAuthStore()
   if (loading) return (
@@ -37,9 +49,11 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />
 }
 
+// Gate 2: authorization. Checks the user's role against permissions.js. If the
+// role can't open this path, it renders an "Access Restricted" message instead.
 function RoleRoute({ path, children }) {
   const { profile } = useAuthStore()
-  const role = profile?.role ?? 'viewer'
+  const role = profile?.role ?? 'viewer'   // default to the most restrictive role
   if (!canAccess(role, path)) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -57,19 +71,23 @@ function RoleRoute({ path, children }) {
 export default function App() {
   const { setUser, setLoading, fetchProfile } = useAuthStore()
 
+  // Auth bootstrap — runs once on mount.
   useEffect(() => {
+    // 1) On first load, check if there's already a saved session (e.g. page refresh).
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
+      if (session?.user) fetchProfile(session.user.id)   // load their role
       setLoading(false)
     })
 
+    // 2) Subscribe to future auth changes (login/logout) so the UI updates live.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
       else setLoading(false)
     })
 
+    // 3) Clean up the subscription when the component unmounts (prevents leaks).
     return () => subscription.unsubscribe()
   }, [])
 

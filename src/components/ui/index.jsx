@@ -1,4 +1,14 @@
-// src/components/ui/StatCard.jsx
+// ============================================================================
+//  ui/index.jsx  —  small reusable UI building blocks
+// ----------------------------------------------------------------------------
+//  Presentational components shared across every page so the look stays
+//  consistent and pages stay short: StatCard (summary number), Badge (status
+//  pill), Modal (popup dialog), SectionCard (titled white panel), plus
+//  EmptyState, Loader, and PageHeader. These hold NO business logic — they
+//  just take props and render markup.
+// ============================================================================
+
+// StatCard — the colored summary number cards at the top of most pages.
 export function StatCard({ icon, value, label, change, changeType = 'up', color = 'teal' }) {
   const iconColors = {
     navy:   'bg-blue-50 text-[#1A3A5C]',
@@ -29,9 +39,10 @@ export function Badge({ children, variant = 'gray' }) {
   return <span className={`badge badge-${variant}`}>{children}</span>
 }
 
-// src/components/ui/Modal.jsx
+// Modal — a centered popup. Clicking the dark backdrop closes it; clicking the
+// white box does NOT (stopPropagation stops the click bubbling up to the backdrop).
 export function Modal({ open, onClose, title, children }) {
-  if (!open) return null
+  if (!open) return null   // render nothing when closed
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>

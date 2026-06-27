@@ -1,3 +1,12 @@
+// ============================================================================
+//  Layout.jsx  —  the shell around every logged-in page
+// ----------------------------------------------------------------------------
+//  Renders the left sidebar (navigation), the top bar (page title + user), and
+//  an <Outlet/> where the current page is injected by the router. The sidebar
+//  is ROLE-AWARE: it only shows links the user's role can access (canAccess),
+//  so a Tanod literally never sees the Resident Profiling or Reports links.
+// ============================================================================
+
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
@@ -78,6 +87,8 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const role = profile?.role ?? 'viewer'
+  // Build the sidebar for THIS role: keep only the links the role can access,
+  // then drop any group (e.g. "Admin") that ends up with zero visible links.
   const filteredGroups = navGroups
     .map(group => ({ ...group, items: group.items.filter(item => canAccess(role, item.to)) }))
     .filter(group => group.items.length > 0)
