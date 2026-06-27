@@ -1,0 +1,17 @@
+flowchart TD
+    CI([Crime & Incident]) --> View[View incident log + type breakdown<br/>+ monthly trend chart]
+    View --> Act{Action?}
+
+    Act -- "Log new (canEdit)" --> Form[Fill form: incident type<br/>sitio · date · complainant]
+    Form --> Photo[Optional: attach photo]
+    Form --> Loc[Optional: pick exact location on mini-map]
+    Photo --> Gen[Auto-generate case no.]
+    Loc --> Gen
+    Gen --> Save[Save to incidents<br/>photo to storage]
+    Save --> Audit[(audit_logs trigger)]
+    Save --> Refresh[Refresh log + charts]
+
+    Act -- "Update status (canEdit)" --> Status[Status dropdown:<br/>Ongoing / Resolved / Escalated / Dismissed]
+    Status --> SaveS[Save status] --> Refresh
+
+    Refresh --> Done([Return to Dashboard])

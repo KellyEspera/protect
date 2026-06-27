@@ -1,0 +1,18 @@
+flowchart TD
+    CH([Crime Hotspot Map]) --> Load[Load map + query incidents]
+    Load --> Mode{View mode?}
+
+    Mode -- Heatmap --> Heat[Density gradient from incident locations<br/>green to red = fewer to more crimes]
+    Mode -- Pins --> Pins[Numbered circles per sitio]
+
+    Heat --> Filter
+    Pins --> Filter
+    Filter{Apply filter?}
+    Filter -- Date range / crime type --> Re[Re-render layer for filtered set]
+    Filter -- No --> Show
+
+    Re --> Show[Show density + sitio ranking + recent incidents]
+    Show --> Click{Click an incident dot?}
+    Click -- Yes --> Pop[Show incident details popup]
+    Click -- No --> Done([Return to Dashboard])
+    Pop --> Done

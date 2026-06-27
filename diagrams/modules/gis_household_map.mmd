@@ -1,0 +1,22 @@
+flowchart TD
+    E([GIS Household Map]) --> Load[Load Leaflet map of San Joaquin<br/>pins color-coded by sitio]
+    Load --> Act{Action?}
+
+    Act -- Click existing pin --> Pop[Popup: residents living there<br/>+ PWD / Senior / Solo flags]
+    Pop --> PE{Edit or remove?}
+    PE -- Edit --> Upd[Update household] --> SaveU[Save to Supabase]
+    PE -- Remove --> Del[Delete household] --> SaveU
+
+    Act -- Click empty map --> Drop[Drop temporary pin]
+    Drop --> PickHead[Select household head<br/>shows their existing HH No.]
+    PickHead --> FillHH[Fill address & housing type]
+    FillHH --> Has{Head already<br/>has a household?}
+    Has -- Yes --> UpdLoc[UPDATE that household's location]
+    Has -- No --> Ins[INSERT new household]
+    UpdLoc --> SaveU
+    Ins --> SaveU
+
+    Act -- Pinned list --> Fly[Fly map to selected household]
+
+    SaveU --> Refresh[Refresh map] --> Done([Return to Dashboard])
+    Fly --> Done

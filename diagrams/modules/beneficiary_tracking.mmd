@@ -1,0 +1,17 @@
+flowchart TD
+    BT([Beneficiary Tracking]) --> View[View beneficiaries + by-program chart<br/>active · total distributed · pending]
+    View --> Act{Action?}
+
+    Act -- Enroll --> Enroll[Select resident + program<br/>status · last release date · total]
+    Act -- Edit --> Edit[Update status / release / notes]
+    Act -- Remove --> Remove[Delete beneficiary]
+    Act -- Manage programs --> Prog[Add program / deactivate program]
+    Act -- Import --> Imp[Upload XLSX] --> ParseB[Parse & upsert]
+
+    Enroll --> Save[Save to Supabase]
+    Edit --> Save
+    Remove --> Save
+    Prog --> Save
+    ParseB --> Save
+    Save --> Refresh[Refresh registry + chart]
+    Refresh --> Done([Return to Dashboard])

@@ -1,0 +1,23 @@
+flowchart TD
+    AND([Announcements & Needs]) --> Who{Staff or public?}
+
+    Who -- "Staff (Announcements admin)" --> AAct{Action?}
+    AAct -- Post --> Post[Write title · body · category<br/>+ optional image upload]
+    Post --> SaveA[Save to announcements + storage]
+    AAct -- Hide / show --> Toggle[Toggle is_active]
+    AAct -- Delete --> DelA[Delete announcement]
+    Toggle --> SaveA
+    DelA --> SaveA
+    SaveA --> PubPage[Public /announcements page updates]
+
+    Who -- "Public (no login)" --> PAct{Action?}
+    PAct -- Read --> Read[View bulletin board<br/>active announcements]
+    PAct -- Submit needs --> NForm[Fill Community Needs form]
+    NForm --> SaveN[Save to survey_responses]
+
+    Who -- "Staff (Needs Assessment)" --> Agg[View aggregated survey stats<br/>priority ranking · sitios covered]
+
+    PubPage --> Done([Done])
+    Read --> Done
+    SaveN --> Done
+    Agg --> Done
