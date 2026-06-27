@@ -1,3 +1,14 @@
+// ============================================================================
+//  BeneficiaryTracking.jsx  —  "Assistance Beneficiary Tracking" page
+// ----------------------------------------------------------------------------
+//  Manages who receives which aid program. The beneficiaries table is a
+//  JUNCTION between residents and assistance_programs (each row = one resident
+//  enrolled in one program), enforced unique per (resident, program) so nobody
+//  is enrolled twice in the same program. Staff can enroll, edit, remove,
+//  manage programs (add/deactivate), record releases (amount + date), and
+//  import from XLSX. Cards show active beneficiaries, total distributed, etc.
+// ============================================================================
+
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as XLSX from 'xlsx'

@@ -1,3 +1,14 @@
+// ============================================================================
+//  Residents.jsx  —  "Resident Profiling" (the biggest, most-used page)
+// ----------------------------------------------------------------------------
+//  The master registry of residents: search / filter / sort, add / edit / view,
+//  CSV & XLSX import, PDF/Excel export, and PII masking (contact & PhilHealth
+//  numbers are hidden until revealed). Key rule: marking a resident as a
+//  "Household Head" AUTO-CREATES a household with the next 4-digit number
+//  (HH-0001). All form input is sanitized (sanitize.js) before saving, and edits
+//  are gated by canEdit() so read-only roles see no add/edit/delete buttons.
+// ============================================================================
+
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'

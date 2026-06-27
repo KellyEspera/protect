@@ -1,3 +1,14 @@
+// ============================================================================
+//  DILGReports.jsx  —  "DILG Report Generation" page
+// ----------------------------------------------------------------------------
+//  Compiles standard barangay reports (Barangay Profile, Peace & Order,
+//  Assistance, Vulnerable Sector, Disaster Risk, etc.) with figures pulled
+//  LIVE from Supabase, and exports them to PDF with the official letterhead.
+//  Also hosts the Activity Log (audit_logs viewer) and Database Backup tools.
+//  These are the documents the barangay submits to the DILG (the DILG is the
+//  external recipient — it does not log into the system).
+// ============================================================================
+
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
