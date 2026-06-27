@@ -1,5 +1,5 @@
 flowchart TD
-    A([Resident Profiling]) --> List[Search / filter residents<br/>by name · sitio · sector<br/>sortable table, PII masked]
+    A((A)) --> List[Search / filter residents<br/>by name · sitio · sector<br/>sortable table, PII masked]
     List --> Act{Action?}
 
     Act -- View detail --> Detail[Open read-only profile<br/>reveal masked PII]
@@ -15,6 +15,6 @@ flowchart TD
     Save --> Audit[(audit_logs trigger)]
     Save --> Refresh[Refresh table]
 
-    Detail --> Done([Return to Dashboard])
-    Exp --> Done
-    Refresh --> Done
+    Detail --> R((R))
+    Exp --> R
+    Refresh --> R

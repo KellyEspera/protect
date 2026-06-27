@@ -1,5 +1,5 @@
 flowchart TD
-    BT([Beneficiary Tracking]) --> View[View beneficiaries + by-program chart<br/>active · total distributed · pending]
+    G((G)) --> View[View beneficiaries + by-program chart<br/>active · total distributed · pending]
     View --> Act{Action?}
 
     Act -- Enroll --> Enroll[Select resident + program<br/>status · last release date · total]
@@ -14,4 +14,4 @@ flowchart TD
     Prog --> Save
     ParseB --> Save
     Save --> Refresh[Refresh registry + chart]
-    Refresh --> Done([Return to Dashboard])
+    Refresh --> R((R))

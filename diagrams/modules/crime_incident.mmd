@@ -1,5 +1,5 @@
 flowchart TD
-    CI([Crime & Incident]) --> View[View incident log + type breakdown<br/>+ monthly trend chart]
+    E((E)) --> View[View incident log + type breakdown<br/>+ monthly trend chart]
     View --> Act{Action?}
 
     Act -- "Log new (canEdit)" --> Form[Fill form: incident type<br/>sitio · date · complainant]
@@ -14,4 +14,4 @@ flowchart TD
     Act -- "Update status (canEdit)" --> Status[Status dropdown:<br/>Ongoing / Resolved / Escalated / Dismissed]
     Status --> SaveS[Save status] --> Refresh
 
-    Refresh --> Done([Return to Dashboard])
+    Refresh --> R((R))

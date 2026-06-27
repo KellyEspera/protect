@@ -1,5 +1,5 @@
 flowchart TD
-    AN([Analytics Dashboards<br/>Population · Poverty · Sector]) --> Query[Query residents_with_age]
+    H((H)) --> Query[Query residents_with_age]
     Query --> Type{Which dashboard?}
 
     Type -- Population --> P1[Compute sex · age groups · sitio]
@@ -10,6 +10,5 @@ flowchart TD
     P2 --> Render
     P3 --> Render
     Render --> Export{Export PDF?}
-    Export -- Yes --> PDF[Generate PDF report]
-    Export -- No --> Done([Return to Dashboard])
-    PDF --> Done
+    Export -- Yes --> PDF[Generate PDF report] --> R((R))
+    Export -- No --> R
