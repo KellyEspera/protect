@@ -2,7 +2,6 @@ flowchart TB
     %% ===== Actors (top row) =====
     Sec[" Barangay Secretary / Officer<br/>admin · officer · brgy_sec"]
     Tanod[" Barangay Tanod"]
-    DILG[" DILG Representative · read-only"]
     Res[" Resident / Public · no login"]
 
     subgraph SYS[PROTECT System]
@@ -61,11 +60,6 @@ flowchart TB
     Tanod --- UC_Stat
     Tanod --- UC_Hot
 
-    %% ===== DILG Rep — read-only review =====
-    DILG --- UC_Login
-    DILG --- UC_Rep
-    DILG --- UC_Needs
-
     %% ===== Resident / Public — no login =====
     Res --- UC_Submit
     Res --- UC_PubAnn
@@ -79,7 +73,7 @@ flowchart TB
     classDef auth fill:#EDE9DF,stroke:#9A9488,color:#3A3A32;
     classDef public fill:#F0FBF9,stroke:#0D9E8C,color:#0a5a50;
 
-    class Sec,Tanod,DILG,Res actor;
+    class Sec,Tanod,Res actor;
     class UC_Login auth;
     class UC_Res,UC_GIS,UC_QR,UC_Doc resident;
     class UC_Ben,UC_Aid,UC_Ann community;

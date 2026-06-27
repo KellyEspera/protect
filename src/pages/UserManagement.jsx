@@ -13,7 +13,6 @@ const ROLE_BADGE = {
   officer:  'teal',
   brgy_sec: 'blue',
   tanod:    'gold',
-  dilg_rep: 'purple',
   viewer:   'gray',
 }
 
@@ -120,7 +119,6 @@ export default function UserManagement() {
             { role: 'officer',  pages: 'All pages — full system access' },
             { role: 'brgy_sec', pages: 'All pages — full system access' },
             { role: 'tanod',    pages: 'Dashboard, Crime Hotspot Map, Crime & Incident' },
-            { role: 'dilg_rep', pages: 'Dashboard, DILG Reports, Needs Assessment' },
             { role: 'viewer',   pages: 'Most pages — no QR Verification or DILG Reports' },
           ].map(({ role, pages }) => (
             <div key={role} className="flex gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
