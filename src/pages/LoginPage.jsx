@@ -1,3 +1,11 @@
+// ============================================================================
+//  LoginPage.jsx  —  the staff sign-in screen (public route)
+// ----------------------------------------------------------------------------
+//  Collects email + password and calls authStore.signIn() (Supabase Auth).
+//  Adds brute-force protection: after 5 failed attempts the email is locked for
+//  15 minutes (see rateLimiter.js). A live countdown ticks while locked.
+// ============================================================================
+
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -26,14 +34,17 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    // 1) Refuse early if this email is currently locked out.
     const limitCheck = checkRateLimit(email)
     if (!limitCheck.allowed) { setLockoutInfo(limitCheck); toast.error(`Too many failed attempts. Try again in ${limitCheck.remainingMin} min.`); return }
     setLoading(true)
     try {
+      // 2) Attempt the real Supabase login. On success, clear the counter and go home.
       await signIn(email, password)
       clearAttempts(email)
       navigate('/')
     } catch (err) {
+      // 3) On failure, record the attempt; lock the account if it hit the limit.
       const result = recordFailedAttempt(email)
       if (result.isLocked) { setLockoutInfo({ remainingMs: 15 * 60 * 1000, remainingMin: 15 }); toast.error('Account locked after 5 failed attempts. Try again in 15 minutes.') }
       else { setAttemptsLeft(result.attemptsLeft); toast.error(result.attemptsLeft > 0 ? `Incorrect credentials. ${result.attemptsLeft} attempt${result.attemptsLeft !== 1 ? 's' : ''} remaining.` : 'Login failed.') }
