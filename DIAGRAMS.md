@@ -5,8 +5,18 @@
 Three diagrams for the capstone documentation, derived from the actual system:
 
 1. **ERD** — see [`DATA_MODEL.md`](DATA_MODEL.md) §4 (entities, fields, relationships)
-2. **System Flowchart** — below
+2. **System Flowchart** — below (with off-page connectors A–K + module sub-flowcharts)
 3. **Data Flow Diagram (DFD)** — below (Context / Level 0 + Level 1)
+4. **Use Case Diagram** — [`diagrams/use_case.png`](diagrams/use_case.png) — 4 actors × what each role can do
+
+### Use Case — actor → access summary
+
+| Actor | Can do |
+|-------|--------|
+| **Barangay Secretary / Officer** (admin · officer · brgy_sec) | Everything — resident/household profiling, GIS, QR + documents, beneficiaries + assistance, announcements, incidents + status, hotspot + disaster maps, analytics, predictive, needs, DILG reports |
+| **Barangay Tanod** | Login, Log Crime/Incident, Update Incident Status, View Crime Hotspot Map |
+| **DILG Representative** (read-only) | Login, Generate DILG Reports, View Needs Assessment |
+| **Resident / Public** (no login) | Submit Community Needs, View Public Announcements |
 
 > All diagrams use **Mermaid**. They render automatically on GitHub. To export an
 > image for your paper, paste a block into <https://mermaid.live> and download as PNG/SVG.
