@@ -214,6 +214,27 @@ flowchart TD
 
 ---
 
+## 4. Module Sub-Flowcharts
+
+Per-module control flow, each matching the deployed system. Sources in
+[`diagrams/modules/`](diagrams/modules/) (`.mmd` editable, `.png` ready to paste).
+
+| Module | Image |
+|--------|-------|
+| Resident Profiling | [resident_profiling.png](diagrams/modules/resident_profiling.png) |
+| QR Verification | [qr_verification.png](diagrams/modules/qr_verification.png) |
+| GIS Household Map | [gis_household_map.png](diagrams/modules/gis_household_map.png) |
+| Disaster Vulnerability Map | [disaster_vulnerability.png](diagrams/modules/disaster_vulnerability.png) |
+| Crime & Incident | [crime_incident.png](diagrams/modules/crime_incident.png) |
+| Crime Hotspot Map | [crime_hotspot_map.png](diagrams/modules/crime_hotspot_map.png) |
+| Beneficiary Tracking | [beneficiary_tracking.png](diagrams/modules/beneficiary_tracking.png) |
+| Analytics Dashboards (Population/Poverty/Sector) | [analytics_dashboards.png](diagrams/modules/analytics_dashboards.png) |
+| Predictive Growth | [predictive_growth.png](diagrams/modules/predictive_growth.png) |
+| Announcements & Needs | [announcements_needs.png](diagrams/modules/announcements_needs.png) |
+| DILG Reports | [dilg_reports.png](diagrams/modules/dilg_reports.png) |
+
+---
+
 ## Notes for your documentation
 
 - **Symbols:** in the DFD, rounded boxes = **processes**, plain boxes = **external entities**,

@@ -1,0 +1,22 @@
+flowchart TD
+    B([QR Verification]) --> Sel[Select resident from list]
+    Sel --> Gen[Generate QR code<br/>encodes resident no · name · sitio]
+    Gen --> Card{Print or scan?}
+
+    Card -- Print ID --> Print[Print / download QR card]
+    Card -- Verify --> Scan[Start camera scan<br/>or Simulate Scan]
+
+    Scan --> Found[Identify resident<br/>show Head / Member + sector badges]
+    Found --> Purpose{Purpose of verification?}
+
+    Purpose -- "Document request" --> Doc[Preview filled barangay document<br/>Clearance · Indigency · Residency · Permit]
+    Doc --> DocPrint[Print for Punong Barangay signature]
+    DocPrint --> Log
+
+    Purpose -- "Assistance claim" --> Verify[Confirm household head]
+    Verify --> Amt[Enter release amount]
+    Amt --> Release[Update beneficiary:<br/>last_release_date + total_released]
+    Release --> Log[Log event to qr_verifications]
+
+    Print --> Done([Return to Dashboard])
+    Log --> Done

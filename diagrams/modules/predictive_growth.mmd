@@ -1,0 +1,9 @@
+flowchart TD
+    PG([Predictive Growth]) --> Query[Query population_history]
+    Query --> Check{At least 2 years of data?}
+    Check -- No --> Empty[Show: not enough data<br/>add census history]
+    Check -- Yes --> Reg[Linear regression<br/>slope, intercept, R squared]
+    Reg --> Proj[Project population 10 years ahead]
+    Proj --> Render[Render forecast line +<br/>10-year projection table + model parameters]
+    Render --> Done([Return to Dashboard])
+    Empty --> Done

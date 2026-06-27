@@ -1,0 +1,11 @@
+flowchart TD
+    DR([DILG Reports]) --> Pick[Select report type<br/>Barangay Profile · CBMS · Peace & Order<br/>Assistance · Vulnerable Sector · Disaster Risk]
+    Pick --> Compile[Compile figures live from Supabase<br/>residents · incidents · beneficiaries · zones]
+    Compile --> PDF[Generate PDF with barangay letterhead]
+    PDF --> Done([Return to Dashboard])
+
+    DR --> Admin{Admin tools<br/>hidden from DILG rep}
+    Admin -- Activity log --> AuditView[View audit_logs]
+    Admin -- Database backup --> Backup[Export data backup]
+    AuditView --> Done
+    Backup --> Done

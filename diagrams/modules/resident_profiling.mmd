@@ -1,0 +1,20 @@
+flowchart TD
+    A([Resident Profiling]) --> List[Search / filter residents<br/>by name · sitio · sector<br/>sortable table, PII masked]
+    List --> Act{Action?}
+
+    Act -- View detail --> Detail[Open read-only profile<br/>reveal masked PII]
+    Act -- Export --> Exp[Export PDF / Excel]
+    Act -- Import --> Imp[Upload CSV / XLSX] --> Parse[Parse & upsert rows] --> Save
+    Act -- "Add / Edit (canEdit only)" --> Form[Fill sanitized form]
+
+    Form --> Head{Marked as<br/>Household Head?}
+    Head -- Yes --> NewHH[Auto-create household<br/>HH-0001 next number]
+    Head -- No --> Link[Use selected household<br/>or none]
+    NewHH --> Save[Save resident to Supabase]
+    Link --> Save
+    Save --> Audit[(audit_logs trigger)]
+    Save --> Refresh[Refresh table]
+
+    Detail --> Done([Return to Dashboard])
+    Exp --> Done
+    Refresh --> Done

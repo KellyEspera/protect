@@ -1,0 +1,15 @@
+flowchart TD
+    AN([Analytics Dashboards<br/>Population · Poverty · Sector]) --> Query[Query residents_with_age]
+    Query --> Type{Which dashboard?}
+
+    Type -- Population --> P1[Compute sex · age groups · sitio]
+    Type -- Poverty --> P2[Compute family income per household<br/>poor households · people in poverty]
+    Type -- Sector --> P3[Count seniors · solo parents · PWDs · OSY<br/>from boolean flags]
+
+    P1 --> Render[Render bar / doughnut / pie charts<br/>+ summary cards]
+    P2 --> Render
+    P3 --> Render
+    Render --> Export{Export PDF?}
+    Export -- Yes --> PDF[Generate PDF report]
+    Export -- No --> Done([Return to Dashboard])
+    PDF --> Done
