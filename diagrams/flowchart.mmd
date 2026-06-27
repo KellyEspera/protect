@@ -1,34 +1,75 @@
 flowchart TD
-    Start([User opens PROTECT]) --> LoggedIn{Already logged in?}
-    LoggedIn -- No --> LoginPage[Login page]
-    LoginPage --> Auth[Supabase Auth verifies email & password]
+    Start([User opens PROTECT]) --> Mode{Logged in?}
+
+    %% ---------- PUBLIC PORTAL (no login) ----------
+    Mode -- "No · public link" --> Pub[/Public Announcements portal/]
+    Pub --> PubAct{What do they do?}
+    PubAct -- Read --> PubRead[View active announcements]
+    PubAct -- Submit needs --> PubForm[Fill Community Needs form]
+    PubForm --> SaveSurvey[(Save to survey_responses)]
+    PubRead --> PubEnd([Leave site])
+    SaveSurvey --> PubEnd
+
+    %% ---------- STAFF LOGIN ----------
+    Mode -- "Staff login" --> Login[Login page]
+    Login --> Auth[Supabase Auth verifies email & password]
     Auth --> Valid{Credentials valid?}
-    Valid -- No --> LoginPage
+    Valid -- No --> Login
     Valid -- Yes --> LoadRole[Load profile and role]
-    LoggedIn -- Yes --> LoadRole
 
-    LoadRole --> Role{What role?}
-    Role -- admin / officer / brgy_sec --> Full[Full access:<br/>all modules]
-    Role -- tanod --> Tanod[Dashboard,<br/>Crime Hotspot Map,<br/>Crime & Incident]
-    Role -- dilg_rep --> DILG[Dashboard,<br/>DILG Reports,<br/>Needs Assessment<br/>read-only]
-    Role -- viewer --> Viewer[Read-only<br/>dashboards]
+    LoadRole --> Route{Role-based menu}
+    Route -- "admin / officer / brgy_sec" --> RAll[All modules]
+    Route -- tanod --> RT[Dashboard · Crime Hotspot · Crime & Incident]
+    Route -- dilg_rep --> RD[Dashboard · DILG Reports · Needs Assessment<br/>read-only]
+    Route -- viewer --> RV[Read-only dashboards]
 
-    Full --> Pick[User opens a module]
-    Tanod --> Pick
-    DILG --> Pick
-    Viewer --> Pick
+    RAll --> Module
+    RT --> Module
+    RD --> Module
+    RV --> Module
 
-    Pick --> ActionType{Action type?}
-    ActionType -- View / report --> Read[Query Supabase,<br/>render charts, maps, tables]
-    ActionType -- Add / Edit / Delete --> CanEdit{canEdit role?}
-    CanEdit -- No --> Hidden[Edit controls hidden / blocked]
-    CanEdit -- Yes --> Write[Write to Supabase]
-    Write --> Trigger[(DB trigger writes audit_log)]
+    Module[/Open a module/] --> Which{Which module?}
+    Which -- Resident Profiling --> Res[Add / edit / search residents,<br/>CSV import, PII masking]
+    Which -- GIS Household Map --> Gis[Pin household,<br/>view members & sector flags]
+    Which -- Crime & Incident --> Inc[Log incident + photo,<br/>update status:<br/>Ongoing / Resolved / Escalated / Dismissed]
+    Which -- "Hotspot / Disaster maps" --> Maps[View crime heatmap,<br/>pins, risk zones]
+    Which -- Beneficiary Tracking --> Ben[Enroll, edit, record aid release,<br/>manage programs]
+    Which -- QR Verification --> Qr[Scan resident QR code]
+    Which -- Announcements --> Ann[Post / hide announcement<br/>+ image upload]
+    Which -- "Analytics / Predictive" --> Cht[View charts & population forecast]
+    Which -- DILG Reports --> Rep[Compile barangay report]
+
+    %% ---------- QR SUB-FLOW ----------
+    Qr --> QrType{Purpose?}
+    QrType -- Document request --> Doc[Preview filled barangay document]
+    Doc --> Print[Print for Punong Barangay signature]
+    QrType -- Assistance claim --> Rel[Verify household head,<br/>record aid release]
+
+    %% ---------- WRITE / PERMISSION GATE ----------
+    Res --> Gate
+    Gis --> Gate
+    Inc --> Gate
+    Ben --> Gate
+    Ann --> Gate
+    Rel --> Gate
+    Gate{Create / edit / delete?}
+    Gate -- "Yes · canEdit role" --> Write[Write to Supabase]
+    Gate -- "No · read-only role" --> Block[Edit controls hidden / blocked]
+    Write --> Audit[(DB trigger writes audit_log)]
     Write --> Refresh[Refresh cache, re-render UI]
 
-    Read --> Done([Information displayed])
-    Refresh --> Done
-    Hidden --> Done
-    Done --> Logout{Log out?}
-    Logout -- No --> Pick
+    %% ---------- READ / OUTPUT ----------
+    Rep --> Export{Export PDF?}
+    Export -- Yes --> Pdf[Generate PDF report]
+    Export -- No --> Show
+    Pdf --> Show
+    Maps --> Show
+    Cht --> Show
+    Print --> Show
+    Refresh --> Show
+    Block --> Show
+    Show([Information displayed / action complete])
+
+    Show --> Logout{Log out?}
+    Logout -- No --> Module
     Logout -- Yes --> End([Session ends])
