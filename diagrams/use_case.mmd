@@ -1,82 +1,79 @@
-flowchart TB
-    %% ===== Actors (top row) =====
-    Sec[" Barangay Secretary / Officer<br/>admin · officer · brgy_sec"]
-    Tanod[" Barangay Tanod"]
-    Res[" Resident / Public · no login"]
+flowchart LR
+    %% ===== Left actors =====
+    Sec["👤 Barangay<br/>Secretary / Officer<br/>admin · officer · brgy_sec"]
+    Tanod["👮 Barangay<br/>Tanod"]
 
+    %% ===== System boundary with use cases stacked vertically =====
     subgraph SYS[PROTECT System]
       direction TB
-
-      UC_Login(["Authenticate / Login"])
-
-      subgraph G1[Resident & Identity]
-        direction LR
-        UC_Res(["Manage Resident &<br/>Household Profiles"])
-        UC_GIS(["Pin Households<br/>on GIS Map"])
-        UC_QR(["Verify Resident<br/>via QR"])
-        UC_Doc(["Issue Barangay<br/>Document"])
-      end
-
-      subgraph G3[Peace & Order / Safety]
-        direction LR
-        UC_Log(["Log Crime /<br/>Incident"])
-        UC_Stat(["Update Incident<br/>Status"])
-        UC_Hot(["View Crime<br/>Hotspot Map"])
-        UC_Dis(["Mark Disaster<br/>Risk Zones"])
-      end
-
-      subgraph G2[Community Services]
-        direction LR
-        UC_Ben(["Manage Beneficiaries<br/>& Programs"])
-        UC_Aid(["Process Assistance<br/>Release"])
-        UC_Ann(["Post Announcements"])
-      end
-
-      subgraph G4[Analytics & Reports]
-        direction LR
-        UC_Ana(["View Analytics<br/>Dashboards"])
-        UC_Pred(["View Predictive<br/>Growth"])
-        UC_Needs(["View Needs<br/>Assessment"])
-        UC_Rep(["Generate DILG<br/>Reports"])
-      end
-
-      subgraph G5[Public Portal]
-        direction LR
-        UC_Submit(["Submit Community<br/>Needs"])
-        UC_PubAnn(["View Public<br/>Announcements"])
-      end
+      U1(["Manage Resident &<br/>Household Profiles"])
+      U2(["Generate & Verify QR /<br/>Issue Documents"])
+      U3(["Track Assistance<br/>Beneficiaries"])
+      U4(["View Analytics<br/>Dashboards"])
+      U5(["View GIS &<br/>Disaster Maps"])
+      U6(["View Crime<br/>Hotspot Map"])
+      U7(["Log Crime /<br/>Incident Reports"])
+      U8(["Update Incident<br/>Status"])
+      U9(["View Predictive<br/>Population Growth"])
+      U10(["Generate DILG<br/>Reports"])
+      U11(["Manage Announcements"])
+      U12(["Submit Needs<br/>Assessment"])
+      U13(["View Public<br/>Announcements"])
+      U14(["Authenticate / Login"])
+      U1 ~~~ U2 ~~~ U3 ~~~ U4 ~~~ U5 ~~~ U6 ~~~ U7 ~~~ U8 ~~~ U9 ~~~ U10 ~~~ U11 ~~~ U12 ~~~ U13 ~~~ U14
     end
 
-    %% ===== Secretary / Officer — full access (whole groups) =====
-    Sec === UC_Login
-    Sec === G1
-    Sec === G2
-    Sec === G3
-    Sec === G4
+    %% ===== Right actor =====
+    Res["🧑 Resident /<br/>Public"]
 
-    %% ===== Tanod — peace & order only =====
-    Tanod --- UC_Login
-    Tanod --- UC_Log
-    Tanod --- UC_Stat
-    Tanod --- UC_Hot
+    %% ===== Secretary / Officer — full access =====
+    Sec --- U1
+    Sec --- U2
+    Sec --- U3
+    Sec --- U4
+    Sec --- U5
+    Sec --- U6
+    Sec --- U7
+    Sec --- U8
+    Sec --- U9
+    Sec --- U10
+    Sec --- U11
+    Sec --- U14
 
-    %% ===== Resident / Public — no login =====
-    Res --- UC_Submit
-    Res --- UC_PubAnn
+    %% ===== Tanod — peace & order =====
+    Tanod --- U6
+    Tanod --- U7
+    Tanod --- U8
+    Tanod --- U14
+
+    %% ===== Resident / Public — no login (right side) =====
+    U12 --- Res
+    U13 --- Res
+
+    %% ===== Legend =====
+    subgraph LEGEND[Legend]
+      direction TB
+      Lg1["Resident Management"]:::resident
+      Lg2["Analytics & Maps"]:::analytics
+      Lg3["Incident Logging"]:::safety
+      Lg4["Reporting & Prediction"]:::reporting
+      Lg5["Needs & Community"]:::needs
+      Lg1 ~~~ Lg2 ~~~ Lg3 ~~~ Lg4 ~~~ Lg5
+    end
 
     %% ===== Styling =====
     classDef actor fill:#1A3A5C,stroke:#10243a,color:#fff,font-weight:bold;
-    classDef resident fill:#0D9E8C,stroke:#0a7a6a,color:#fff;
-    classDef community fill:#FCEEDB,stroke:#C9A84C,color:#5A4A1A;
-    classDef safety fill:#FDEAEA,stroke:#D88888,color:#7A2A2A;
-    classDef analytics fill:#EAF0FB,stroke:#7FA3DB,color:#1A3A5C;
+    classDef resident fill:#C9F2D0,stroke:#5BB36A,color:#1E5A2A;
+    classDef analytics fill:#E6D6F5,stroke:#A87FD0,color:#4A2A6A;
+    classDef safety fill:#EDE3C8,stroke:#C9A84C,color:#5A4A1A;
+    classDef reporting fill:#D6E4F5,stroke:#7FA3DB,color:#1A3A5C;
+    classDef needs fill:#F9D7DC,stroke:#D88894,color:#7A2A3A;
     classDef auth fill:#EDE9DF,stroke:#9A9488,color:#3A3A32;
-    classDef public fill:#F0FBF9,stroke:#0D9E8C,color:#0a5a50;
 
     class Sec,Tanod,Res actor;
-    class UC_Login auth;
-    class UC_Res,UC_GIS,UC_QR,UC_Doc resident;
-    class UC_Ben,UC_Aid,UC_Ann community;
-    class UC_Log,UC_Stat,UC_Hot,UC_Dis safety;
-    class UC_Ana,UC_Pred,UC_Needs,UC_Rep analytics;
-    class UC_Submit,UC_PubAnn public;
+    class U1,U2,U3 resident;
+    class U4,U5,U6 analytics;
+    class U7,U8 safety;
+    class U9,U10 reporting;
+    class U11,U12,U13 needs;
+    class U14 auth;
