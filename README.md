@@ -133,19 +133,20 @@ protect/
         ├── Dashboard.jsx
         ├── Residents.jsx
         ├── QRVerification.jsx
-        ├── AnalyticsPages.jsx      ← Population, Poverty, Sectors
-        ├── PopulationAnalytics.jsx ← wrapper
-        ├── PovertyIncidence.jsx    ← wrapper
-        ├── SectorStatistics.jsx    ← wrapper
+        ├── PopulationAnalytics.jsx ← Population charts
+        ├── PovertyIncidence.jsx    ← Poverty statistics
+        ├── SectorStatistics.jsx    ← PWD / senior / solo-parent counts
         ├── GISMap.jsx
         ├── DisasterVulnerability.jsx
-        ├── CommunityPages.jsx      ← Beneficiary, Crime, Predictive, Needs, Reports
-        ├── BeneficiaryTracking.jsx ← wrapper
-        ├── CrimeIncident.jsx       ← wrapper
-        ├── PredictiveGrowth.jsx    ← wrapper
-        ├── NeedsAssessment.jsx     ← wrapper
-        └── DILGReports.jsx         ← wrapper
+        ├── BeneficiaryTracking.jsx ← Assistance program enrollment
+        ├── CrimeIncident.jsx       ← Log & analyze incidents
+        ├── PredictiveGrowth.jsx    ← Population forecast
+        ├── NeedsAssessment.jsx     ← Community survey results
+        └── DILGReports.jsx         ← Government report generation
 ```
+
+> Each page is its own file. The three analytics pages share one data hook,
+> `src/hooks/useResidents.js`, so residents are fetched once and cached.
 
 ---
 
