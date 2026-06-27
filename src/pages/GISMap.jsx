@@ -1,3 +1,15 @@
+// ============================================================================
+//  GISMap.jsx  —  "GIS Household Map" page
+// ----------------------------------------------------------------------------
+//  An interactive Leaflet + OpenStreetMap of the barangay. Households appear as
+//  colour-coded pins per sitio. Clicking a pin shows who lives there and their
+//  sector flags (PWD/Senior/Solo). Clicking empty space drops a new pin; you
+//  pick the household head and save. Important: if that head ALREADY has a
+//  household (auto-created in Resident Profiling), the save UPDATES that
+//  household's location instead of inserting a duplicate household number.
+//  Map tiles are cached by a service worker for limited offline viewing.
+// ============================================================================
+
 // GISMap.jsx
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'

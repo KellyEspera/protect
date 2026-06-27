@@ -1,3 +1,13 @@
+// ============================================================================
+//  CrimeIncident.jsx  —  "Crime & Incident Analytics" page
+// ----------------------------------------------------------------------------
+//  The blotter: log incidents (type, sitio, date, complainant, optional photo,
+//  and an exact map location), see a type breakdown + monthly trend, and change
+//  a case's status via a dropdown (Ongoing → Resolved / Escalated / Dismissed).
+//  Incident types use a Batanes-specific set. New cases get an auto case number;
+//  every save fires the audit_logs trigger. Edits gated by canEdit().
+// ============================================================================
+
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bar } from 'react-chartjs-2'

@@ -1,3 +1,13 @@
+// ============================================================================
+//  CrimeHotspotMap.jsx  —  "Crime Hotspot Map" page
+// ----------------------------------------------------------------------------
+//  Shows WHERE incidents concentrate. Two views via a toggle: a HEATMAP
+//  (leaflet.heat) that turns each incident's GPS location into a density
+//  gradient — green where there are few, red where many — and a PINS view with
+//  a numbered marker per sitio. Date-range and crime-type filters re-render the
+//  layer for the selected subset. Read-only (logging happens in Crime & Incident).
+// ============================================================================
+
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'

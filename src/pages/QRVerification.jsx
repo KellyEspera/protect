@@ -1,3 +1,14 @@
+// ============================================================================
+//  QRVerification.jsx  —  "QR Verification" page
+// ----------------------------------------------------------------------------
+//  Generates a QR code per resident (react-qr-code) and scans them with the
+//  camera (html5-qrcode). After identifying a resident, the officer picks a
+//  purpose: ISSUE A DOCUMENT (opens a filled, print-ready barangay template for
+//  the captain to sign) or PROCESS AN ASSISTANCE RELEASE (records the release
+//  against the household's beneficiary record to prevent double-claiming).
+//  Every scan/issuance is logged to the qr_verifications table.
+// ============================================================================
+
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import QRCode from 'react-qr-code'
