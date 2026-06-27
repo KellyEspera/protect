@@ -138,9 +138,16 @@ export default function CrimeIncident() {
     mutationFn: async ({ id, status }) => {
       const { error } = await supabase.from('incidents').update({ status }).eq('id', id)
       if (error) throw error
+      return status
     },
-    onSuccess: () => qc.invalidateQueries(['incidents']),
+    onSuccess: (status) => {
+      qc.invalidateQueries(['incidents'])
+      toast.success(`Case marked ${status}`)
+    },
+    onError: (e) => toast.error(e.message),
   })
+
+  const STATUS_OPTIONS = ['Ongoing', 'Resolved', 'Escalated', 'Dismissed']
 
   const ongoing = incidents.filter(i => i.status === 'Ongoing').length
   const resolved = incidents.filter(i => i.status === 'Resolved').length
@@ -335,7 +342,7 @@ export default function CrimeIncident() {
             <thead>
               <tr>
                 <th>Case No.</th><th>Type</th><th>Sitio</th>
-                <th>Date</th><th>Complainant</th><th>Photo</th><th>Status</th><th>Action</th>
+                <th>Date</th><th>Complainant</th><th>Photo</th><th>Status</th><th>Update Status</th>
               </tr>
             </thead>
             <tbody>
@@ -363,13 +370,23 @@ export default function CrimeIncident() {
                   </td>
                   <td><Badge variant={statusColor[inc.status] || 'gray'}>{inc.status}</Badge></td>
                   <td>
-                    {canWrite && inc.status === 'Ongoing' && (
-                      <button
-                        className="btn btn-ghost px-2 py-1 text-xs"
-                        onClick={() => updateStatus.mutate({ id: inc.id, status: 'Resolved' })}
+                    {canWrite ? (
+                      <select
+                        value={inc.status}
+                        onChange={e => {
+                          if (e.target.value !== inc.status) {
+                            updateStatus.mutate({ id: inc.id, status: e.target.value })
+                          }
+                        }}
+                        title="Change case status"
+                        style={{ fontSize: 12, padding: '4px 6px', border: '1px solid #D4D0C8', borderRadius: 4, color: '#1A1A2E', fontFamily: 'Inter,sans-serif', background: '#fff', cursor: 'pointer' }}
                       >
-                        Mark Resolved
-                      </button>
+                        {STATUS_OPTIONS.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span style={{ fontSize: 11, color: '#C4BFB6' }}>—</span>
                     )}
                   </td>
                 </tr>
