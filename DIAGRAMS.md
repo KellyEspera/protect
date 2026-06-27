@@ -10,6 +10,12 @@ Three diagrams for the capstone documentation, derived from the actual system:
 
 > All diagrams use **Mermaid**. They render automatically on GitHub. To export an
 > image for your paper, paste a block into <https://mermaid.live> and download as PNG/SVG.
+>
+> **Pre-rendered PNG images** are in the [`diagrams/`](diagrams/) folder:
+> [`flowchart.png`](diagrams/flowchart.png) ·
+> [`dfd_context.png`](diagrams/dfd_context.png) ·
+> [`dfd_level1.png`](diagrams/dfd_level1.png) ·
+> [`erd.png`](diagrams/erd.png) — drag these straight into your document.
 
 ---
 

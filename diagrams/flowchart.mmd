@@ -1,0 +1,34 @@
+flowchart TD
+    Start([User opens PROTECT]) --> LoggedIn{Already logged in?}
+    LoggedIn -- No --> LoginPage[Login page]
+    LoginPage --> Auth[Supabase Auth verifies email & password]
+    Auth --> Valid{Credentials valid?}
+    Valid -- No --> LoginPage
+    Valid -- Yes --> LoadRole[Load profile and role]
+    LoggedIn -- Yes --> LoadRole
+
+    LoadRole --> Role{What role?}
+    Role -- admin / officer / brgy_sec --> Full[Full access:<br/>all modules]
+    Role -- tanod --> Tanod[Dashboard,<br/>Crime Hotspot Map,<br/>Crime & Incident]
+    Role -- dilg_rep --> DILG[Dashboard,<br/>DILG Reports,<br/>Needs Assessment<br/>read-only]
+    Role -- viewer --> Viewer[Read-only<br/>dashboards]
+
+    Full --> Pick[User opens a module]
+    Tanod --> Pick
+    DILG --> Pick
+    Viewer --> Pick
+
+    Pick --> ActionType{Action type?}
+    ActionType -- View / report --> Read[Query Supabase,<br/>render charts, maps, tables]
+    ActionType -- Add / Edit / Delete --> CanEdit{canEdit role?}
+    CanEdit -- No --> Hidden[Edit controls hidden / blocked]
+    CanEdit -- Yes --> Write[Write to Supabase]
+    Write --> Trigger[(DB trigger writes audit_log)]
+    Write --> Refresh[Refresh cache, re-render UI]
+
+    Read --> Done([Information displayed])
+    Refresh --> Done
+    Hidden --> Done
+    Done --> Logout{Log out?}
+    Logout -- No --> Pick
+    Logout -- Yes --> End([Session ends])
