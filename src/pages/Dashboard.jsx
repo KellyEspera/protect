@@ -3,6 +3,8 @@ import { Bar, Line, Doughnut } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
 import { supabase } from '../lib/supabase'
 import { StatCard, SectionCard, Badge } from '../components/ui/index'
+import { exportToPDF } from '../lib/exportUtils'
+import { Download } from 'lucide-react'
 
 Chart.register(...registerables)
 
@@ -77,17 +79,45 @@ export default function Dashboard() {
 
   const statusColor = { Ongoing: 'gold', Resolved: 'blue', Escalated: 'red', Dismissed: 'gray' }
 
+  const handleExportPDF = () => {
+    exportToPDF({
+      title: 'Community Dashboard Summary',
+      rows: [
+        ['Total Residents', String(total)],
+        ['Male', `${males} (${total ? ((males/total)*100).toFixed(1) : 0}%)`],
+        ['Female', `${females} (${total ? ((females/total)*100).toFixed(1) : 0}%)`],
+        ['Children (0-17)', String(children)],
+        ['Youth (18-30)', String(youth)],
+        ['Adult (31-59)', String(adults)],
+        ['Senior Citizens', String(seniors)],
+        ['Persons with Disability', String(pwds)],
+        ['Solo Parents', String(soloParents)],
+        ['Active Beneficiaries', String(beneficiaryCount)],
+        ['Residents — Sitio Hunan', String(purokCounts[0])],
+        ['Residents — Sitio Hagu', String(purokCounts[1])],
+        ['Residents — Sitio Tuva', String(purokCounts[2])],
+      ],
+    })
+  }
+
   return (
     <div>
+      {/* Export */}
+      <div className="flex justify-end mb-3">
+        <button className="btn btn-ghost flex items-center gap-1.5 text-xs" onClick={handleExportPDF} disabled={total === 0}>
+          <Download size={13} /> Export Summary PDF
+        </button>
+      </div>
+
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         <StatCard icon="👥" value={total.toLocaleString()} label="Total Residents" color="teal" />
         <StatCard icon="👴" value={seniors} label="Senior Citizens" color="blue" />
         <StatCard icon="♿" value={pwds} label="Persons with Disability" color="gold" />
         <StatCard icon="🎁" value={beneficiaryCount} label="Active Beneficiaries" color="red" />
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Sex distribution */}
         <SectionCard title="Sex Distribution" subtitle="From registered residents">
           <div className="h-48">
@@ -157,7 +187,7 @@ export default function Dashboard() {
           : null}
       >
         {incidents.length > 0 ? (
-          <table className="data-table">
+          <div className="overflow-x-auto"><table className="data-table">
             <thead><tr><th>Case No.</th><th>Type</th><th>Sitio</th><th>Date</th><th>Status</th></tr></thead>
             <tbody>
               {incidents.map(inc => (
@@ -170,14 +200,14 @@ export default function Dashboard() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         ) : (
           <p className="text-center text-gray-400 text-sm py-6">No incidents recorded yet.</p>
         )}
       </SectionCard>
 
       {/* Sector summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard icon="👴" value={seniors} label="Senior Citizens" change={total ? `${((seniors/total)*100).toFixed(1)}% of population` : ''} color="blue" />
         <StatCard icon="♿" value={pwds} label="Persons with Disability" change={total ? `${((pwds/total)*100).toFixed(1)}% of population` : ''} color="gold" />
         <StatCard icon="👩‍👧" value={soloParents} label="Solo Parents" change={total ? `${((soloParents/total)*100).toFixed(1)}% of population` : ''} color="teal" />

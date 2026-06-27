@@ -1,10 +1,11 @@
 // src/components/ui/StatCard.jsx
 export function StatCard({ icon, value, label, change, changeType = 'up', color = 'teal' }) {
   const iconColors = {
-    teal: 'bg-teal-light text-teal',
-    gold: 'bg-amber-50 text-amber-700',
-    red: 'bg-red-50 text-red-700',
-    blue: 'bg-blue-50 text-blue-700',
+    navy:   'bg-blue-50 text-[#1A3A5C]',
+    teal:   'bg-teal-light text-teal',
+    gold:   'bg-amber-50 text-amber-700',
+    red:    'bg-red-50 text-red-700',
+    blue:   'bg-blue-50 text-blue-700',
     purple: 'bg-purple-50 text-purple-700',
   }
   return (

@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
+import { canAccess, ROLE_LABELS } from '../../lib/permissions'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
-  Accessibility, Map, AlertTriangle, Gift, Shield, BrainCircuit,
-  ClipboardList, FileText, LogOut, Bell
+  Accessibility, Map, AlertTriangle, Flame, Gift, Shield, BrainCircuit,
+  ClipboardList, FileText, LogOut, Bell, Menu, X, UserCog, Megaphone
 } from 'lucide-react'
 
 const navGroups = [
@@ -26,18 +28,26 @@ const navGroups = [
   {
     label: 'GIS & Safety',
     items: [
-      { to: '/gis', icon: Map, label: 'GIS Household Map' },
-      { to: '/disaster', icon: AlertTriangle, label: 'Disaster Vulnerability' },
+      { to: '/gis',       icon: Map,          label: 'GIS Household Map' },
+      { to: '/crime-map', icon: Flame,         label: 'Crime Hotspot Map' },
+      { to: '/disaster',  icon: AlertTriangle, label: 'Disaster Vulnerability' },
     ],
   },
   {
     label: 'Community',
     items: [
-      { to: '/beneficiary', icon: Gift, label: 'Beneficiary Tracking' },
-      { to: '/crime', icon: Shield, label: 'Crime & Incident' },
-      { to: '/predictive', icon: BrainCircuit, label: 'Predictive Growth' },
-      { to: '/needs', icon: ClipboardList, label: 'Needs Assessment' },
-      { to: '/reports', icon: FileText, label: 'DILG Reports' },
+      { to: '/beneficiary', icon: Gift,         label: 'Beneficiary Tracking' },
+      { to: '/crime',       icon: Shield,        label: 'Crime & Incident' },
+      { to: '/predictive',  icon: BrainCircuit,  label: 'Predictive Growth' },
+      { to: '/needs',       icon: ClipboardList, label: 'Needs Assessment' },
+      { to: '/announcements-admin', icon: Megaphone, label: 'Announcements' },
+      { to: '/reports',     icon: FileText,      label: 'DILG Reports' },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      { to: '/users', icon: UserCog, label: 'User Management' },
     ],
   },
 ]
@@ -50,23 +60,34 @@ const pageTitles = {
   '/poverty': 'Poverty Incidence Analytics',
   '/sectors': 'Sector Statistics',
   '/gis': 'GIS Household Map',
+  '/crime-map': 'Crime Hotspot Map',
   '/disaster': 'Disaster Vulnerability Map',
   '/beneficiary': 'Assistance Beneficiary Tracking',
   '/crime': 'Crime & Incident Analytics',
   '/predictive': 'Predictive Population Growth',
   '/needs': 'Community Needs Assessment',
+  '/announcements-admin': 'Community Announcements',
   '/reports': 'DILG Report Generation',
+  '/users':   'User Management',
 }
 
 export default function Layout() {
   const { user, profile, signOut } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const role = profile?.role ?? 'viewer'
+  const filteredGroups = navGroups
+    .map(group => ({ ...group, items: group.items.filter(item => canAccess(role, item.to)) }))
+    .filter(group => group.items.length > 0)
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/login')
   }
+
+  const closeSidebar = () => setSidebarOpen(false)
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -74,22 +95,43 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 bg-navy flex flex-col flex-shrink-0 overflow-y-auto">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-60 bg-navy flex flex-col flex-shrink-0 overflow-y-auto
+        transform transition-transform duration-200 ease-in-out
+        md:static md:translate-x-0
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         {/* Brand */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-2.5 mb-0.5">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-teal rounded-lg flex items-center justify-center text-base">🛡️</div>
             <div>
               <div className="font-display text-[15px] font-bold text-white tracking-wide">PROTECT</div>
               <div className="text-[10px] text-white/40 uppercase tracking-widest">Basco · Batanes</div>
             </div>
           </div>
+          {/* Close button — mobile only */}
+          <button
+            className="md:hidden text-white/50 hover:text-white transition-colors"
+            onClick={closeSidebar}
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 py-2">
-          {navGroups.map((group) => (
+          {filteredGroups.map((group) => (
             <div key={group.label}>
               <div className="px-3 pt-3 pb-1 text-[10px] text-white/50 uppercase tracking-widest font-semibold">
                 {group.label}
@@ -99,9 +141,8 @@ export default function Layout() {
                   key={to}
                   to={to}
                   end={to === '/'}
-                  className={({ isActive }) =>
-                    `sidebar-link ${isActive ? 'active' : ''}`
-                  }
+                  onClick={closeSidebar}
+                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
                 >
                   <Icon size={15} />
                   <span>{label}</span>
@@ -121,7 +162,7 @@ export default function Layout() {
               <div className="text-[12px] text-white font-medium truncate">
                 {profile?.full_name || user?.email || 'Brgy. Officer'}
               </div>
-              <div className="text-[10px] text-white/40 capitalize">{profile?.role || 'officer'}</div>
+              <div className="text-[10px] text-white/40">{ROLE_LABELS[role] ?? 'Officer'}</div>
             </div>
             <button onClick={handleSignOut} className="text-white/40 hover:text-white transition-colors" title="Sign out">
               <LogOut size={14} />
@@ -131,30 +172,39 @@ export default function Layout() {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Topbar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-6 gap-4 flex-shrink-0">
-          <div>
-            <h1 className="font-display text-[17px] font-semibold text-navy">
+        <header className="h-14 md:h-16 bg-white border-b border-gray-200 flex items-center px-4 md:px-6 gap-3 flex-shrink-0">
+          {/* Hamburger — mobile only */}
+          <button
+            className="md:hidden text-gray-500 hover:text-navy transition-colors flex-shrink-0"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu size={20} />
+          </button>
+
+          <div className="min-w-0">
+            <h1 className="font-display text-[15px] md:text-[17px] font-semibold text-navy truncate">
               {pageTitles[location.pathname] || 'PROTECT'}
             </h1>
-            <p className="text-[11px] text-gray-400 mt-0.5">
+            <p className="text-[10px] md:text-[11px] text-gray-400 mt-0.5 hidden sm:block">
               Barangay San Joaquin, Basco, Batanes &bull; As of June 2026
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <span className="badge badge-teal text-[10px]">
+
+          <div className="ml-auto flex items-center gap-2 md:gap-3 flex-shrink-0">
+            <span className="badge badge-teal text-[10px] hidden sm:flex items-center">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-600 mr-1"></span>
-              System Online
+              Online
             </span>
-            <button className="btn btn-ghost px-3 py-2 text-gray-400">
+            <button className="btn btn-ghost px-2 py-2 text-gray-400">
               <Bell size={15} />
             </button>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-3 md:p-6">
           <Outlet />
         </main>
       </div>
