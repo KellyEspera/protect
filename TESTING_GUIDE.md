@@ -1,348 +1,167 @@
-# PROTECT System — Feature-by-Feature Testing Guide
-**Barangay San Joaquin Analytics & Community Intelligence System**
-Basco, Batanes · Capstone Project
+# PROTECT — Testing Guide / QA Checklist
+
+Work top to bottom. Tick each box when the **Expected result** matches.
+If something fails, note: the page, what you clicked, and the exact error
+(red toast text, or the red error in the browser console — press **F12**).
 
 ---
 
-## Before You Start
+## 0. Prerequisites (do these BEFORE testing)
 
-1. Run all SQL files in **Supabase SQL Editor** in this order:
-   - `supabase_schema.sql` — creates all tables
-   - `seed_data.sql` — loads 60 sample residents + 20 households
-   - `update_roles.sql` — enables the 5 user roles
-   - `update_crime_types.sql` — expands incident type constraint
-   - `add_sector_fields.sql` — adds OSY column
-   - `audit_logs.sql` — enables activity logging
-   - `incident_photos.sql` — adds photo upload to incidents
-   - `announcements.sql` — creates announcements table
+- [ ] Ran **`DATABASE_SETUP.sql`** in Supabase → SQL Editor (no red errors)
+- [ ] Storage buckets exist: **`incident-photos`** and **`announcement-photos`**
+- [ ] (Optional, for charts) Ran `seed_sector_data.sql` so OSY / PWD charts have data
+- [ ] `population_history` has ≥ 2 years (for Predictive Growth) — included in `DATABASE_SETUP.sql`
+- [ ] On Vercel: env vars **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** are set
+- [ ] You have one login per role to test with: **admin/officer/brgy_sec**, **tanod**, **viewer**
 
-2. Start the app: `npm run dev`
-3. Open `http://localhost:5173`
+> If a feature fails and a prerequisite above is unchecked, fix the prerequisite first —
+> it's almost always a database-sync issue, not a code bug.
 
 ---
 
-## 1. Login & Role-Based Access Control (RBAC)
+## 1. Authentication & Security
 
-**What to test:** Only the right roles can access the right pages.
-
-**Steps:**
-1. Go to `/login` — log in as `admin`
-2. Confirm all sidebar items are visible
-3. Log out, log in as `viewer`
-4. Try navigating to `/residents` — you should see "Access Restricted"
-5. Try `/reports` — viewer can see it, but cannot add residents
-
-**Expected roles:**
-| Role | Access |
-|------|--------|
-| admin | Everything |
-| officer | Most pages except some restricted |
-| tanod | Crime & Incident only |
-| viewer | Read-only on select pages |
+- [ ] **Login (valid)** → correct email/password logs in and lands on the Dashboard
+- [ ] **Login (wrong password)** → red toast "Incorrect credentials. N attempts remaining"
+- [ ] **Lockout** → 5 wrong attempts on the same email → "Account locked… 15 minutes", form disabled, countdown ticks
+- [ ] **Logout** → sidebar user menu → logout → returns to /login; can't go back to a page without re-login
+- [ ] **Direct URL while logged out** → visiting any page redirects to /login
 
 ---
 
-## 2. Add a Resident (Manual)
+## 2. Role-Based Access (log in as EACH role)
 
-**What to test:** The add resident form saves correctly and auto-assigns a Resident No.
+**admin / officer / brgy_sec (full access)**
+- [ ] Sidebar shows **all** groups (Main, Analytics, GIS & Safety, Community, Admin)
+- [ ] Can add/edit/delete on every page
 
-**Steps:**
-1. Go to **Residents** page
-2. Click **Add Resident**
-3. Fill in: First Name, Last Name, Date of Birth, Sitio
-4. Leave Resident No. blank (auto-generated)
-5. Click **Save Resident**
-6. Confirm the resident appears in the table with `RES-XXXX` number
+**tanod**
+- [ ] Sidebar shows **only**: Dashboard, Crime Hotspot Map, Crime & Incident
+- [ ] Typing a blocked URL (e.g. `/residents`) shows "Access Restricted"
 
----
-
-## 3. Household Head + Auto HH Creation
-
-**What to test:** Checking "Household Head" auto-creates a linked household.
-
-**Steps:**
-1. Click **Add Resident**
-2. Fill in name, DOB, Sitio
-3. Check **Household Head**
-4. Notice the green notice: *"A Household No. will be auto-generated..."*
-5. Click **Save Resident**
-6. Go to **GIS Map** — the new household should appear in the map popup list
-7. Confirm the resident's **View** modal shows a household number
+**viewer**
+- [ ] Sidebar shows most pages **except** QR Verification, Announcements, DILG Reports, User Management
+- [ ] On every page, **no Add / Edit / Delete buttons appear** (read-only)
 
 ---
 
-## 4. Assign Non-HH-Head Resident to a Household
+## 3. Dashboard
+- [ ] Summary cards show real counts (total residents, seniors, PWDs, active beneficiaries)
+- [ ] Charts render (sex distribution, age groups, residents by sitio)
+- [ ] Recent incidents list shows the latest cases
+- [ ] **Export PDF** downloads a PDF with the barangay header
 
-**What to test:** Family members can be linked to their household.
+## 4. Resident Profiling
+- [ ] **Add Resident** → fill form → saves; new resident appears in the table and after refresh
+- [ ] Mark **Household Head** on a new resident → a household (HH-000X) is auto-created
+- [ ] **Edit** a resident → change saves and shows in the table
+- [ ] **Search / filter** by name, sitio, sector → table narrows correctly
+- [ ] **Sort** by a column header → order changes
+- [ ] **PII masking** → contact / PhilHealth show as `•••••••1234`; "Reveal" shows the full value
+- [ ] **CSV/XLSX import** → upload the template → rows import (check the import summary)
+- [ ] **Export PDF / Excel** → files download with the resident data
 
-**Steps:**
-1. Make sure at least one Household Head exists (from Step 3 or seed data)
-2. Click **Add Resident** — do NOT check "Household Head"
-3. Scroll to **Assign to Household** dropdown — it should list all existing households (e.g. "HH-001 — Ramon Gaje")
-4. Select the household
-5. Click **Save Resident**
-6. Open the resident's **View** modal → Residence & Contact section shows "Household No."
+## 5. QR Verification
+- [ ] Select a resident → a **QR code** renders
+- [ ] **Scan the QR with a generic phone app** (Google Lens) → shows **gibberish hex**, NOT the name (PII protected ✅)
+- [ ] **Simulate Scan** (with a resident selected) → identifies the correct resident + shows Head/Member + sector badges
+- [ ] **Start Scanner** on `http://localhost:5173` (or HTTPS) → camera opens; scanning the QR identifies the resident
+- [ ] Choose **Barangay Clearance** → **Issue & Print** → preview modal shows the filled document → **Print** opens the print dialog
+- [ ] Choose **Assistance Claim** for a household head who is a beneficiary → enter amount → **Record release** → toast confirms; beneficiary's last release date / total update
+- [ ] **Recent Verifications** list updates after each scan/issue
 
----
+## 6. Population Analytics
+- [ ] Cards show total population, male ratio, under-18, seniors
+- [ ] Sex (pie), Age group (doughnut), Population by sitio (bar) all render
+- [ ] **Export PDF** works
 
-## 5. Bulk Import Residents (CSV / Excel)
+## 7. Poverty Incidence
+- [ ] Cards: Poverty Incidence %, Poor Households (< ₱10,000), Avg **Family** Income, People in Poverty
+- [ ] "Poverty Rate by Sitio" and "Income Classification" charts render
+- [ ] Household Heads Below Poverty Line table lists the poor households
+- [ ] **Export PDF** works
 
-**What to test:** Upload a spreadsheet of residents.
+## 8. Sector Statistics
+- [ ] Cards: Senior Citizens, Solo Parents, PWDs (with % of population)
+- [ ] "Senior Citizens by Age Group", "PWD by Disability Type", "OSY by Sitio" charts render (run `seed_sector_data.sql` if empty)
+- [ ] **Export PDF** works
 
-**Steps:**
-1. Download the template: Go to Residents → **Excel** export to see the column format
-2. Create a small `.xlsx` file with 3 rows using these columns:
-   `Resident No., Last Name, First Name, Date of Birth, Sex, Sitio, HH Head, PWD, Solo Parent, Senior Citizen, Monthly Income, Occupation, OSY`
-3. Click **Import** button on Residents page
-4. Select the file
-5. Wait for the "Import Complete" modal showing Added / Updated / HH Records Created counts
-6. Verify the residents appear in the table
+## 9. GIS Household Map
+- [ ] Map loads centered on San Joaquin with color-coded pins per sitio
+- [ ] **Click an existing pin** → popup shows residents living there + sector flags + Edit/Remove
+- [ ] **Click empty map** → drop a pin → select a household head → save
+- [ ] Pinning a head who **already has a household** → it **updates that household's location** (no duplicate HH number, no error)
+- [ ] Click an entry in the **Pinned Households** list → map flies to it
+- [ ] (viewer) → cannot pin/edit/remove
 
-**Edge cases to test:**
-- Re-upload the same file → rows should be updated, not duplicated (same Resident No.)
-- Upload a file with an invalid row (missing name) → that row is skipped, others succeed
+## 10. Crime Hotspot Map
+- [ ] Map loads with incidents
+- [ ] **Heatmap** view → red where incidents cluster (Hagu hottest with seed data)
+- [ ] **Pins** toggle → numbered markers per sitio
+- [ ] **Date range** and **Crime type** filters re-render the map
+- [ ] Click an incident dot → details popup
+- [ ] Sitio Ranking + Recent Incidents panels populate
 
----
+## 11. Disaster Vulnerability
+- [ ] Map loads with existing risk zones (red/orange/green circles)
+- [ ] **Click map** → place a zone → fill hazard type / level / radius → save
+- [ ] Zone popup shows **households exposed** count
+- [ ] Risk Summary by Sitio populates
+- [ ] (viewer) → cannot add/remove zones
 
-## 6. Export Residents
+## 12. Beneficiary Tracking
+- [ ] Cards: active beneficiaries, total distributed, active programs, pending claims
+- [ ] **Enroll** a beneficiary (resident + program + status + last release date + total) → saves
+- [ ] **Edit** / **Remove** a beneficiary → works
+- [ ] **Manage Programs** → add a program / deactivate one → reflected in the list
+- [ ] Hover **Active Programs** card → tooltip lists the programs
+- [ ] **Import XLSX** → rows import
 
-**What to test:** PDF and Excel exports work.
+## 13. Crime & Incident
+- [ ] Cards: total incidents, ongoing, resolution rate
+- [ ] Incident type breakdown chart shows the **Batanes types**
+- [ ] **Log incident** → type, sitio, date, complainant, optional photo, pick location on mini-map → saves
+- [ ] **Update Status dropdown** → change a case to Resolved / Escalated / Dismissed → badge updates, toast confirms
+- [ ] (viewer) → no log form, no status dropdown
 
-**Steps:**
-1. Go to **Residents** page (with data loaded)
-2. Click **PDF** → a PDF should download with the resident table
-3. Click **Excel** → an `.xlsx` file should download
-4. Open the Excel file and verify all columns and resident data are present
+## 14. Predictive Growth
+- [ ] Forecast chart shows historical line + dashed 10-year projection
+- [ ] Cards: current population, avg annual growth, projected (year+10), R²
+- [ ] 10-Year Projection Table + Model Parameters populate
+- [ ] (If "not enough data") → confirm `population_history` has ≥ 2 rows
 
----
+## 15. Needs Assessment (staff)
+- [ ] Cards: survey responses, top priority need, sitios covered
+- [ ] Priority Needs ranking populates from submitted surveys
 
-## 7. QR Code Generation & Verification
+## 16. Announcements (admin) + Public page
+- [ ] **Post announcement** with title, body, category, **image** → saves (no "bucket not found")
+- [ ] **Hide / Show** toggles visibility; **Delete** removes it
+- [ ] Open **`/announcements`** (no login) → active announcements show on the bulletin board with images
+- [ ] Public **Submit Your Needs** form → submits → appears in Needs Assessment
 
-**What to test:** Each resident gets a scannable QR code; scanning it shows their profile.
+## 17. DILG Reports
+- [ ] Each report card compiles figures and **exports a PDF** with letterhead
+- [ ] Activity Log shows recent audit entries (admin)
+- [ ] Database Backup downloads a `.json`
 
-**Steps:**
-1. Go to **QR Verification** page
-2. Select any resident from the dropdown
-3. A QR code appears — click **Download QR**
-4. In the **Scan / Verify** section, either:
-   - Use a phone camera to scan the QR code, OR
-   - Paste the resident ID manually into the input field
-5. Click **Verify** — the resident's profile card should appear
-6. Test with an invalid ID — expect "Resident not found" error
-
----
-
-## 8. Sector Statistics (Senior Citizens, PWD, Solo Parents, OSY, Working)
-
-**What to test:** All 5 sector categories display correctly with charts and tables.
-
-**Steps:**
-1. Go to **Sectors** page (or the analytics route with sector stats)
-2. Verify 5 stat cards appear: Senior Citizens, PWD, Solo Parents, OSY, Working
-3. Scroll down — verify 4 charts: SC by Age Group, PWD by Disability Type, OSY by Sitio, Working by Sitio
-4. Scroll to the **Sector Registry** table — all 5 categories listed with counts
-
-**To test OSY:**
-1. Go to Residents → Edit any resident
-2. Check **Out-of-School Youth (OSY)**
-3. Save, then go back to Sectors — the OSY count should increase by 1
-4. The resident should now show a red **OSY** badge in the residents table
-
-**To test Working:**
-- Any resident with a non-empty **Occupation** field is counted as "Working" automatically
-
----
-
-## 9. GIS Map
-
-**What to test:** The map loads, shows household pins, and popups work.
-
-**Steps:**
-1. Go to **GIS Map**
-2. The map should center on Basco, Batanes
-3. Colored circles appear for each household — color = housing type
-4. Click a pin → popup shows household number, head name, members, income
-5. Use the **Sitio filter** buttons to filter by Sitio Hunan / Hagu / Tuva
-6. Check the 5 stat cards at the top (Total HH, Concrete, Semi-concrete, Wood, Makeshift)
-
----
-
-## 10. Offline Map Tile Caching
-
-**What to test:** Map tiles are saved for offline use via Service Worker.
-
-**Steps:**
-1. Go to **GIS Map**
-2. Look for the **"Save Offline"** (💾) button in the map card header
-3. Click it — a progress bar appears: *"Caching X / Y tiles..."*
-4. Wait for **"Offline ready!"** toast
-5. The 5th stat card now shows tile count (e.g. "342 tiles")
-6. Turn off your internet (airplane mode or disable network)
-7. Refresh the page — the map should still load tiles from cache
-8. The status card should show **Offline** in red
-
-**To clear cache:**
-- Click the 🗑️ button next to "Save Offline" — tile count resets to 0
+## 18. User Management (admin)
+- [ ] Lists all users with name, role badge, created date
+- [ ] **Edit** a user → change name and **role** (dropdown shows: Administrator, Officer, Secretary, Tanod, Viewer — **no DILG rep**) → saves
+- [ ] Changing a role then logging in as that user reflects the new access
 
 ---
 
-## 11. Beneficiary Tracking
-
-**What to test:** Enroll residents in assistance programs and track distribution.
-
-**Steps:**
-1. Go to **Beneficiary Tracking**
-2. Click **+ Enroll** → you'll be directed to use the Residents page to enroll
-3. Check the **Beneficiary Registry** table for any seed data entries
-4. Test **Bulk Import**: download the template, fill in resident nos. and program names, upload
-5. Verify the chart "Assistance by Program" updates with the new data
-6. Check the 4 stat cards: Active Beneficiaries, Total Distributed, Active Programs, Pending Claims
+## 19. Cross-cutting / regression
+- [ ] After any add/edit, the change **persists after a page refresh** (confirms it saved to Supabase, not just local state)
+- [ ] Audit: after editing a resident/incident, an entry appears in DILG Reports → Activity Log
+- [ ] Responsive: open on a phone-width window → sidebar collapses to a hamburger; pages stay usable
+- [ ] No red errors in the browser console (F12) during normal use
 
 ---
 
-## 12. Crime & Incident Reporting
-
-**What to test:** Log an incident and update its status.
-
-**Steps:**
-1. Go to **Crime & Incident**
-2. In **Log New Incident**: select type (e.g. Theft), sitio, set date & time, add complainant name
-3. Click **+ Submit Report**
-4. Verify the incident appears in the **Incident Log** with status "Ongoing"
-5. Click **Mark Resolved** → status changes to "Resolved"
-6. Check the charts: Incident Type Breakdown and Monthly Trend update
-7. Check stat cards: Resolution Rate should change
-
----
-
-## 13. Crime Incident Photo Upload
-
-**What to test:** Attach a photo to an incident report.
-
-> **Prerequisite:** Run `incident_photos.sql` in Supabase first.
-
-**Steps:**
-1. Go to **Crime & Incident** → **Log New Incident** form
-2. Click **📷 Attach Photo** — select any image from your device
-3. A thumbnail preview appears — verify file name shows below
-4. Fill in the other fields and click **+ Submit Report**
-5. In the **Incident Log** table, the new row should show a small thumbnail in the **Photo** column
-6. Click the thumbnail → it should open the full image in a new tab
-
-**To test removal:**
-- Click ✕ on the preview before submitting — photo clears, incident saves without photo
-
----
-
-## 14. Predictive Population Growth
-
-**What to test:** The linear regression model generates a 10-year population projection.
-
-**Steps:**
-1. Go to **Predictive Growth**
-2. If seed data has residents from multiple years, you'll see historical + projected lines on the chart
-3. Verify 3 stat cards: Projected 10-year population, Annual Growth Rate, R² model fit
-4. Scroll down — check the **Projection Table** (10 years) with confidence levels
-5. Check the **Model Parameters** table: slope, intercept, R², data points
-
-**Note:** If all residents were added in the same year, you'll see "Not enough data" — this is expected.
-
----
-
-## 15. Needs Assessment (Public Survey Form)
-
-**What to test:** Residents submit needs without logging in; results appear in the dashboard.
-
-**Steps:**
-1. Go to **Needs Assessment** page
-2. Copy the **Resident Form URL** (or click **Copy Link**)
-3. Open a private/incognito browser tab and paste the URL → you should reach the form without logging in
-4. Submit a response (select a priority need + sitio)
-5. Go back to Needs Assessment in the admin app
-6. The **Priority Needs Ranking** chart should show the new response
-7. Verify the response count stat card increases
-
----
-
-## 16. Community Announcements (Public Link)
-
-**What to test:** Post an announcement that's visible to the public without login.
-
-> **Prerequisite:** Run `announcements.sql` in Supabase first.
-
-**Steps:**
-1. Go to **Needs Assessment** page — the **Announcements** panel is at the top
-2. Click **+ New Announcement**
-3. Fill in: Title (e.g. "Barangay Assembly — July 15"), Category (Event), Message body
-4. Click **📢 Post Announcement**
-5. The announcement appears in the table with status **Live**
-6. Click **Copy Public Link** → paste into an incognito window
-7. The `/announcements` page loads without login — your announcement is visible
-8. Back in the admin panel, click **Hide** → announcement disappears from the public page
-
----
-
-## 17. DILG Report Generation
-
-**What to test:** Reports auto-populate from live data and can be exported.
-
-**Steps:**
-1. Go to **DILG Reports**
-2. Click **Barangay Profile Report** — a preview appears with live figures (total population, sex breakdown, seniors, PWDs, etc.)
-3. Click **Export PDF** — a PDF downloads with the formatted report
-4. Click ✕ Close, then open **Peace & Order Report** — confirm incident counts match the Crime page
-5. Open **CBMS Statistical Report** and **Assistance & Beneficiary Report** — verify data is consistent
-
----
-
-## 18. Database Backup
-
-**What to test:** Download a full JSON backup; system tracks last backup date.
-
-**Steps:**
-1. Go to **DILG Reports** → scroll to **Database Backup** section
-2. If no backup has been done, the badge shows **"Never backed up"** (red)
-3. Click **⬇️ Download Backup**
-4. A `.json` file downloads: `protect-backup-YYYY-MM-DD.json`
-5. Open the file — verify it contains `residents`, `households`, `incidents`, `beneficiaries`, etc.
-6. The badge now shows **"Backed up today"** (green)
-7. The **Recent Backups** table shows the entry with date and record count
-
-**To test overdue warning:**
-- Manually set your system clock forward 8 days, refresh → badge turns red "Overdue — 8d ago"
-
----
-
-## 19. Audit / Activity Log
-
-**What to test:** Every data change is recorded in the Activity Log.
-
-> **Prerequisite:** Run `audit_logs.sql` in Supabase first.
-
-**Steps:**
-1. Go to **DILG Reports** → scroll to **Activity Log** section
-2. Add a new resident (go to Residents, add one, come back)
-3. Click **🔄 Refresh** in the Activity Log
-4. A new row appears: `just now | Added | Resident | Juan Dela Cruz (RES-XXXX) | [your name]`
-5. Edit that resident (change the occupation) → refresh → see `Updated` row
-6. Log a new incident → refresh → see `Added | Incident | INC-2026-XXX — Theft`
-7. Verify timestamps show "just now", "5m ago", etc.
-8. Hover over the timestamp to see the exact date and time
-
----
-
-## Common Issues & Fixes
-
-| Problem | Fix |
-|---------|-----|
-| Residents table shows mock data | Seed data not run yet — run `seed_data.sql` in Supabase |
-| Household dropdown shows only 1 entry | Same — run seed data; households need to exist in DB |
-| Activity Log is empty | Run `audit_logs.sql` to install the DB triggers |
-| Photo upload fails | Run `incident_photos.sql`; check Supabase Storage bucket exists |
-| Announcements page 404 | Normal — run `announcements.sql` and make sure the app has the new route |
-| Map doesn't load | Check internet; tiles need network on first load before caching |
-| OSY column error | Run `add_sector_fields.sql` to add the column |
-
----
-
-*Generated for PROTECT v1.0 Capstone Demo — Barangay San Joaquin, Basco, Batanes*
+### How to report a failure to the developer
+Page + action + exact error. Example:
+> *"Crime & Incident → clicked Submit Report → red toast: 'new row violates row-level security policy'."*
+That triad is enough to pinpoint and fix it.
