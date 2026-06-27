@@ -26,6 +26,19 @@ const PURPOSES = [
   'Others',
 ]
 
+// ---- SHA-256 hashing (privacy for the QR payload) ----
+// We hash the resident_no with the browser's built-in Web Crypto API so the QR
+// code contains NO readable personal data — just a 64-char hex fingerprint.
+// A generic QR scanner sees meaningless hex; only our system can match the hash
+// back to a resident. Returns a hex string. (Async because crypto.subtle is async.)
+async function sha256(text) {
+  const bytes = new TextEncoder().encode(String(text))           // string → bytes
+  const digest = await crypto.subtle.digest('SHA-256', bytes)    // bytes → SHA-256 hash
+  return Array.from(new Uint8Array(digest))                      // hash bytes → hex string
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 export default function QRVerification() {
   const [selected, setSelected]   = useState(null)
   const [scanned, setScanned]     = useState(null)
@@ -36,6 +49,8 @@ export default function QRVerification() {
   const [releaseAmount, setReleaseAmount] = useState('')
   const [docPreview, setDocPreview] = useState(null)       // HTML of the document to preview/print
   const [cameraError, setCameraError] = useState(null)
+  const [qrHash, setQrHash] = useState('')                 // SHA-256 of the selected resident's number (goes in the QR)
+  const [hashMap, setHashMap] = useState({})               // { sha256(resident_no): resident } — used to identify a scanned hash
   const scannerRef = useRef(null)
   const html5QrRef = useRef(null)
   const printPreviewRef = useRef(null)
@@ -93,6 +108,28 @@ export default function QRVerification() {
       return data || []
     },
   })
+
+  // Build a lookup { hash → resident } whenever the residents list changes, so a
+  // scanned hash can be matched back to a person instantly (hashing is async, so
+  // we precompute the whole map once instead of hashing on every scan).
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const entries = await Promise.all(
+        residents.map(async r => [await sha256(r.resident_no), r])
+      )
+      if (!cancelled) setHashMap(Object.fromEntries(entries))
+    })()
+    return () => { cancelled = true }
+  }, [residents])
+
+  // Hash the currently selected resident's number for their QR code.
+  useEffect(() => {
+    if (!selected) { setQrHash(''); return }
+    let cancelled = false
+    sha256(selected.resident_no).then(h => { if (!cancelled) setQrHash(h) })
+    return () => { cancelled = true }
+  }, [selected])
 
   // Log verification to Supabase
   const logMutation = useMutation({
@@ -215,8 +252,11 @@ export default function QRVerification() {
   const handleScannedResult = (text) => {
     try {
       const data = JSON.parse(text)
-      // Match by resident_no
-      const match = residents.find(r => r.resident_no === data.id)
+      // v2 (current): QR holds a SHA-256 hash → look it up in the precomputed map.
+      // v1 (legacy): older QR holds the plaintext resident_no in data.id → match directly.
+      const match = data.rid
+        ? hashMap[data.rid]
+        : residents.find(r => r.resident_no === data.id)
       if (match) {
         setScanned(match)
         logMutation.mutate({ resident_id: match.id, purpose })
@@ -237,13 +277,10 @@ export default function QRVerification() {
     toast.success(`Verified: ${selected.first_name} ${selected.last_name}`)
   }
 
-  const qrData = selected ? JSON.stringify({
-    id: selected.resident_no,
-    name: `${selected.first_name} ${selected.last_name}`,
-    purok: selected.purok,
-    barangay: 'San Joaquin',
-    issued: new Date().toISOString().split('T')[0],
-  }) : ''
+  // The QR now carries ONLY a SHA-256 hash (no name, no sitio, no plaintext ID),
+  // so scanning it with any generic app reveals nothing about the resident.
+  // `v: 2` marks the new hashed format so the scanner knows how to read it.
+  const qrData = (selected && qrHash) ? JSON.stringify({ v: 2, rid: qrHash }) : ''
 
   const handlePrintCertificate = (resident, certPurpose, requestPurpose = '') => {
     const age = resident.date_of_birth

@@ -111,6 +111,27 @@ The incident form uses `sanitizeIncidentForm()` and the survey form uses `saniti
 
 ---
 
+## 6a. Hashed QR Payload — no PII in the QR code
+
+**Implementation:** `QRVerification.jsx` (SHA-256 via the Web Crypto API)
+
+A resident's QR code does **not** contain their name, sitio, or any readable
+personal information. Instead it carries only a **SHA-256 hash** of the resident
+number (a 64-character hex fingerprint). When scanned with any generic QR app it
+reveals nothing about the person; only the PROTECT system can match the hash back
+to a resident (by hashing each resident number and comparing).
+
+- **Goal:** prevent casual PII exposure if a resident's QR/ID is seen or scanned
+  by an outsider.
+- **Honest scope:** SHA-256 is a one-way *hash*, not a digital *signature*. It
+  protects against reading the PII, not against a determined attacker forging a
+  code. Server-side signing (HMAC) is noted as future work.
+
+**RA 10173 mapping:** Data minimization and *"appropriate technical measures"* —
+the QR exposes no personal data by default.
+
+---
+
 ## 7. Audit Trail — Accountability
 
 **Implementation:** `audit_logs.sql` + Activity Log in DILG Reports
