@@ -1,3 +1,11 @@
+// ============================================================================
+//  PublicAnnouncements.jsx  —  the public bulletin board at /announcements
+// ----------------------------------------------------------------------------
+//  A PUBLIC page (no login) where residents read active announcements, styled
+//  as a corkboard of pinned notices, and can open the Community Needs form to
+//  submit their priority needs. Only reads announcements where is_active = true.
+// ============================================================================
+
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'

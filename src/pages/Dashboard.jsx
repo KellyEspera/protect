@@ -1,3 +1,12 @@
+// ============================================================================
+//  Dashboard.jsx  —  the "Community Dashboard" landing page (after login)
+// ----------------------------------------------------------------------------
+//  A high-level overview: summary cards (population, seniors, PWDs, active
+//  beneficiaries) plus charts and the 5 most recent incidents. It runs several
+//  small READ-ONLY queries — each query only selects the columns it needs to
+//  keep the payload light.
+// ============================================================================
+
 import { useQuery } from '@tanstack/react-query'
 import { Bar, Line, Doughnut } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'

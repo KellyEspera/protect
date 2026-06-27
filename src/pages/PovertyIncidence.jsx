@@ -1,3 +1,12 @@
+// ============================================================================
+//  PovertyIncidence.jsx  —  "Poverty Incidence Analytics" page
+// ----------------------------------------------------------------------------
+//  Measures economic vulnerability using FAMILY income (the combined income of
+//  everyone in a household), not individual income — because a household's
+//  welfare depends on its total earnings. A household is "poor" if its family
+//  income is below the ₱10,000/month poverty line.
+// ============================================================================
+
 import { Bar, Doughnut } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
 import { SectionCard, StatCard } from '../components/ui/index'
@@ -14,7 +23,8 @@ export default function PovertyIncidence() {
   const total = residents.length
   const poorThreshold = 10000
 
-  // Build family income map: household_id → sum of all members' monthly_income
+  // Build a lookup: household_id → total income of all its members.
+  // We loop once over every resident and add their income into their household's bucket.
   const hhIncomeMap = {}
   residents.forEach(r => {
     if (r.household_id) {
@@ -22,6 +32,8 @@ export default function PovertyIncidence() {
     }
   })
 
+  // A resident's "family income" = their household's total. If they have no
+  // household linked, fall back to just their own income.
   const getFamilyIncome = r =>
     r.household_id ? (hhIncomeMap[r.household_id] || 0) : (r.monthly_income || 0)
 
