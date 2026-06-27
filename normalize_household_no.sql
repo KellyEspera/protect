@@ -5,9 +5,17 @@
 -- Residents link to households by ID, so this is safe — no other table changes.
 -- ============================================================
 
-UPDATE households
-SET household_no = 'HH-' || LPAD(REGEXP_REPLACE(household_no, '\D', '', 'g'), 4, '0')
-WHERE household_no ~ '\d';
+-- Collision-safe: only renames a household to its 4-digit form when no OTHER
+-- household already holds that number (e.g. an app-created HH-0007 vs a demo HH-007).
+UPDATE households AS h
+SET household_no = 'HH-' || LPAD(REGEXP_REPLACE(h.household_no, '\D', '', 'g'), 4, '0')
+WHERE h.household_no ~ '\d'
+  AND h.household_no <> 'HH-' || LPAD(REGEXP_REPLACE(h.household_no, '\D', '', 'g'), 4, '0')
+  AND NOT EXISTS (
+    SELECT 1 FROM households o
+    WHERE o.id <> h.id
+      AND o.household_no = 'HH-' || LPAD(REGEXP_REPLACE(h.household_no, '\D', '', 'g'), 4, '0')
+  );
 
 -- Check the result
 SELECT household_no, purok, head_name
