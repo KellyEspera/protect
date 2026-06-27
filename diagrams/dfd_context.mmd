@@ -1,0 +1,15 @@
+flowchart LR
+    Staff[Barangay Staff<br/>admin / secretary / tanod]
+    DILGrep[DILG Representative]
+    Public[Resident / Public]
+
+    System(((PROTECT<br/>System)))
+
+    Staff -- resident, household, incident,<br/>beneficiary, announcement data --> System
+    System -- dashboards, maps, certificates,<br/>reports --> Staff
+
+    DILGrep -- report & review requests --> System
+    System -- DILG reports, needs data<br/>read-only --> DILGrep
+
+    Public -- community needs survey --> System
+    System -- public announcements --> Public

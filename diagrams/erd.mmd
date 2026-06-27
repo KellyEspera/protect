@@ -1,0 +1,90 @@
+erDiagram
+    AUTH_USERS ||--|| PROFILES : "has role"
+    HOUSEHOLDS ||--o{ RESIDENTS : "houses"
+    RESIDENTS ||--o{ BENEFICIARIES : "enrolled in"
+    ASSISTANCE_PROGRAMS ||--o{ BENEFICIARIES : "grants"
+    RESIDENTS ||--o{ QR_VERIFICATIONS : "scanned"
+    RESIDENTS ||--o{ SURVEY_RESPONSES : "submits"
+
+    PROFILES {
+        uuid id PK "= auth.users.id"
+        text full_name
+        text role "6 roles"
+    }
+    HOUSEHOLDS {
+        uuid id PK
+        text household_no UK "HH-0001"
+        text purok
+        text head_name
+        numeric latitude
+        numeric longitude
+    }
+    RESIDENTS {
+        uuid id PK
+        text resident_no
+        uuid household_id FK
+        text first_name
+        text last_name
+        date date_of_birth
+        text purok
+        bool is_household_head
+        bool is_pwd
+        bool is_out_of_school_youth
+        numeric monthly_income
+    }
+    ASSISTANCE_PROGRAMS {
+        uuid id PK
+        text name
+        bool is_active
+    }
+    BENEFICIARIES {
+        uuid id PK
+        uuid resident_id FK
+        uuid program_id FK
+        text status
+        date last_release_date
+        numeric total_released
+    }
+    QR_VERIFICATIONS {
+        uuid id PK
+        uuid resident_id FK
+        text purpose
+        timestamptz verified_at
+    }
+    SURVEY_RESPONSES {
+        uuid id PK
+        uuid resident_id FK "nullable"
+        text purok
+        text priority_need
+    }
+    INCIDENTS {
+        uuid id PK
+        text case_no
+        text incident_type
+        text status
+        numeric latitude
+        numeric longitude
+    }
+    DISASTER_RISK_ZONES {
+        uuid id PK
+        text hazard_type
+        text risk_level
+        numeric radius
+    }
+    ANNOUNCEMENTS {
+        uuid id PK
+        text title
+        text category
+        bool is_active
+    }
+    POPULATION_HISTORY {
+        uuid id PK
+        int year UK
+        int total_population
+    }
+    AUDIT_LOGS {
+        uuid id PK
+        text table_name
+        text action
+        jsonb new_data
+    }
