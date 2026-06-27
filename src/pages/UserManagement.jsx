@@ -1,3 +1,13 @@
+// ============================================================================
+//  UserManagement.jsx  —  "User Management" (admin only)
+// ----------------------------------------------------------------------------
+//  Lists all staff accounts and lets an admin edit a user's display name and
+//  assign their ROLE (the dropdown is built from ROLE_LABELS, so it always
+//  matches permissions.js). Changing a role here is what drives the whole
+//  app's access control. New accounts are created in Supabase Auth; a database
+//  trigger auto-creates the matching profile row, which is then edited here.
+// ============================================================================
+
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'

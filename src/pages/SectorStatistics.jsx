@@ -1,3 +1,12 @@
+// ============================================================================
+//  SectorStatistics.jsx  —  "Sector Statistics" page
+// ----------------------------------------------------------------------------
+//  Counts and charts the vulnerable sectors the barangay must monitor: senior
+//  citizens, solo parents, PWDs (by disability type), and out-of-school youth.
+//  Each sector is just a boolean flag on the resident row (is_senior_citizen,
+//  is_pwd, etc.), so the stats are simple filters over the residents list.
+// ============================================================================
+
 import { Bar } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
 import { SectionCard, StatCard } from '../components/ui/index'

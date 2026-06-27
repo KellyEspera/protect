@@ -1,3 +1,12 @@
+// ============================================================================
+//  NeedsAssessment.jsx  —  "Community Needs Assessment" (staff view)
+// ----------------------------------------------------------------------------
+//  Aggregates the needs survey responses that residents submit through the
+//  public form. Shows how many responses came in, ranks the priority needs,
+//  and how many sitios are covered. Read-only — residents do the submitting on
+//  the public page; staff only review the results here.
+// ============================================================================
+
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { SectionCard, StatCard } from '../components/ui/index'

@@ -1,3 +1,12 @@
+// ============================================================================
+//  PredictiveGrowth.jsx  —  "Predictive Population Growth" page
+// ----------------------------------------------------------------------------
+//  Forecasts the barangay's population 10 years ahead using LINEAR REGRESSION
+//  (least-squares) on the yearly figures in the population_history table.
+//  It fits a straight line y = slope·year + intercept through the historical
+//  points, reports R² (how well the line fits), then projects the line forward.
+// ============================================================================
+
 import { useQuery } from '@tanstack/react-query'
 import { Line } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
@@ -23,16 +32,21 @@ export default function PredictiveGrowth() {
   const historical = historyRows.map(r => ({ year: r.year, count: r.total_population }))
   const hasData = historical.length >= 2
 
-  // Linear regression on historical data
+  // ---- Linear regression (least-squares method) ----
+  // We need at least 2 points to draw a line. x = year, y = population.
   let slope = 0, intercept = 0, r2 = 0
   if (hasData) {
     const n = historical.length
-    const sumX  = historical.reduce((s, d) => s + d.year, 0)
-    const sumY  = historical.reduce((s, d) => s + d.count, 0)
-    const sumXY = historical.reduce((s, d) => s + d.year * d.count, 0)
-    const sumX2 = historical.reduce((s, d) => s + d.year * d.year, 0)
-    slope     = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+    const sumX  = historical.reduce((s, d) => s + d.year, 0)          // Σx
+    const sumY  = historical.reduce((s, d) => s + d.count, 0)         // Σy
+    const sumXY = historical.reduce((s, d) => s + d.year * d.count, 0) // Σ(xy)
+    const sumX2 = historical.reduce((s, d) => s + d.year * d.year, 0)  // Σ(x²)
+    // Least-squares formulas for the best-fit line y = slope·x + intercept:
+    slope     = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)  // = growth per year
     intercept = (sumY - slope * sumX) / n
+    // R² (coefficient of determination) = 1 - (residual variance / total variance).
+    // 1.0 = the line fits perfectly; closer to 0 = poor fit. ssTot/ssRes are the
+    // total and leftover squared distances from the mean / from the line.
     const meanY  = sumY / n
     const ssTot  = historical.reduce((s, d) => s + Math.pow(d.count - meanY, 2), 0)
     const ssRes  = historical.reduce((s, d) => s + Math.pow(d.count - (slope * d.year + intercept), 2), 0)

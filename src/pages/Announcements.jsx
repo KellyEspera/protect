@@ -1,3 +1,12 @@
+// ============================================================================
+//  Announcements.jsx  —  "Community Announcements" (staff admin)
+// ----------------------------------------------------------------------------
+//  Where staff create announcements (title, body, category, optional image),
+//  hide/show them, or delete them. Active ones appear on the public bulletin
+//  board at /announcements. Images are uploaded to a Supabase Storage bucket
+//  and the public URL is saved on the announcement row.
+// ============================================================================
+
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
