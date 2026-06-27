@@ -1,5 +1,5 @@
 flowchart TD
-    E([GIS Household Map]) --> Load[Load Leaflet map of San Joaquin<br/>pins color-coded by sitio]
+    C((C)) --> Load[Load Leaflet map of San Joaquin<br/>pins color-coded by sitio]
     Load --> Act{Action?}
 
     Act -- Click existing pin --> Pop[Popup: residents living there<br/>+ PWD / Senior / Solo flags]
@@ -18,5 +18,5 @@ flowchart TD
 
     Act -- Pinned list --> Fly[Fly map to selected household]
 
-    SaveU --> Refresh[Refresh map] --> Done([Return to Dashboard])
-    Fly --> Done
+    SaveU --> Refresh[Refresh map] --> R((R))
+    Fly --> R

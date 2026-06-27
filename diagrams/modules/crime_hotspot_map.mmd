@@ -1,5 +1,5 @@
 flowchart TD
-    CH([Crime Hotspot Map]) --> Load[Load map + query incidents]
+    F((F)) --> Load[Load map + query incidents]
     Load --> Mode{View mode?}
 
     Mode -- Heatmap --> Heat[Density gradient from incident locations<br/>green to red = fewer to more crimes]
@@ -14,5 +14,5 @@ flowchart TD
     Re --> Show[Show density + sitio ranking + recent incidents]
     Show --> Click{Click an incident dot?}
     Click -- Yes --> Pop[Show incident details popup]
-    Click -- No --> Done([Return to Dashboard])
-    Pop --> Done
+    Click -- No --> R((R))
+    Pop --> R
