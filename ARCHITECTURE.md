@@ -75,7 +75,6 @@ ROLE_ROUTES = {
   officer:  [all pages],
   brgy_sec: [all pages],
   tanod:    ['/', '/crime-map', '/crime'],      // only 3 pages
-  dilg_rep: ['/', '/reports', '/needs'],         // only 3 pages
   viewer:   [most pages, no admin/QR],
 }
 ```

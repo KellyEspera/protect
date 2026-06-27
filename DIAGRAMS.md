@@ -15,8 +15,11 @@ Three diagrams for the capstone documentation, derived from the actual system:
 |-------|--------|
 | **Barangay Secretary / Officer** (admin · officer · brgy_sec) | Everything — resident/household profiling, GIS, QR + documents, beneficiaries + assistance, announcements, incidents + status, hotspot + disaster maps, analytics, predictive, needs, DILG reports |
 | **Barangay Tanod** | Login, Log Crime/Incident, Update Incident Status, View Crime Hotspot Map |
-| **DILG Representative** (read-only) | Login, Generate DILG Reports, View Needs Assessment |
 | **Resident / Public** (no login) | Submit Community Needs, View Public Announcements |
+
+> The **DILG / Government** is *not* a system user — it's the external office that **receives**
+> the compliance reports the barangay generates and submits. It appears in the DFD as an
+> external entity, not as a login role.
 
 > All diagrams use **Mermaid**. They render automatically on GitHub. To export an
 > image for your paper, paste a block into <https://mermaid.live> and download as PNG/SVG.
@@ -36,80 +39,38 @@ How a user moves through the system: login → role check → permitted modules 
 
 ```mermaid
 flowchart TD
-    Start([User opens PROTECT]) --> Mode{Logged in?}
+    Start([Start]) --> Open[User opens PROTECT]
+    Open --> Access{Public link or staff login?}
 
-    %% ---------- PUBLIC PORTAL (no login) ----------
-    Mode -- "No · public link" --> Pub[/Public Announcements portal/]
-    Pub --> PubAct{What do they do?}
-    PubAct -- Read --> PubRead[View active announcements]
-    PubAct -- Submit needs --> PubForm[Fill Community Needs form]
-    PubForm --> SaveSurvey[(Save to survey_responses)]
-    PubRead --> PubEnd([Leave site])
-    SaveSurvey --> PubEnd
+    %% Public (no login)
+    Access -- Public --> Pub[Public Announcements / Needs portal] --> J((J))
 
-    %% ---------- STAFF LOGIN ----------
-    Mode -- "Staff login" --> Login[Login page]
-    Login --> Auth[Supabase Auth verifies email & password]
-    Auth --> Valid{Credentials valid?}
-    Valid -- No --> Login
-    Valid -- Yes --> LoadRole[Load profile and role]
+    %% Staff login with rate limiting
+    Access -- Staff login --> Fail{5+ failed attempts?}
+    Fail -- Yes --> Lock[Locked 15 mins]
+    Fail -- No --> Auth{Supabase Auth valid?}
+    Auth -- Invalid --> Fail
+    Auth -- Yes --> Dash[Community Dashboard]
 
-    LoadRole --> Route{Role-based menu}
-    Route -- "admin / officer / brgy_sec" --> RAll[All modules]
-    Route -- tanod --> RT[Dashboard · Crime Hotspot · Crime & Incident]
-    Route -- dilg_rep --> RD[Dashboard · DILG Reports · Needs Assessment<br/>read-only]
-    Route -- viewer --> RV[Read-only dashboards]
+    %% Module selection (filtered by role) -> off-page connectors
+    Dash --> Sel{Select module from dashboard<br/>menu filtered by role}
+    Sel --> M1[Resident Profiling] --> A((A))
+    Sel --> M2[QR Verification] --> B((B))
+    Sel --> M3[GIS Household Map] --> C((C))
+    Sel --> M4[Disaster Vulnerability] --> D((D))
+    Sel --> M5[Crime & Incident] --> E((E))
+    Sel --> M6[Crime Hotspot Map] --> F((F))
+    Sel --> M7[Beneficiary Tracking] --> G((G))
+    Sel --> M8[Analytics Dashboards] --> H((H))
+    Sel --> M9[Predictive Growth] --> I((I))
+    Sel --> M10[Announcements & Needs] --> J
+    Sel --> M11[DILG Reports] --> K((K))
 
-    RAll --> Module
-    RT --> Module
-    RD --> Module
-    RV --> Module
-
-    Module[/Open a module/] --> Which{Which module?}
-    Which -- Resident Profiling --> Res[Add / edit / search residents,<br/>CSV import, PII masking]
-    Which -- GIS Household Map --> Gis[Pin household,<br/>view members & sector flags]
-    Which -- Crime & Incident --> Inc[Log incident + photo,<br/>update status:<br/>Ongoing / Resolved / Escalated / Dismissed]
-    Which -- "Hotspot / Disaster maps" --> Maps[View crime heatmap,<br/>pins, risk zones]
-    Which -- Beneficiary Tracking --> Ben[Enroll, edit, record aid release,<br/>manage programs]
-    Which -- QR Verification --> Qr[Scan resident QR code]
-    Which -- Announcements --> Ann[Post / hide announcement<br/>+ image upload]
-    Which -- "Analytics / Predictive" --> Cht[View charts & population forecast]
-    Which -- DILG Reports --> Rep[Compile barangay report]
-
-    %% ---------- QR SUB-FLOW ----------
-    Qr --> QrType{Purpose?}
-    QrType -- Document request --> Doc[Preview filled barangay document]
-    Doc --> Print[Print for Punong Barangay signature]
-    QrType -- Assistance claim --> Rel[Verify household head,<br/>record aid release]
-
-    %% ---------- WRITE / PERMISSION GATE ----------
-    Res --> Gate
-    Gis --> Gate
-    Inc --> Gate
-    Ben --> Gate
-    Ann --> Gate
-    Rel --> Gate
-    Gate{Create / edit / delete?}
-    Gate -- "Yes · canEdit role" --> Write[Write to Supabase]
-    Gate -- "No · read-only role" --> Block[Edit controls hidden / blocked]
-    Write --> Audit[(DB trigger writes audit_log)]
-    Write --> Refresh[Refresh cache, re-render UI]
-
-    %% ---------- READ / OUTPUT ----------
-    Rep --> Export{Export PDF?}
-    Export -- Yes --> Pdf[Generate PDF report]
-    Export -- No --> Show
-    Pdf --> Show
-    Maps --> Show
-    Cht --> Show
-    Print --> Show
-    Refresh --> Show
-    Block --> Show
-    Show([Information displayed / action complete])
-
-    Show --> Logout{Log out?}
-    Logout -- No --> Module
-    Logout -- Yes --> End([Session ends])
+    %% Shared return connector from every sub-flowchart
+    R((R)) --> Backend[Supabase Backend — PostgreSQL · Row Level Security · Auth · Real-time]
+    Backend --> Cont{Continue session?}
+    Cont -- Yes --> Dash
+    Cont -- No --> Out([User logs out])
 ```
 
 ---
@@ -121,7 +82,7 @@ The whole system as one process, showing the external entities and what flows in
 ```mermaid
 flowchart LR
     Staff[Barangay Staff<br/>admin / secretary / tanod]
-    DILGrep[DILG Representative]
+    DILG[DILG / Government<br/>oversight office]
     Public[Resident / Public]
 
     System(((PROTECT<br/>System)))
@@ -129,8 +90,7 @@ flowchart LR
     Staff -- resident, household, incident,<br/>beneficiary, announcement data --> System
     System -- dashboards, maps, certificates,<br/>reports --> Staff
 
-    DILGrep -- report & review requests --> System
-    System -- DILG reports, needs data<br/>read-only --> DILGrep
+    System -- compliance reports<br/>(submitted by the barangay) --> DILG
 
     Public -- community needs survey --> System
     System -- public announcements --> Public
@@ -147,7 +107,7 @@ The major processes, the data stores they use, and the flows between them.
 flowchart TD
     %% ---- External entities ----
     Staff[Barangay Staff]
-    DILGrep[DILG Rep]
+    DILG[DILG / Government]
     Public[Resident / Public]
 
     %% ---- Processes ----
@@ -170,7 +130,6 @@ flowchart TD
 
     %% ---- Auth ----
     Staff --> P1
-    DILGrep --> P1
     P1 --> D1
 
     %% ---- Residents / households ----
@@ -203,11 +162,11 @@ flowchart TD
 
     %% ---- Analytics / reports ----
     Staff --> P7
-    DILGrep --> P7
     D2 --> P7
     D3 --> P7
     D4 --> P7
     D7 --> P7
+    P7 --> DILG
 ```
 
 ### Process ↔ data store key

@@ -3,7 +3,6 @@ export const ROLE_LABELS = {
   officer:  'Barangay Officer',
   brgy_sec: 'Barangay Secretary',
   tanod:    'Barangay Tanod',
-  dilg_rep: 'DILG Representative',
   viewer:   'Viewer',
 }
 
@@ -15,7 +14,6 @@ export const ROLE_ROUTES = {
   officer:  ALL_ROUTES,
   brgy_sec: ALL_ROUTES,
   tanod:    ['/', '/crime-map', '/crime'],
-  dilg_rep: ['/', '/reports', '/needs'],
   viewer:   ['/', '/residents', '/qr', '/population', '/poverty', '/sectors', '/gis', '/crime-map', '/disaster', '/beneficiary', '/crime', '/predictive', '/needs'],
 }
 
@@ -25,7 +23,7 @@ export function canAccess(role, path) {
 }
 
 // Roles that may only VIEW data — no create / edit / delete / import.
-export const READONLY_ROLES = ['viewer', 'dilg_rep']
+export const READONLY_ROLES = ['viewer']
 
 // True if the role is allowed to make changes (add/edit/delete).
 export function canEdit(role) {

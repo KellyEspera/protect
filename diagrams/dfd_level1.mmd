@@ -1,7 +1,7 @@
 flowchart TD
     %% ---- External entities ----
     Staff[Barangay Staff]
-    DILGrep[DILG Rep]
+    DILG[DILG / Government]
     Public[Resident / Public]
 
     %% ---- Processes ----
@@ -24,7 +24,6 @@ flowchart TD
 
     %% ---- Auth ----
     Staff --> P1
-    DILGrep --> P1
     P1 --> D1
 
     %% ---- Residents / households ----
@@ -57,8 +56,8 @@ flowchart TD
 
     %% ---- Analytics / reports ----
     Staff --> P7
-    DILGrep --> P7
     D2 --> P7
     D3 --> P7
     D4 --> P7
     D7 --> P7
+    P7 --> DILG

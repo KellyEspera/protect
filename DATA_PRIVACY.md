@@ -36,7 +36,6 @@ The system uses **Role-Based Access Control (RBAC)** with 6 defined roles:
 | `officer` | Full access — same as admin |
 | `brgy_sec` | Full access — Barangay Secretary |
 | `tanod` | Limited — Dashboard, Crime Hotspot Map, Crime & Incident only |
-| `dilg_rep` | Limited — Dashboard, DILG Reports, Needs Assessment only |
 | `viewer` | Read-only on most pages; no QR Verification or DILG Reports |
 
 - Every protected route is wrapped in a `<RoleRoute>` component that checks `canAccess(role, path)` before rendering

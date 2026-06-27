@@ -38,7 +38,6 @@ Basco, Batanes · Capstone Project
 | admin | Everything |
 | officer | Most pages except some restricted |
 | tanod | Crime & Incident only |
-| dilg_rep | Reports & Analytics |
 | viewer | Read-only on select pages |
 
 ---

@@ -33,7 +33,7 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 |--------|------|-------|
 | 🔑 🔗 `id` | uuid | = `auth.users.id` (1-to-1) |
 | *`full_name`* | text | |
-| `role` | text | one of: `admin`, `officer`, `brgy_sec`, `tanod`, `dilg_rep`, `viewer` |
+| `role` | text | one of: `admin`, `officer`, `brgy_sec`, `tanod`, `viewer` |
 | *`barangay`* | text | |
 | `created_at` | timestamptz | |
 
@@ -343,8 +343,8 @@ Which screen reads (R) / writes (W) which table:
 | `admin` / `officer` | full system |
 | `brgy_sec` (Barangay Secretary) | full system (all modules) |
 | `tanod` | Dashboard, Crime Hotspot Map, Crime & Incident only |
-| `dilg_rep` | Dashboard, DILG Reports, Needs Assessment only — **read-only** |
 | `viewer` | read-only |
 
-Write actions are gated by `canEdit(role)`; read-only roles (`viewer`, `dilg_rep`) see no
-edit/delete controls.
+Write actions are gated by `canEdit(role)`; the read-only `viewer` role sees no
+edit/delete controls. The DILG is **not** a system user — the barangay generates the
+DILG-compliant reports and submits them to the DILG (an external recipient).

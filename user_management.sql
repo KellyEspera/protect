@@ -9,7 +9,7 @@ ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 
 ALTER TABLE profiles
   ADD CONSTRAINT profiles_role_check
-  CHECK (role IN ('admin', 'officer', 'brgy_sec', 'tanod', 'dilg_rep', 'viewer'));
+  CHECK (role IN ('admin', 'officer', 'brgy_sec', 'tanod', 'viewer'));
 
 
 -- 2. Auto-create a profile row when a new user is created in Supabase Auth
