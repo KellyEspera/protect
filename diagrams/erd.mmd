@@ -5,6 +5,9 @@ erDiagram
     ASSISTANCE_PROGRAMS ||--o{ BENEFICIARIES : "grants"
     RESIDENTS ||--o{ QR_VERIFICATIONS : "scanned"
     RESIDENTS ||--o{ SURVEY_RESPONSES : "submits"
+    AUTH_USERS ||--o{ INCIDENTS : "logs (officer_id)"
+    AUTH_USERS ||--o{ ANNOUNCEMENTS : "posts (posted_by)"
+    AUTH_USERS ||--o{ AUDIT_LOGS : "records (changed_by)"
 
     PROFILES {
         uuid id PK "= auth.users.id"
@@ -62,6 +65,7 @@ erDiagram
         text case_no
         text incident_type
         text status
+        uuid officer_id FK
         numeric latitude
         numeric longitude
     }
@@ -76,6 +80,7 @@ erDiagram
         text title
         text category
         bool is_active
+        uuid posted_by FK
     }
     POPULATION_HISTORY {
         uuid id PK
@@ -86,5 +91,6 @@ erDiagram
         uuid id PK
         text table_name
         text action
+        uuid changed_by FK
         jsonb new_data
     }

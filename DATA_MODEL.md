@@ -212,6 +212,9 @@ erDiagram
     ASSISTANCE_PROGRAMS ||--o{ BENEFICIARIES : "grants"
     RESIDENTS ||--o{ QR_VERIFICATIONS : "scanned"
     RESIDENTS ||--o{ SURVEY_RESPONSES : "submits"
+    AUTH_USERS ||--o{ INCIDENTS : "logs (officer_id)"
+    AUTH_USERS ||--o{ ANNOUNCEMENTS : "posts (posted_by)"
+    AUTH_USERS ||--o{ AUDIT_LOGS : "records (changed_by)"
 
     PROFILES {
         uuid id PK "= auth.users.id"
@@ -269,6 +272,7 @@ erDiagram
         text case_no
         text incident_type
         text status
+        uuid officer_id FK
         numeric latitude
         numeric longitude
     }
@@ -283,6 +287,7 @@ erDiagram
         text title
         text category
         bool is_active
+        uuid posted_by FK
     }
     POPULATION_HISTORY {
         uuid id PK
@@ -293,13 +298,15 @@ erDiagram
         uuid id PK
         text table_name
         text action
+        uuid changed_by FK
         jsonb new_data
     }
 ```
 
-> `INCIDENTS`, `DISASTER_RISK_ZONES`, `ANNOUNCEMENTS`, `POPULATION_HISTORY`, and
-> `AUDIT_LOGS` are standalone (no FK into the resident/household core) — they're keyed by
-> `purok`/`year`/`table_name` rather than a hard foreign key. Shown here without lines for clarity.
+> `INCIDENTS`, `ANNOUNCEMENTS`, and `AUDIT_LOGS` link to `AUTH_USERS` through the user who
+> created the record (`officer_id` / `posted_by` / `changed_by`). `DISASTER_RISK_ZONES` and
+> `POPULATION_HISTORY` are the only truly standalone tables — they have **no foreign keys**
+> (keyed by `purok` and `year`), so they correctly stand alone in the ERD.
 
 ---
 
