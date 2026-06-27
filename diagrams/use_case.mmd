@@ -1,9 +1,9 @@
-flowchart LR
-    %% ===== Actors =====
+flowchart TB
+    %% ===== Actors (top row) =====
     Sec[" Barangay Secretary / Officer<br/>admin · officer · brgy_sec"]
     Tanod[" Barangay Tanod"]
-    DILG[" DILG Representative<br/>read-only"]
-    Res[" Resident / Public<br/>no login"]
+    DILG[" DILG Representative · read-only"]
+    Res[" Resident / Public · no login"]
 
     subgraph SYS[PROTECT System]
       direction TB
@@ -11,60 +11,49 @@ flowchart LR
       UC_Login(["Authenticate / Login"])
 
       subgraph G1[Resident & Identity]
-        direction TB
+        direction LR
         UC_Res(["Manage Resident &<br/>Household Profiles"])
-        UC_GIS(["Pin Households on GIS Map"])
-        UC_QR(["Verify Resident via QR"])
-        UC_Doc(["Issue Barangay Document"])
-      end
-
-      subgraph G2[Community Services]
-        direction TB
-        UC_Ben(["Manage Beneficiaries &<br/>Programs"])
-        UC_Aid(["Process Assistance Release"])
-        UC_Ann(["Post Announcements"])
+        UC_GIS(["Pin Households<br/>on GIS Map"])
+        UC_QR(["Verify Resident<br/>via QR"])
+        UC_Doc(["Issue Barangay<br/>Document"])
       end
 
       subgraph G3[Peace & Order / Safety]
-        direction TB
-        UC_Log(["Log Crime / Incident"])
-        UC_Stat(["Update Incident Status"])
-        UC_Hot(["View Crime Hotspot Map"])
-        UC_Dis(["Mark Disaster Risk Zones"])
+        direction LR
+        UC_Log(["Log Crime /<br/>Incident"])
+        UC_Stat(["Update Incident<br/>Status"])
+        UC_Hot(["View Crime<br/>Hotspot Map"])
+        UC_Dis(["Mark Disaster<br/>Risk Zones"])
+      end
+
+      subgraph G2[Community Services]
+        direction LR
+        UC_Ben(["Manage Beneficiaries<br/>& Programs"])
+        UC_Aid(["Process Assistance<br/>Release"])
+        UC_Ann(["Post Announcements"])
       end
 
       subgraph G4[Analytics & Reports]
-        direction TB
-        UC_Ana(["View Analytics Dashboards"])
-        UC_Pred(["View Predictive Growth"])
-        UC_Needs(["View Needs Assessment"])
-        UC_Rep(["Generate DILG Reports"])
+        direction LR
+        UC_Ana(["View Analytics<br/>Dashboards"])
+        UC_Pred(["View Predictive<br/>Growth"])
+        UC_Needs(["View Needs<br/>Assessment"])
+        UC_Rep(["Generate DILG<br/>Reports"])
       end
 
       subgraph G5[Public Portal]
-        direction TB
-        UC_Submit(["Submit Community Needs"])
-        UC_PubAnn(["View Public Announcements"])
+        direction LR
+        UC_Submit(["Submit Community<br/>Needs"])
+        UC_PubAnn(["View Public<br/>Announcements"])
       end
     end
 
-    %% ===== Secretary / Officer — full access =====
-    Sec --- UC_Login
-    Sec --- UC_Res
-    Sec --- UC_GIS
-    Sec --- UC_QR
-    Sec --- UC_Doc
-    Sec --- UC_Ben
-    Sec --- UC_Aid
-    Sec --- UC_Ann
-    Sec --- UC_Log
-    Sec --- UC_Stat
-    Sec --- UC_Hot
-    Sec --- UC_Dis
-    Sec --- UC_Ana
-    Sec --- UC_Pred
-    Sec --- UC_Needs
-    Sec --- UC_Rep
+    %% ===== Secretary / Officer — full access (whole groups) =====
+    Sec === UC_Login
+    Sec === G1
+    Sec === G2
+    Sec === G3
+    Sec === G4
 
     %% ===== Tanod — peace & order only =====
     Tanod --- UC_Login
