@@ -58,7 +58,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] **Edit** a resident → change saves and shows in the table
 - [ ] **Search / filter** by name, sitio, sector → table narrows correctly
 - [ ] **Sort** by a column header → order changes
-- [ ] **PII masking** → contact / PhilHealth show as `•••••••1234`; "Reveal" shows the full value
+- [ ] **PII masking** → contact number shows as `•••••••1234`; "Reveal PII" shows the full value
 - [ ] **CSV/XLSX import** → upload the template → rows import (check the import summary)
 - [ ] **Export PDF / Excel** → files download with the resident data
 

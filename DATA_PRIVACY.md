@@ -232,7 +232,7 @@ No data is collected beyond what is needed for barangay governance and social se
 > All text inputs pass through `sanitize.js` which strips HTML tags and escapes special characters before saving to the database. This prevents XSS and script injection.
 
 **Q: Is the data encrypted?**
-> Yes — in transit via HTTPS/TLS 1.2+, and at rest via AES-256 managed by Supabase (hosted on AWS). Uploaded photos in Supabase Storage are also encrypted at rest. On top of that, sensitive PII (contact number and PhilHealth number) is **masked in the resident profile view** — it shows as `•••••••1234` until a user explicitly clicks "Reveal PII", so it isn't exposed at a glance over someone's shoulder.
+> Yes — in transit via HTTPS/TLS 1.2+, and at rest via AES-256 managed by Supabase (hosted on AWS). Uploaded photos in Supabase Storage are also encrypted at rest. On top of that, sensitive PII (the contact number) is **masked in the resident profile view** — it shows as `•••••••1234` until a user explicitly clicks "Reveal PII", so it isn't exposed at a glance over someone's shoulder.
 
 **Q: How do you comply with RA 10173?**
 > Through three layers: organizational (role-based access control), technical (encryption, RLS, input sanitization, audit logging), and data minimization (only collecting what's needed for barangay governance).

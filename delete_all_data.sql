@@ -32,7 +32,7 @@ RESTART IDENTITY CASCADE;
 
 -- Community announcements: also placeholder? Uncomment to wipe them too.
 -- (Leave commented if you posted any real announcements you want to keep.)
--- TRUNCATE public.announcements RESTART IDENTITY CASCADE;
+TRUNCATE public.announcements RESTART IDENTITY CASCADE;
 
 -- ── Verify everything is empty (should all read 0, except the kept tables) ──
 SELECT 'residents'           AS table, COUNT(*) FROM residents

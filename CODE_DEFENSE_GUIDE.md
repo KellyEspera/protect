@@ -71,7 +71,7 @@ assigns one.
 | **Authorization / roles (frontend)** | Which pages a role sees + edit gating — the UX layer on top of RLS | `permissions.js` |
 | **XSS prevention** | Escapes HTML in form input before saving | `sanitize.js` |
 | **Brute-force** | 5 failed logins → 15-min lockout per email | `rateLimiter.js` |
-| **PII masking** | Contact # / PhilHealth shown masked, reveal on click | `Residents.jsx` |
+| **PII masking** | Contact number shown masked, reveal on click | `Residents.jsx` |
 | **Audit trail** | Auto-logs INSERT/UPDATE/DELETE on key tables | DB triggers (`audit_logs.sql`) |
 | **Data privacy** | RA 10173 compliance noted; access restricted to authorized staff | `DATA_PRIVACY.md` |
 
