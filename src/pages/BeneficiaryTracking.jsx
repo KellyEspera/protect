@@ -35,6 +35,7 @@ export default function BeneficiaryTracking() {
   const [enrollOpen, setEnrollOpen] = useState(false)
   const [enrollForm, setEnrollForm] = useState(emptyEnroll)
   const [residentSearch, setResidentSearch] = useState('')
+  const [residentFocused, setResidentFocused] = useState(false)  // show the full list on focus (browse without typing)
   const [editBen, setEditBen] = useState(null)        // beneficiary being edited
   const [delBen, setDelBen] = useState(null)          // beneficiary id to remove
   const [programOpen, setProgramOpen] = useState(false)
@@ -409,22 +410,27 @@ export default function BeneficiaryTracking() {
                 <label style={{ fontSize:11,fontWeight:600,color:'#5A5A52',display:'block',marginBottom:4 }}>Resident *</label>
                 <input
                   className="form-input"
-                  placeholder="Search name or resident no..."
+                  placeholder="Search name or resident no… (or click to browse all)"
                   value={residentSearch}
                   onChange={e => { setResidentSearch(e.target.value); setEnrollForm(f => ({ ...f, resident_id: '' })) }}
+                  onFocus={() => setResidentFocused(true)}
+                  onBlur={() => setTimeout(() => setResidentFocused(false), 150)}  // delay so a click on the list still registers
                   style={{ marginBottom:6 }}
                 />
-                {residentSearch.trim().length > 0 && (
-                  <div style={{ border:'1px solid #E8E4DA',borderRadius:4,maxHeight:160,overflowY:'auto',background:'#fff',boxShadow:'0 4px 12px rgba(0,0,0,0.08)' }}>
-                    {allResidents
-                      .filter(r =>
-                        `${r.first_name} ${r.last_name} ${r.resident_no}`.toLowerCase().includes(residentSearch.toLowerCase())
-                      )
-                      .slice(0, 10)
-                      .map(r => (
+                {(residentFocused || residentSearch.trim().length > 0) && (() => {
+                  // Empty search → show ALL residents (scrollable). Typing filters.
+                  const matches = allResidents.filter(r =>
+                    `${r.first_name} ${r.last_name} ${r.resident_no}`.toLowerCase().includes(residentSearch.toLowerCase())
+                  )
+                  return (
+                  <div style={{ border:'1px solid #E8E4DA',borderRadius:4,maxHeight:200,overflowY:'auto',background:'#fff',boxShadow:'0 4px 12px rgba(0,0,0,0.08)' }}>
+                    {matches.length === 0 && (
+                      <div style={{ padding:'10px 12px',fontSize:12,color:'#9A9488' }}>No residents found</div>
+                    )}
+                    {matches.slice(0, 100).map(r => (
                         <div
                           key={r.id}
-                          onClick={() => { setEnrollForm(f => ({ ...f, resident_id: r.id })); setResidentSearch(`${r.first_name} ${r.last_name} (${r.resident_no})`) }}
+                          onMouseDown={() => { setEnrollForm(f => ({ ...f, resident_id: r.id })); setResidentSearch(`${r.first_name} ${r.last_name} (${r.resident_no})`); setResidentFocused(false) }}
                           style={{ padding:'8px 12px',cursor:'pointer',fontSize:13,borderBottom:'1px solid #F5F2EC', background: enrollForm.resident_id === r.id ? '#F0FBF9' : '#fff' }}
                           onMouseEnter={e => e.currentTarget.style.background='#F5F2EC'}
                           onMouseLeave={e => e.currentTarget.style.background = enrollForm.resident_id === r.id ? '#F0FBF9' : '#fff'}
@@ -434,11 +440,12 @@ export default function BeneficiaryTracking() {
                         </div>
                       ))
                     }
-                    {allResidents.filter(r => `${r.first_name} ${r.last_name} ${r.resident_no}`.toLowerCase().includes(residentSearch.toLowerCase())).length === 0 && (
-                      <div style={{ padding:'10px 12px',fontSize:12,color:'#9A9488' }}>No residents found</div>
+                    {matches.length > 100 && (
+                      <div style={{ padding:'8px 12px',fontSize:11,color:'#9A9488' }}>Showing first 100 — type to narrow down.</div>
                     )}
                   </div>
-                )}
+                  )
+                })()}
                 {enrollForm.resident_id && (
                   <div style={{ fontSize:11,color:'#0D9E8C',marginTop:4 }}>✓ Resident selected</div>
                 )}
