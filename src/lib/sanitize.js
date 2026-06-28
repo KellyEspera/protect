@@ -95,6 +95,12 @@ export function sanitizeIncidentForm(form) {
   const base = sanitizeObject(form)
   return {
     ...base,
+    // Dropdown values — keep RAW. They come from fixed <select> options (not
+    // free text) so they're XSS-safe, and they must match the DB CHECK
+    // constraints exactly. Sanitizing them encoded the "/" in types like
+    // "Public Intoxication / Disorderly Conduct" and broke inserts.
+    incident_type: form.incident_type,
+    purok: form.purok,
     complainant: (base.complainant || '').slice(0, 200),
     description: (base.description || '').slice(0, 1000),
   }
