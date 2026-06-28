@@ -1,219 +1,282 @@
-# PROTECT — Documentation Fixes
+# PROTECT — Documentation Audit & Fixes (full paper, refreshed)
 
-Paste-ready corrections to align the capstone paper with the **deployed system**.
-Each item says *what to change* and gives the *replacement text*. Work top to bottom.
+Top-to-bottom audit of `PROTECT_DOCUMENTATION.docx` against the **deployed system**
+(as of this session). Each item gives the location, what's wrong, and paste-ready
+replacement text. Work top to bottom.
 
-Roles in the live system (final): **brgy_sec (Barangay Secretary — full access) · tanod (peace & order)**
-(admin/officer were merged into brgy_sec; the read-only viewer role was removed. DILG is **not** a
-login role — it receives the reports the barangay submits.)
+**Ground truth of the live system:**
+- **Login roles:** `brgy_sec` = **Barangay Secretary** (full access / the admin) · `tanod` =
+  **Barangay Tanod** (Dashboard, Crime Hotspot Map, Crime & Incident only). A new account is
+  *unassigned* until given a role. **There is no "Barangay Officer" and no "Resident" login role.**
+- **Residents do not log in.** They use a **public portal** (`/announcements` and the needs form)
+  with no account.
+- **DILG is not a user** — it is a *recipient* of the reports the barangay submits.
+
+**Severity:** 🔴 Critical (a panelist can catch the mismatch live) · 🟠 Medium · 🟢 Minor/polish.
 
 ---
 
 ## CHAPTER I — Background
 
-### ① Scope → "User Roles" bullet (REPLACE)
+### 🔴 ① Scope → "User Roles" bullet (REPLACE)
 **Old:** "User Roles: Barangay Officer and Resident with role-based access control…"
 
 **New:**
-> **User Roles:** The system enforces role-based access control across two roles —
+> **User Roles:** The system enforces role-based access control across two staff roles —
 > *Barangay Secretary* (full access — the system administrator) and *Barangay Tanod*
-> (peace-and-order pages only). Residents interact with the system only through a public portal
-> (needs survey and announcements) without logging in. This protects sensitive data so that each
-> user sees and edits only what their role permits.
+> (peace-and-order pages only: Dashboard, Crime Hotspot Map, and Crime & Incident). Residents
+> are **not** system users; they interact only through a public portal (community needs survey and
+> announcements) without logging in. A newly created account has no access until the Barangay
+> Secretary assigns it a role.
 
-### ② Conceptual Framework → feature count (REPLACE the phrase)
-**Old:** "delivering twelve integrated features…"
+### 🟢 ② Conceptual Framework → feature count (REPLACE the phrase)
+**Old:** "delivering twelve integrated features…" / "all twelve target features"
 
 **New:** "delivering its integrated modules — centralized dashboards, resident & household
 profiling, QR verification, GIS household mapping, disaster vulnerability mapping, crime &
-incident analytics, a crime hotspot heatmap, beneficiary tracking, poverty and sector
-analytics, predictive population modeling, community announcements & needs assessment, and
-automated DILG-compliant reporting."
+incident analytics, a crime hotspot heatmap, beneficiary tracking, poverty and sector analytics,
+predictive population modeling, community announcements & needs assessment, and automated
+DILG-compliant reporting."
 
-### ③ Limitations → offline bullet (REPLACE)
+### 🟢 ③ Limitations → offline bullet (REPLACE)
 **Old:** "The system operates online only; offline functionality is not implemented…"
 
 **New:**
-> The system is online-first: all data operations require an internet connection. The GIS maps
-> do cache their map tiles for limited offline **viewing** (via a service worker), but creating,
+> The system is online-first: all data operations require an internet connection. The GIS maps do
+> cache their map tiles for limited offline **viewing** (via a service worker), but creating,
 > editing, and reading records still requires connectivity. Full offline data synchronization is
 > not implemented.
 
 ---
 
-## CHAPTER III — Technical Background (tool list corrections)
+## CHAPTER III — Technical Background (tool list)
 
-🔴 **Replace these two entries — they are not what the system uses:**
+🔴 **Remove / replace these — they are NOT what the system uses:**
 
-- **Remove "React-Qr-Scanner."** The actual camera scanner library is **html5-qrcode**.
-  > **html5-qrcode** — used in PROTECT's QR Verification module to scan resident QR codes
-  > with the device camera for fast, paperless identity verification.
-
-- **Remove "React-To-Print."** Printing is handled with the **browser's native print dialog**
-  (a hidden in-app print frame), not a third-party print library.
+- **Remove "React-To-Print."** Printing (ID cards, certificates, reports) uses the **browser's
+  native print dialog** via a hidden in-app print frame — no third-party print library.
+- **Remove "React-Qr-Scanner."** The actual camera scanner is **html5-qrcode**:
+  > **html5-qrcode** — used in PROTECT's QR Verification module to scan resident QR codes with the
+  > device camera for fast, paperless identity verification.
 
 ✅ **react-qr-code** (QR generation) is correct — keep it.
 
-➕ **Add these tools you actually use (optional but accurate):**
-- **jsPDF** — generates the downloadable PDF reports/exports across the analytics and DILG modules.
+🟢 **Lucidchart** — keep only if you actually drew the final ERD/DFD/Use Case there. (If the
+diagrams were generated another way, replace with the tool you used.)
+
+🟠 **Add the tools you actually use** (accurate and worth crediting):
+- **jsPDF (+ jspdf-autotable)** — generates the downloadable PDF reports/exports.
 - **SheetJS (xlsx)** — Excel import/export for residents and beneficiaries.
 - **Leaflet.heat** — renders the crime density heatmap on the Crime Hotspot Map.
+- **Zustand** — lightweight client state (auth/session).
+- **TanStack React Query** — server-state fetching/caching for every data page.
+- **Web Crypto API (SHA-256)** — hashes the QR payload so the QR carries no readable PII.
 
 ---
 
-## CHAPTER IV — Diagrams (replace with the regenerated figures)
+## CHAPTER IV — Requirement Documentation (diagrams)
 
-Replace these figures with the new PNGs in the repo's `diagrams/` folder (they match the
-deployed system):
+### 🔴 ④ ERD narrative + Figure 1 (REPLACE narrative; REGENERATE figure)
+The paper says "10 entities with 6 relationship connectors." The live database has **13 tables**.
+The ERD figure is also missing three tables (**announcements, population_history, audit_logs**).
 
-| Old figure | Replace with |
-|------------|--------------|
-| Figure 1 — ERD | `diagrams/erd.png` (13 tables, correct relationships) |
-| Figure 2 — DFD | `diagrams/dfd_context.png` + `diagrams/dfd_level1.png` |
-| Figure 3 — Use Case | `diagrams/use_case.png` (3 actors, no DILG rep) |
-| Figure 4 — System Flowchart | `diagrams/flowchart.png` (connector style A–K) |
-| Figures 5–10 — module flows | `diagrams/modules/*.png` (11 updated sub-flowcharts) |
+**New narrative:**
+> The ERD models the PROTECT database, which consists of **13 tables**. `residents` is the heart of
+> the system, linking to `households` (each resident may belong to one household; a household has one
+> head), `beneficiaries` (residents enrolled in `assistance_programs`), `qr_verifications` (each scan
+> event), and `survey_responses` (public needs submissions). `incidents` records crime/incident
+> reports logged by staff. `profiles` holds each system user's role and links to Supabase's
+> `auth.users`. `audit_logs` records every insert/update/delete on residents, households, and
+> incidents. `announcements`, `disaster_risk_zones`, and `population_history` are standalone tables
+> (no foreign keys) used for the bulletin board, hazard mapping, and population forecasting
+> respectively. Deleting a resident who is a household head cascades to remove the linked household
+> (enforced by a database trigger); standalone tables are unaffected.
 
-### ④ ERD narrative (REPLACE)
-**Old:** "…consists of 10 entities with 6 relationship connectors…"
+**Figure 1:** Replace with the regenerated ERD that shows all 13 tables **with relationship lines**
+(no floating tables). Use `diagrams/erd.png`.
 
-**New:**
-> The ERD consists of **13 tables**. The **residents** table is the heart of the system,
-> linking to **households** (each resident belongs to one household), **beneficiaries**,
-> **qr_verifications**, and **survey_responses**. **beneficiaries** is a junction table
-> resolving the many-to-many relationship between residents and **assistance_programs**. The
-> **profiles** table extends Supabase **auth.users** one-to-one and stores each user's role.
-> The **incidents**, **announcements**, and **audit_logs** tables each link to the staff user
-> who created the record (officer / poster / changer). **disaster_risk_zones** and
-> **population_history** are standalone reference tables — they have no foreign keys and are
-> keyed by sitio and year respectively; a household's exposure to a risk zone is computed at
-> runtime by distance, not stored. Deleting a resident cascades to its dependent records, while
-> the standalone reference tables are unaffected.
+### 🟠 ⑤ DFD narrative (one wording fix)
+**Old:** "Managed by the authorized Barangay Officer, the system adheres to national reporting
+standards…"
 
-### ⑤ Use Case narrative (REPLACE)
-**Old:** "The PROTECT System has two actors: Resident and Barangay Secretary…"
+**New:** "Managed by the authorized **Barangay Secretary**, the system adheres to national reporting
+standards…" (Also ensure the DFD figure's actor reads **Barangay Secretary**, and DILG/Government
+is shown as an external *recipient*, not a user.)
 
-**New:**
-> The PROTECT System has **three actors**: the **Barangay Secretary / Officer** (full access),
-> the **Barangay Tanod** (peace-and-order functions), and the **Resident / Public** (public
-> portal, no login). The Secretary/Officer manages resident and household profiles, verifies
-> residents via QR and issues barangay documents, tracks beneficiaries and processes
-> assistance, logs and resolves incidents, marks disaster risk zones, posts announcements,
-> views all analytics and the population forecast, and generates DILG-compliant reports. The
-> Tanod logs crime/incident reports, updates incident status, and views the Crime Hotspot Map.
-> Residents submit community needs and view public announcements without an account. The
-> **DILG is not a system actor** — it is the external office that *receives* the compliance
-> reports the barangay generates and submits.
+### 🔴 ⑥ Use Case narrative + Figure 3 (REPLACE narrative; REDRAW figure)
+The paper gives the **Resident** abilities they don't have (viewing analytics, GIS/disaster maps,
+predictive growth, scanning QR). Residents have **no login**. It also omits the **Tanod** actor.
 
----
+**New narrative:**
+> The PROTECT System has three actors: **Barangay Secretary**, **Barangay Tanod**, and **Resident
+> (public)**. The Barangay Secretary has full access — managing resident and household profiles,
+> generating QR codes, verifying residents, tracking beneficiaries, logging crime/incident reports,
+> viewing all analytics and GIS/disaster maps, running predictive population growth, posting
+> announcements, managing users, reviewing the activity log, and generating DILG reports. The
+> Barangay Tanod has peace-and-order access only — viewing the dashboard and crime hotspot map and
+> logging/updating incident reports. The Resident is a public actor who does not log in; a resident
+> can only **submit a community needs assessment** and **view public announcements** through the
+> public portal.
 
-## CHAPTER IV — Corrected screenshot captions
+**Figure 3 (redraw):** Resident connects **only** to *Submit Needs Assessment* and *View Public
+Announcements*. Add a **Barangay Tanod** actor connected to *View Dashboard*, *View Crime Hotspot
+Map*, and *Log/Update Incident*. Keep the Barangay Secretary connected to everything.
 
-### ⑥ Figure 16 — Edit Resident Detail View (REPLACE)
-**Old:** "…The pre-populated form requires a reason for modification. All edits are recorded in
-an audit trail with timestamp, user ID, and reason."
-
-**New:**
-> Figure 16 shows the Edit Resident Detail View, which lets authorized users update an existing
-> resident's information through a pre-populated form. Every change is automatically recorded in
-> the **audit log** by a database trigger that captures the affected record, the before/after
-> values, the user who made the change, and the timestamp — providing a complete, tamper-evident
-> change history without extra data entry.
-
-### ⑦ Figure 17 — QR Verification (REPLACE)
-**Old:** "…Scanning a QR code instantly retrieves and displays the resident's complete profile
-and photo, preventing fraudulent claims…"
-
-**New:**
-> Figure 17 shows the QR Verification module, which enables fast, paperless verification of
-> residents. Each resident has a QR code encoding their resident number, name, and sitio. After
-> scanning (or selecting a resident), the system identifies the person, flags whether they are a
-> **household head or member**, and shows their sector badges. The officer then chooses a
-> purpose: **issue a barangay document** (Clearance, Indigency, Residency, or Business Permit) —
-> which opens a filled, print-ready document for the Punong Barangay to sign — **or process a
-> household assistance release**, which records the release against the beneficiary and prevents
-> double-claiming. Every verification is logged for accountability.
-
-### ⑧ Figure 19 — Poverty Incidence Analytics (REPLACE the card description)
-**Old:** "…poverty incidence rate among household heads, the count of household heads below the
-poverty threshold, average monthly income of residents, and total number of registered
-household heads."
-
-**New:**
-> Figure 19 shows the Poverty Incidence Analytics dashboard, which identifies economic
-> vulnerability using **family income** (the combined income of all members of a household).
-> Four summary cards display the **Poverty Incidence rate** (share of households below the
-> ₱10,000/month family-income line), the number of **Poor Households** (below that line), the
-> **Average Family Income**, and the total **People in Poverty** (residents living in poor
-> households). A "Poverty Rate by Sitio" chart and an "Income Classification" breakdown relative
-> to the poverty line complete the view.
-
-### ⑨ Figure 24 — Crime & Incident Analytics (REPLACE)
-**Old:** lists "Noise/Disturbance, Theft, Physical Injury, Domestic Violence, Trespassing,
-Accident, Illegal Drugs, Others" and "a Mark Resolved button."
-
-**New:**
-> Figure 24 shows the Crime & Incident Analytics module. Three summary cards display total
-> incidents, ongoing cases, and resolution rate. A bar chart breaks down incidents by type using
-> a set tailored to Barangay San Joaquin: **Public Intoxication / Disorderly Conduct, Minor
-> Physical Altercation, Domestic Dispute, Property Damage (Typhoon-related), Environmental /
-> Ordinance Violation, Stray Animal Complaint, Noise Disturbance, and Others**. A form logs new
-> incidents by type, sitio, date/time, complainant, optional evidence photo, and exact map
-> location. The incident log table lists each case with its status, which staff can change
-> through a **status dropdown** (Ongoing, Resolved, Escalated, or Dismissed). All records are
-> stored in Supabase's incidents table and linked to the logging officer.
+### 🟢 ⑦ System Flowchart figures (small wording)
+- Figure 9 (GIS Mapping): the Disaster branch marks **hazard/risk zones**, not "safe zones."
+  Change "Safe Zone" → "Mark Risk Zone."
+- Figure 6 (QR Verification): optionally note the QR encodes a **hashed ID** (no PII). The flow
+  (Select Resident → Generate QR → Print/Download → Log verification) is otherwise correct.
 
 ---
 
-## CHAPTER IV — New module sections to ADD (with screenshots)
+## CHAPTER IV — Screenshot captions / descriptions
 
-> Take a screenshot of each module on the live site and insert it; the descriptions below match
-> the current build. Renumber the figures to fit your sequence.
+### 🟢 Figure 13 — "Household Profiling Dashboard"
+The page is labeled **Resident Profiling** in the system. Either rename the caption to
+"Resident Profiling Dashboard" or note that "Household Profiling" is the section title.
 
-### ⑩ NEW — Crime Hotspot Map
-> **Figure NN. Crime Hotspot Map**
->
-> Figure NN shows the Crime Hotspot Map, which visualizes **where** incidents concentrate across
-> Barangay San Joaquin using Leaflet.js with OpenStreetMap. Summary cards show total incidents,
-> the crime-hotspot sitio, cases resolved, and the most common incident type. The map offers two
-> views via a toggle: a **Heatmap** that renders a density gradient (green → red) driven by each
-> incident's real GPS location, so the busiest areas glow red; and a **Pins** view that shows a
-> numbered marker per sitio. Filters for date range and crime type re-render the map for the
-> selected subset. A Sitio Ranking panel and a Recent Incidents list accompany the map, and
-> clicking any incident dot opens its details.
+### 🔴 ⑧ Figure 15 — Resident Detail View (REPLACE description)
+**Old:** "…Socioeconomic (Occupation, Monthly Income, Educational Attainment)."
 
-### ⑪ NEW — Community Announcements
-> **Figure NN. Community Announcements**
->
-> Figure NN shows the Announcements module, where barangay staff post community announcements
-> with a title, body, category (General, Health, Safety, Event, Disaster, Others), and an
-> optional image uploaded to Supabase Storage. Each announcement can be hidden/shown or deleted.
-> Active announcements appear on a **public bulletin-board page** (`/announcements`) that
-> residents can open without logging in — styled as a corkboard of pinned notices — alongside a
-> "Submit Your Needs" form that feeds the Community Needs Assessment. This gives the barangay a
-> one-way public communication channel while keeping posting controls staff-only.
+**New:**
+> …and **Socioeconomic** (Occupation, Monthly Income). The detail view shows only the fields the
+> barangay actively uses; unused fields (e.g. PhilHealth number, educational attainment) were
+> removed to keep the profile focused and avoid collecting data without a clear purpose
+> (data minimization under RA 10173).
 
-### ⑫ NEW — User Management
-> **Figure NN. User Management**
->
-> Figure NN shows the User Management module (admin), which lists all system accounts with their
-> name, role, and creation date. An administrator can edit a user's display name and **assign
-> their role** (Barangay Secretary or Barangay Tanod)
-> from a dropdown; a Role Access Guide explains what each role can access. New accounts are
-> created in Supabase Authentication, and a database trigger automatically creates the matching
-> profile row, after which the administrator sets the appropriate role here. Role assignment is
-> what drives the role-based access control enforced throughout the system.
+(Retake the Figure 15 screenshot — the old PhilHealth/Education rows no longer appear.)
+
+### 🔴 ⑨ Figure 16 — Edit Resident Detail View (REPLACE description)
+The system has **no "reason for modification" field.** Remove that claim.
+
+**New:**
+> Figure 16 shows the Edit Resident form, which lets the Barangay Secretary update an existing
+> resident. The form is pre-populated and all inputs are sanitized before saving. Every change is
+> automatically recorded in the audit log with the action (insert/update/delete), the before-and-
+> after data, the user who made it, and a timestamp — providing a complete, tamper-evident change
+> history (viewable under System & Audit → Activity Log).
+
+### 🔴 ⑩ Figure 17 — QR Verification (REPLACE description)
+The QR no longer encodes name/sitio, and there is **no resident photo**.
+
+**New:**
+> Figure 17 shows the QR Verification module. For privacy, the QR code carries only a **SHA-256 hash**
+> of the resident's ID — no name, sitio, or readable personal data — so scanning it with a generic
+> phone app reveals only meaningless characters; only PROTECT can match the hash back to a resident.
+> The Barangay Secretary selects a resident to generate their Barangay ID with QR, then **prints the
+> ID card**, **downloads the QR as a PNG**, or **downloads the full ID card as a PNG**. On the scan
+> side, the user chooses a **Purpose of Verification** (e.g. Barangay Clearance, Certificate of
+> Indigency, Assistance Claim, or *Others* with a free-text reason), then scans with the camera or
+> uses Simulate Scan. Each verification is logged with its purpose in the Recent Verifications list.
+
+(Note: the ID card shows a "PHOTO HERE" placeholder — the system does not store resident photos.
+Do not claim a photo is displayed.)
+
+### 🟢 Figure 18 — Population Analytics
+Wording fix: it says "two interactive features" then lists three charts. Change to **"three charts:
+a Sex Distribution pie chart, an Age Group doughnut chart, and a Population by Sitio bar chart."**
+
+### 🟠 Figure 20 — Sector Statistics (extend description)
+Add that, besides the SC/Solo Parent/PWD cards, the page also charts **PWD by Disability Type**,
+**Out-of-School Youth (OSY) by Sitio**, and **Working Residents by Sitio**, plus a Sector Registry
+table. (OSY is now a tracked sector.)
+
+### 🟠 Figure 22 — Disaster Vulnerability Map (REPLACE description)
+**New:**
+> Figure 22 shows the Disaster Vulnerability Map (Leaflet.js + OpenStreetMap). Summary cards show
+> total risk zones and counts per level. The Barangay Secretary clicks the map to place a zone, then
+> sets hazard type (**Typhoon, Flood, Landslide, Storm Surge, Earthquake, Fire**), risk level (High,
+> Medium, Low), affected sitio, radius, and notes. The zone appears as an **editable preview circle
+> with two drag handles** — a blue pin to move it and a red pin to resize it — and the radius can
+> also be set with a slider (default 150 m). Risk zones render as colored circles (**red = High,
+> amber = Medium, teal = Low**) with a diamond center marker; the circles are non-interactive so a
+> large zone never blocks clicks. A read-only **household overlay** can be toggled on to show which
+> households fall inside a zone (exposed = red dot, safe = teal dot), and the "households exposed"
+> count is computed at runtime by Haversine distance. Zone data is stored in `disaster_risk_zones`.
+
+### 🟠 Figure 24 — Crime & Incident Analytics (REPLACE description)
+The incident types and the "Mark Resolved" button are outdated.
+
+**New:**
+> Figure 24 shows the Crime & Incident Analytics module. Three cards show total incidents, ongoing
+> cases, and resolution rate. A bar chart breaks down the **Batanes-appropriate incident types**:
+> Public Intoxication / Disorderly Conduct, Minor Physical Altercation, Domestic Dispute, Property
+> Damage (Typhoon-related), Environmental / Ordinance Violation, Stray Animal Complaint, Noise
+> Disturbance, and Others. A form logs a new incident by type, sitio, date/time, complainant, an
+> optional photo, and an exact map location (mini-map pin). The incident log lists case number, type,
+> sitio, date, complainant, and status, with a **status dropdown** to set each case to Ongoing,
+> Resolved, Escalated, or Dismissed. Records are stored in the `incidents` table and linked to the
+> staff member via `officer_id`. (The Barangay Tanod can also log and update incidents here.)
+
+### 🟠 Figure 26 — Community Needs Assessment (extend description)
+Add: "Residents may also **attach a photo** (e.g. a broken pipe or damaged road) when submitting a
+need; staff see each submission — with its sitio, priority need, comment, and photo thumbnail — in
+a Recent Submissions list."
+
+### 🔴 Figure 27 — DILG Report Generation (FIX export format)
+**Old:** "…exportable to PDF or DOCX with the official barangay letterhead."
+
+**New:** "…**exportable to PDF** (via jsPDF) with the official barangay letterhead." (There is no
+DOCX export.) The six report cards in the figure — Barangay Profile, CBMS Statistical, Peace &
+Order, Assistance & Beneficiary, Vulnerable Sector, and Disaster Risk Assessment — are correct.
+
+---
+
+## CHAPTER IV — NEW module sections to ADD (with screenshots)
+
+The walkthrough is missing four shipped modules. Add a numbered subsection + screenshot for each:
+
+### ➕ Crime Hotspot Map
+> The Crime Hotspot Map visualizes where incidents concentrate. By default it shows a **density
+> heatmap** (Leaflet.heat) — red where incidents cluster — and can toggle to **numbered pins** per
+> sitio for exact counts. Date-range and crime-type filters re-render the map, and side panels rank
+> sitios by incident count and list recent incidents. (Accessible to both the Barangay Secretary and
+> the Barangay Tanod.)
+
+### ➕ Community Announcements (admin) + Public Bulletin Board
+> The Announcements module lets the Barangay Secretary post announcements with a title, body,
+> category, and image, and toggle their visibility. Active announcements appear on a **public bulletin
+> board** at `/announcements` that residents can view **without logging in** — the same public portal
+> that hosts the community needs form.
+
+### ➕ User Management (admin)
+> User Management lists all system accounts with their name, role badge, and creation date. The
+> Barangay Secretary can edit a user's name and assign a role — the dropdown offers only **Barangay
+> Secretary** and **Barangay Tanod**. Roles are stored server-side in the `profiles` table and
+> enforced by database Row-Level Security, so they cannot be spoofed from the browser.
+
+### ➕ System & Audit (admin)
+> The System & Audit page holds two administrative tools. The **Activity Log** is a live, paginated
+> viewer of the audit trail (10 entries per page) showing every add/edit/delete on residents,
+> households, and incidents — with the action, the affected record, the user, and the time. The
+> **Database Backup** tool downloads a full JSON backup of all barangay data for safekeeping.
+
+---
+
+## Figures to retake (because the UI changed this session)
+- **Figure 1** — ERD (use the regenerated 13-table version with relationship lines)
+- **Figure 3** — Use Case (add Tanod actor; reduce Resident to needs-submission + public announcements)
+- **Figure 15 / 16** — Resident Detail / Edit (PhilHealth & Education rows removed; no "reason" field)
+- **Figure 17** — QR Verification (now shows Purpose incl. "Others", Download QR/ID buttons)
+- **Figure 22** — Disaster Vulnerability (drag-handle circle, diamond markers, household overlay)
+- **Figure 24** — Crime & Incident (Batanes types in chart; status dropdown instead of "Mark Resolved")
+- **Figure 26** — Community Needs (photo attachment field)
+- **NEW** — Crime Hotspot Map, Community Announcements (+ public page), User Management, System & Audit
 
 ---
 
 ## Quick checklist
-
-- [ ] Ch I Scope — roles bullet
-- [ ] Ch I Conceptual Framework — feature wording
-- [ ] Ch I Limitations — offline wording
-- [ ] Ch III — html5-qrcode (not React-Qr-Scanner); drop React-To-Print; add jsPDF/xlsx/leaflet.heat
-- [ ] Replace Figures 1, 2, 3, 4 and 5–10 with the new PNGs
-- [ ] ERD narrative — 13 tables
-- [ ] Use Case narrative — 3 actors, DILG is external
-- [ ] Fix captions: Figures 16, 17, 19, 24
-- [ ] Add sections: Crime Hotspot Map, Announcements, User Management
+- [ ] 🔴 Scope user roles → Secretary + Tanod (no "Officer"/"Resident" login)
+- [ ] 🔴 Use Case narrative + figure → 3 actors; Resident = public only; add Tanod
+- [ ] 🔴 ERD narrative → 13 tables; regenerate figure with relationships
+- [ ] 🔴 Fig 24 crime types → Batanes set; "Mark Resolved" → status dropdown
+- [ ] 🔴 Fig 17 QR → hashed payload, no PII, no photo; add download options
+- [ ] 🔴 Fig 16 edit → remove "reason for modification" claim
+- [ ] 🔴 Fig 15 → remove Educational Attainment / PhilHealth
+- [ ] 🔴 Fig 27 → PDF only (no DOCX)
+- [ ] 🔴 Ch III tools → remove React-To-Print & React-Qr-Scanner; add html5-qrcode etc.
+- [ ] 🟠 Fig 22 disaster → new behaviors + correct colors (red/amber/teal) + Earthquake
+- [ ] 🟠 DFD → "Barangay Secretary" not "Officer"
+- [ ] 🟠 Add 4 new module sections (Hotspot, Announcements, User Mgmt, System & Audit)
+- [ ] 🟢 Conceptual framework "twelve features" wording; Fig 18 "three charts"; GIS "risk zone" wording
