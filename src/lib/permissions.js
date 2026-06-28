@@ -9,24 +9,26 @@
 // ============================================================================
 
 // Human-readable labels for each role (used in User Management dropdowns/badges).
+// The system has 3 roles: the Barangay Secretary is the full-access "admin".
 export const ROLE_LABELS = {
-  admin:    'Administrator',
-  officer:  'Barangay Officer',
   brgy_sec: 'Barangay Secretary',
   tanod:    'Barangay Tanod',
   viewer:   'Viewer',
 }
 
-// Every route path that exists in the app. Full-access roles get all of these.
-const ALL_ROUTES = ['/', '/residents', '/qr', '/population', '/poverty', '/sectors', '/gis', '/crime-map', '/disaster', '/beneficiary', '/crime', '/predictive', '/needs', '/announcements-admin', '/reports', '/users']
+// Every route path that exists in the app. The full-access role gets all of these.
+const ALL_ROUTES = ['/', '/residents', '/qr', '/population', '/poverty', '/sectors', '/gis', '/crime-map', '/disaster', '/beneficiary', '/crime', '/predictive', '/needs', '/announcements-admin', '/reports', '/users', '/admin-tools']
 
 // Which routes each role is allowed to open (exact path match).
 export const ROLE_ROUTES = {
-  admin:    ALL_ROUTES,                          // full system
-  officer:  ALL_ROUTES,                          // full system
-  brgy_sec: ALL_ROUTES,                          // Barangay Secretary — full system
+  brgy_sec: ALL_ROUTES,                          // Barangay Secretary — full system (the admin)
   tanod:    ['/', '/crime-map', '/crime'],       // peace & order pages only
   viewer:   ['/', '/residents', '/qr', '/population', '/poverty', '/sectors', '/gis', '/crime-map', '/disaster', '/beneficiary', '/crime', '/predictive', '/needs'], // read-only on most pages
+
+  // Legacy aliases — old accounts still tagged admin/officer keep full access until
+  // the SQL migration converts them to brgy_sec. (Safe to remove after migrating.)
+  admin:    ALL_ROUTES,
+  officer:  ALL_ROUTES,
 }
 
 // Returns true if `role` is allowed to open `path`. Unknown roles fall back to

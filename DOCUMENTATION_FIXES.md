@@ -3,8 +3,9 @@
 Paste-ready corrections to align the capstone paper with the **deployed system**.
 Each item says *what to change* and gives the *replacement text*. Work top to bottom.
 
-Roles in the live system (final): **admin · officer · brgy_sec · tanod · viewer**
-(DILG is **not** a login role — it receives the reports the barangay submits.)
+Roles in the live system (final): **brgy_sec (Barangay Secretary — full access) · tanod · viewer**
+(admin/officer were merged into brgy_sec. DILG is **not** a login role — it receives the
+reports the barangay submits.)
 
 ---
 
@@ -14,8 +15,8 @@ Roles in the live system (final): **admin · officer · brgy_sec · tanod · vie
 **Old:** "User Roles: Barangay Officer and Resident with role-based access control…"
 
 **New:**
-> **User Roles:** The system enforces role-based access control across five roles —
-> *Administrator*, *Barangay Officer*, *Barangay Secretary* (full access); *Barangay Tanod*
+> **User Roles:** The system enforces role-based access control across three roles —
+> *Barangay Secretary* (full access — the system administrator); *Barangay Tanod*
 > (peace-and-order pages only); and *Viewer* (read-only). Residents interact with the system
 > only through a public portal (needs survey and announcements) without logging in. This
 > protects sensitive data so that each user sees and edits only what their role permits.
@@ -197,7 +198,7 @@ Accident, Illegal Drugs, Others" and "a Mark Resolved button."
 >
 > Figure NN shows the User Management module (admin), which lists all system accounts with their
 > name, role, and creation date. An administrator can edit a user's display name and **assign
-> their role** (Administrator, Barangay Officer, Barangay Secretary, Barangay Tanod, or Viewer)
+> their role** (Barangay Secretary, Barangay Tanod, or Viewer)
 > from a dropdown; a Role Access Guide explains what each role can access. New accounts are
 > created in Supabase Authentication, and a database trigger automatically creates the matching
 > profile row, after which the administrator sets the appropriate role here. Role assignment is

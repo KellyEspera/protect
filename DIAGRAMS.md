@@ -13,7 +13,7 @@ Three diagrams for the capstone documentation, derived from the actual system:
 
 | Actor | Can do |
 |-------|--------|
-| **Barangay Secretary / Officer** (admin · officer · brgy_sec) | Everything — resident/household profiling, GIS, QR + documents, beneficiaries + assistance, announcements, incidents + status, hotspot + disaster maps, analytics, predictive, needs, DILG reports |
+| **Barangay Secretary** (full access / the admin) | Everything — resident/household profiling, GIS, QR + documents, beneficiaries + assistance, announcements, incidents + status, hotspot + disaster maps, analytics, predictive, needs, DILG reports, user management, system & audit |
 | **Barangay Tanod** | Login, Log Crime/Incident, Update Incident Status, View Crime Hotspot Map |
 | **Resident / Public** (no login) | Submit Community Needs, View Public Announcements |
 

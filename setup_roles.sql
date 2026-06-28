@@ -3,16 +3,23 @@
 -- After this, manage every user from the app's User Management page.
 -- ============================================================
 
--- 1. Allow the 5 roles in the profiles table
---    (DILG is an external report recipient, not a system login)
+-- 1. Allow the 3 roles in the profiles table
+--    brgy_sec = Barangay Secretary (full access / the admin), tanod, viewer.
+--    (DILG is an external report recipient, not a system login.)
 -- ------------------------------------------------------------
--- Reassign any legacy dilg_rep accounts so the new constraint applies cleanly
-UPDATE profiles SET role = 'viewer' WHERE role = 'dilg_rep';
+-- Reassign any legacy accounts so the new constraint applies cleanly:
+--   admin/officer  -> brgy_sec   (they were all full-access)
+--   dilg_rep       -> viewer
+UPDATE profiles SET role = 'brgy_sec' WHERE role IN ('admin', 'officer');
+UPDATE profiles SET role = 'viewer'   WHERE role = 'dilg_rep';
+
+-- Default role for any new profile row is the most restrictive (viewer)
+ALTER TABLE profiles ALTER COLUMN role SET DEFAULT 'viewer';
 
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE profiles
   ADD CONSTRAINT profiles_role_check
-  CHECK (role IN ('admin', 'officer', 'brgy_sec', 'tanod', 'viewer'));
+  CHECK (role IN ('brgy_sec', 'tanod', 'viewer'));
 
 
 -- 2. Auto-create a profile row whenever a user is added in Auth

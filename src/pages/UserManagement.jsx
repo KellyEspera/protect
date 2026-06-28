@@ -125,11 +125,9 @@ export default function UserManagement() {
       <SectionCard title="Role Access Guide" subtitle="What each role can access in the system">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
-            { role: 'admin',    pages: 'All pages — full system access' },
-            { role: 'officer',  pages: 'All pages — full system access' },
-            { role: 'brgy_sec', pages: 'All pages — full system access' },
+            { role: 'brgy_sec', pages: 'All pages — full system access (the admin)' },
             { role: 'tanod',    pages: 'Dashboard, Crime Hotspot Map, Crime & Incident' },
-            { role: 'viewer',   pages: 'Most pages — no QR Verification or DILG Reports' },
+            { role: 'viewer',   pages: 'Most pages — no QR Verification, Reports, or Admin' },
           ].map(({ role, pages }) => (
             <div key={role} className="flex gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
               <ShieldCheck size={16} className="text-teal flex-shrink-0 mt-0.5" />

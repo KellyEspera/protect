@@ -14,7 +14,7 @@ import { canAccess, ROLE_LABELS } from '../../lib/permissions'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Flame, Gift, Shield, BrainCircuit,
-  ClipboardList, FileText, LogOut, Bell, Menu, X, UserCog, Megaphone
+  ClipboardList, FileText, LogOut, Bell, Menu, X, UserCog, Megaphone, Database
 } from 'lucide-react'
 
 const navGroups = [
@@ -57,6 +57,7 @@ const navGroups = [
     label: 'Admin',
     items: [
       { to: '/users', icon: UserCog, label: 'User Management' },
+      { to: '/admin-tools', icon: Database, label: 'System & Audit' },
     ],
   },
 ]
@@ -78,6 +79,7 @@ const pageTitles = {
   '/announcements-admin': 'Community Announcements',
   '/reports': 'DILG Report Generation',
   '/users':   'User Management',
+  '/admin-tools': 'System & Audit',
 }
 
 export default function Layout() {

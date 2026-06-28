@@ -33,7 +33,7 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 |--------|------|-------|
 | 🔑 🔗 `id` | uuid | = `auth.users.id` (1-to-1) |
 | *`full_name`* | text | |
-| `role` | text | one of: `admin`, `officer`, `brgy_sec`, `tanod`, `viewer` |
+| `role` | text | one of: `brgy_sec` (full access), `tanod`, `viewer` |
 | *`barangay`* | text | |
 | `created_at` | timestamptz | |
 
@@ -340,8 +340,7 @@ Which screen reads (R) / writes (W) which table:
 
 | Role | Access |
 |------|--------|
-| `admin` / `officer` | full system |
-| `brgy_sec` (Barangay Secretary) | full system (all modules) |
+| `brgy_sec` (Barangay Secretary) | full system (all modules) — the admin |
 | `tanod` | Dashboard, Crime Hotspot Map, Crime & Incident only |
 | `viewer` | read-only |
 

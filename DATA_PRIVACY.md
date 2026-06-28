@@ -32,11 +32,9 @@ The system uses **Role-Based Access Control (RBAC)** with 6 defined roles:
 
 | Role | Access Level |
 |------|-------------|
-| `admin` | Full access to all pages and data |
-| `officer` | Full access — same as admin |
-| `brgy_sec` | Full access — Barangay Secretary |
+| `brgy_sec` | Full access to all pages and data — Barangay Secretary (the admin) |
 | `tanod` | Limited — Dashboard, Crime Hotspot Map, Crime & Incident only |
-| `viewer` | Read-only on most pages; no QR Verification or DILG Reports |
+| `viewer` | Read-only on most pages; no QR Verification, Reports, or Admin |
 
 - Every protected route is wrapped in a `<RoleRoute>` component that checks `canAccess(role, path)` before rendering
 - Unauthorized access shows "Access Restricted 🚫" — no data leaks
@@ -134,7 +132,7 @@ the QR exposes no personal data by default.
 
 ## 7. Audit Trail — Accountability
 
-**Implementation:** `audit_logs.sql` + Activity Log in DILG Reports
+**Implementation:** `audit_logs.sql` + Activity Log in System & Audit (Admin)
 
 The system records every INSERT, UPDATE, and DELETE on the three most sensitive tables:
 

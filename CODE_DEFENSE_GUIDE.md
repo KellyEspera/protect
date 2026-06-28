@@ -55,7 +55,7 @@ Wraps the app in: `QueryClientProvider` (React Query cache, `staleTime` 5 min), 
 2. **Edit gating** — `canEdit(role)` is `false` for `READONLY_ROLES` (`viewer`); pages hide their
    add/edit/delete buttons when `canEdit` is false (`const canWrite = canEdit(profile?.role)`).
 
-Roles: `admin` / `officer` / `brgy_sec` (full) · `tanod` (crime pages) · `viewer` (read-only).
+Roles: `brgy_sec` (Barangay Secretary — full access / the admin) · `tanod` (crime pages) · `viewer` (read-only).
 
 ---
 

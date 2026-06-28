@@ -13,7 +13,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] (Optional, for charts) Ran `seed_sector_data.sql` so OSY / PWD charts have data
 - [ ] `population_history` has ≥ 2 years (for Predictive Growth) — included in `DATABASE_SETUP.sql`
 - [ ] On Vercel: env vars **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** are set
-- [ ] You have one login per role to test with: **admin/officer/brgy_sec**, **tanod**, **viewer**
+- [ ] You have one login per role to test with: **brgy_sec** (Barangay Secretary), **tanod**, **viewer**
 
 > If a feature fails and a prerequisite above is unchecked, fix the prerequisite first —
 > it's almost always a database-sync issue, not a code bug.
@@ -32,9 +32,10 @@ If something fails, note: the page, what you clicked, and the exact error
 
 ## 2. Role-Based Access (log in as EACH role)
 
-**admin / officer / brgy_sec (full access)**
+**brgy_sec — Barangay Secretary (full access / the admin)**
 - [ ] Sidebar shows **all** groups (Main, Analytics, GIS & Safety, Community, Admin)
 - [ ] Can add/edit/delete on every page
+- [ ] Admin group shows **User Management** + **System & Audit**
 
 **tanod**
 - [ ] Sidebar shows **only**: Dashboard, Crime Hotspot Map, Crime & Incident
@@ -143,19 +144,22 @@ If something fails, note: the page, what you clicked, and the exact error
 
 ## 17. DILG Reports
 - [ ] Each report card compiles figures and **exports a PDF** with letterhead
-- [ ] Activity Log shows recent audit entries (admin)
-- [ ] Database Backup downloads a `.json`
 
 ## 18. User Management (admin)
 - [ ] Lists all users with name, role badge, created date
-- [ ] **Edit** a user → change name and **role** (dropdown shows: Administrator, Officer, Secretary, Tanod, Viewer — **no DILG rep**) → saves
+- [ ] **Edit** a user → change name and **role** (dropdown shows only: **Barangay Secretary, Barangay Tanod, Viewer**) → saves
 - [ ] Changing a role then logging in as that user reflects the new access
+
+## 18a. System & Audit (admin)
+- [ ] **Activity Log** shows recent audit entries (add/edit/delete)
+- [ ] **Database Backup** downloads a `.json`
+- [ ] A **viewer** cannot see the System & Audit page (not in sidebar; URL shows "Access Restricted")
 
 ---
 
 ## 19. Cross-cutting / regression
 - [ ] After any add/edit, the change **persists after a page refresh** (confirms it saved to Supabase, not just local state)
-- [ ] Audit: after editing a resident/incident, an entry appears in DILG Reports → Activity Log
+- [ ] Audit: after editing a resident/incident, an entry appears in System & Audit → Activity Log
 - [ ] Responsive: open on a phone-width window → sidebar collapses to a hamburger; pages stay usable
 - [ ] No red errors in the browser console (F12) during normal use
 
