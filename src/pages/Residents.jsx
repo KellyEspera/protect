@@ -822,12 +822,10 @@ export default function Residents() {
                   ['Sitio',           viewResident.purok],
                   ['Household No.',   households.find(h => h.id === viewResident.household_id)?.household_no || '—'],
                   ['Contact Number',  showSensitive ? (viewResident.contact_number || '—') : maskPII(viewResident.contact_number)],
-                  ['PhilHealth No.',  showSensitive ? (viewResident.philhealth_no  || '—') : maskPII(viewResident.philhealth_no)],
                 ]],
                 ['Socioeconomic', [
                   ['Occupation',     viewResident.occupation             || '—'],
                   ['Monthly Income', viewResident.monthly_income ? `₱${Number(viewResident.monthly_income).toLocaleString()}` : '—'],
-                  ['Education',      viewResident.educational_attainment || '—'],
                 ]],
               ].map(([section, rows]) => (
                 <div key={section} style={{ marginBottom: 16 }}>
