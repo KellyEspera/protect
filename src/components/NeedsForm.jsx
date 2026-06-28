@@ -12,6 +12,19 @@ export default function NeedsForm({ onClose }) {
   const qc = useQueryClient()
   const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({ purok: 'Sitio Hunan', priority_need: 'Health Services', comments: '' })
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+
+  // Validate & preview an attached photo (images only, max 5MB)
+  const handlePhoto = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file.'); e.target.value = ''; return }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be 5MB or smaller.'); e.target.value = ''; return }
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+  const clearPhoto = () => { setPhotoFile(null); setPhotoPreview(null) }
 
   const needOptions = [
     { need: 'Health Services', icon: '🏥' },
@@ -24,8 +37,17 @@ export default function NeedsForm({ onClose }) {
   ]
 
   const submitMutation = useMutation({
-    mutationFn: async (payload) => {
-      const { error } = await supabase.from('survey_responses').insert(payload)
+    mutationFn: async ({ payload, file }) => {
+      // Upload the optional photo first, then store its public URL on the row.
+      let photo_url = null
+      if (file) {
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+        const { error: upErr } = await supabase.storage.from('needs-photos').upload(path, file, { upsert: false })
+        if (upErr) throw upErr
+        photo_url = supabase.storage.from('needs-photos').getPublicUrl(path).data.publicUrl
+      }
+      const { error } = await supabase.from('survey_responses').insert({ ...payload, photo_url })
       if (error) throw error
     },
     onSuccess: () => {
@@ -33,6 +55,7 @@ export default function NeedsForm({ onClose }) {
       qc.invalidateQueries({ queryKey: ['survey-responses'] })
       setTimeout(() => {
         setForm({ purok: 'Sitio Hunan', priority_need: 'Health Services', comments: '' })
+        clearPhoto()
         setSubmitted(false)
       }, 3000)
     },
@@ -42,7 +65,7 @@ export default function NeedsForm({ onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     const sanitized = sanitizeSurveyForm(form)
-    submitMutation.mutate(sanitized)
+    submitMutation.mutate({ payload: sanitized, file: photoFile })
   }
 
   return (
@@ -136,6 +159,28 @@ export default function NeedsForm({ onClose }) {
                 onFocus={(e) => e.target.style.borderColor = '#0D9E8C'}
                 onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
               />
+            </div>
+
+            {/* Photo (optional) */}
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1A3A5C', marginBottom: 8 }}>📷 Add a Photo (Optional)</label>
+              <p style={{ fontSize: 12, color: '#888', margin: '0 0 8px' }}>e.g. a broken pipe, damaged road, or anything that shows the need.</p>
+              {photoPreview ? (
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <img src={photoPreview} alt="preview" style={{ maxWidth: '100%', maxHeight: 180, borderRadius: 6, border: '1px solid #E2E8F0' }} />
+                  <button
+                    type="button"
+                    onClick={clearPhoto}
+                    style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(184,50,50,0.92)', color: '#fff', border: 'none', width: 24, height: 24, borderRadius: '50%', cursor: 'pointer', fontSize: 14, lineHeight: 1 }}
+                    aria-label="Remove photo"
+                  >&times;</button>
+                </div>
+              ) : (
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', border: '1.5px dashed #CBD5E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#5A5A52' }}>
+                  📎 Choose a photo (max 5MB)
+                  <input type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+                </label>
+              )}
             </div>
 
             {/* Submit Button */}
