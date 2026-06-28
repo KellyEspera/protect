@@ -33,6 +33,7 @@ import DILGReports from './pages/DILGReports'
 import PublicAnnouncements from './pages/PublicAnnouncements'
 import Announcements from './pages/Announcements'
 import UserManagement from './pages/UserManagement'
+import AdminTools from './pages/AdminTools'
 
 // Gate 1: authentication. Shows a loading splash while the session is being
 // checked, then either renders the children (logged in) or redirects to /login.
@@ -120,6 +121,7 @@ export default function App() {
         <Route path="announcements-admin" element={<RoleRoute path="/announcements-admin"><Announcements /></RoleRoute>} />
         <Route path="reports"    element={<RoleRoute path="/reports"><DILGReports /></RoleRoute>} />
         <Route path="users"      element={<RoleRoute path="/users"><UserManagement /></RoleRoute>} />
+        <Route path="admin-tools" element={<RoleRoute path="/admin-tools"><AdminTools /></RoleRoute>} />
       </Route>
     </Routes>
   )
