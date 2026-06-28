@@ -159,12 +159,23 @@ export default function AdminTools() {
   const { data: auditLogs = [], isFetching: logsFetching, refetch: refetchLogs } = useQuery({
     queryKey: ['audit-logs'],
     queryFn: async () => {
-      const { data } = await supabase
+      // NOTE: no FK between audit_logs.changed_by and profiles, so we can't embed
+      // profiles(...) directly — fetch the log rows, then look up the actors.
+      const { data, error } = await supabase
         .from('audit_logs')
-        .select('*, profiles(full_name, role)')
+        .select('*')
         .order('changed_at', { ascending: false })
         .limit(30)
-      return data || []
+      if (error) { console.error('audit_logs read error:', error.message); throw error }
+      const logs = data || []
+      // Attach each actor's profile (name/role) via a separate lookup
+      const ids = [...new Set(logs.map(l => l.changed_by).filter(Boolean))]
+      let profById = {}
+      if (ids.length) {
+        const { data: profs } = await supabase.from('profiles').select('id, full_name, role').in('id', ids)
+        profById = Object.fromEntries((profs || []).map(p => [p.id, p]))
+      }
+      return logs.map(l => ({ ...l, profiles: profById[l.changed_by] || null }))
     },
     refetchInterval: 60000,
   })
