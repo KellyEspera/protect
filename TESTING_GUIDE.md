@@ -53,7 +53,8 @@ If something fails, note: the page, what you clicked, and the exact error
 
 ## 4. Resident Profiling
 - [ ] **Add Resident** → fill form → saves; new resident appears in the table and after refresh
-- [ ] Mark **Household Head** on a new resident → a household (HH-000X) is auto-created
+- [ ] Mark **Household Head** + "Create a new household" → a household (HH-000X) is auto-created
+- [ ] Mark **Household Head** + pick an **existing** household → resident becomes that household's head; the previous head is demoted to a member (no duplicate household)
 - [ ] **Edit** a resident → change saves and shows in the table
 - [ ] **Search / filter** by name, sitio, sector → table narrows correctly
 - [ ] **Sort** by a column header → order changes

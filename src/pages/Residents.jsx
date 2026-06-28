@@ -178,72 +178,83 @@ export default function Residents() {
 
   const saveMutation = useMutation({
     mutationFn: async (payload) => {
-      const wasHHHead = payload.is_household_head
+      const wantsHead   = payload.is_household_head
+      const fullName    = `${payload.first_name} ${payload.last_name}`
+      const selectedHH  = payload.household_id || null   // household chosen in the form (may be null)
+
+      // Make `householdId` headed by this resident: stamp head_name and demote
+      // whoever was previously flagged head of that household (excluding ourself).
+      const promoteToHead = async (householdId, excludeResidentId) => {
+        let demote = supabase.from('residents')
+          .update({ is_household_head: false })
+          .eq('household_id', householdId)
+          .eq('is_household_head', true)
+        if (excludeResidentId) demote = demote.neq('id', excludeResidentId)
+        await demote
+        await supabase.from('households').update({ head_name: fullName }).eq('id', householdId)
+      }
+
+      // Create a brand-new household for this resident and return its id.
+      const createHousehold = async () => {
+        const household_no = await generateHouseholdNo()
+        const { data: newHH, error: hhErr } = await supabase
+          .from('households')
+          .insert({ household_no, purok: payload.purok, head_name: fullName })
+          .select('id')
+          .single()
+        if (hhErr) throw hhErr
+        return newHH.id
+      }
 
       if (editId) {
         // --- EDIT MODE ---
-        // Get old resident to check if HH head status changed
         const { data: oldResident } = await supabase
           .from('residents')
           .select('is_household_head, household_id')
           .eq('id', editId)
           .single()
 
-        const becameHHHead = wasHHHead && !oldResident?.is_household_head
-        const removedHHHead = !wasHHHead && oldResident?.is_household_head
-
-        if (becameHHHead) {
-          // Newly marked as HH Head — create a household record
-          const household_no = await generateHouseholdNo()
-          const { data: newHH, error: hhErr } = await supabase
-            .from('households')
-            .insert({
-              household_no,
-              purok: payload.purok,
-              head_name: `${payload.first_name} ${payload.last_name}`,
-            })
-            .select('id')
-            .single()
-          if (hhErr) throw hhErr
-          payload.household_id = newHH.id
-        } else if (removedHHHead && oldResident?.household_id) {
-          // Unchecked as HH Head — unlink but don't delete the household
-          payload.household_id = null
+        if (wantsHead) {
+          if (selectedHH) {
+            // Make this resident the head of the EXISTING selected household
+            await promoteToHead(selectedHH, editId)
+            payload.household_id = selectedHH
+          } else if (oldResident?.household_id) {
+            // No new selection but already in a household → become its head
+            await promoteToHead(oldResident.household_id, editId)
+            payload.household_id = oldResident.household_id
+          } else {
+            // Not in any household → create a fresh one
+            payload.household_id = await createHousehold()
+          }
+        } else {
+          // Not a head — they're a plain member of whatever they selected (or none)
+          payload.household_id = selectedHH
+          // If they USED to be a head, drop the head_name on their old household
+          if (oldResident?.is_household_head && oldResident?.household_id) {
+            await supabase.from('households').update({ head_name: null }).eq('id', oldResident.household_id)
+          }
         }
-
-        // Normalize empty string → null so Supabase FK doesn't reject it
-        if (!becameHHHead) payload.household_id = payload.household_id || null
 
         const { error } = await supabase.from('residents').update(payload).eq('id', editId)
         if (error) throw error
 
       } else {
         // --- ADD MODE ---
-        let household_id = null
+        let household_id = selectedHH
 
-        if (wasHHHead) {
-          // Create household record first
-          const household_no = await generateHouseholdNo()
-          const { data: newHH, error: hhErr } = await supabase
-            .from('households')
-            .insert({
-              household_no,
-              purok: payload.purok,
-              head_name: `${payload.first_name} ${payload.last_name}`,
-            })
-            .select('id')
-            .single()
-          if (hhErr) throw hhErr
-          household_id = newHH.id
-        } else {
-          // Non-HH-Head: use the household selected in the form (if any)
-          household_id = payload.household_id || null
+        if (wantsHead) {
+          if (selectedHH) {
+            // New resident becomes head of the EXISTING selected household
+            await promoteToHead(selectedHH, null)
+            household_id = selectedHH
+          } else {
+            // Create a fresh household for them
+            household_id = await createHousehold()
+          }
         }
 
-        const { error } = await supabase.from('residents').insert({
-          ...payload,
-          household_id,
-        })
+        const { error } = await supabase.from('residents').insert({ ...payload, household_id })
         if (error) throw error
       }
     },
@@ -679,17 +690,29 @@ export default function Residents() {
               ))}
             </div>
 
-            {/* HH Head notice */}
-            {form.is_household_head && !editId && (
-              <div style={{ marginTop: 10, padding: '8px 12px', background: '#F0FBF9', border: '1px solid #0D9E8C', borderRadius: 4 }}>
-                <p style={{ fontSize: 11, color: '#0D9E8C', margin: 0 }}>
-                  ✅ A <strong>Household No.</strong> will be auto-generated and a household record will be created upon saving.
+            {/* Household section — adapts to whether this resident is the head */}
+            {form.is_household_head ? (
+              <div className="mt-3">
+                <label className="form-label">Household (as head)</label>
+                <select
+                  className="form-select mt-1"
+                  value={form.household_id || ''}
+                  onChange={e => setForm({ ...form, household_id: e.target.value })}
+                >
+                  <option value="">— Create a new household —</option>
+                  {households.map(h => (
+                    <option key={h.id} value={h.id}>
+                      {h.household_no}{h.head_name ? ` — ${h.head_name}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ fontSize: 11, color: '#9A9488', marginTop: 4 }}>
+                  Leave as <strong>“Create a new household”</strong> to start a fresh one (a 4-digit
+                  HH No. is auto-generated), or pick an <strong>existing household</strong> to make
+                  this resident its head (the previous head becomes a member).
                 </p>
               </div>
-            )}
-
-            {/* Household assignment for non-HH-Head members */}
-            {!form.is_household_head && (
+            ) : (
               <div className="mt-3">
                 <label className="form-label">Assign to Household</label>
                 <select
