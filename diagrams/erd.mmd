@@ -12,7 +12,7 @@ erDiagram
     PROFILES {
         uuid id PK "= auth.users.id"
         text full_name
-        text role "6 roles"
+        text role "brgy_sec / tanod"
     }
     HOUSEHOLDS {
         uuid id PK
@@ -59,6 +59,7 @@ erDiagram
         uuid resident_id FK "nullable"
         text purok
         text priority_need
+        text photo_url "optional"
     }
     INCIDENTS {
         uuid id PK
