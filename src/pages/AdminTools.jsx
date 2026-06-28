@@ -155,17 +155,22 @@ const TABLE_LABEL = { residents: 'Resident', households: 'Household', incidents:
 export default function AdminTools() {
   const { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, changeFrequency, nextDue, daysUntilDue } = useBackupState()
 
-  // Live audit log — auto-refreshes every 60 seconds.
-  const { data: auditLogs = [], isFetching: logsFetching, refetch: refetchLogs } = useQuery({
-    queryKey: ['audit-logs'],
+  // Live audit log — paginated (10 per page), auto-refreshes every 60 seconds.
+  const LOG_PAGE_SIZE = 10
+  const [logPage, setLogPage] = useState(0)   // 0-indexed
+  const { data: auditData = { rows: [], count: 0 }, isFetching: logsFetching, refetch: refetchLogs } = useQuery({
+    queryKey: ['audit-logs', logPage],
+    keepPreviousData: true,
     queryFn: async () => {
       // NOTE: no FK between audit_logs.changed_by and profiles, so we can't embed
       // profiles(...) directly — fetch the log rows, then look up the actors.
-      const { data, error } = await supabase
+      const from = logPage * LOG_PAGE_SIZE
+      const to = from + LOG_PAGE_SIZE - 1
+      const { data, error, count } = await supabase
         .from('audit_logs')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('changed_at', { ascending: false })
-        .limit(30)
+        .range(from, to)
       if (error) { console.error('audit_logs read error:', error.message); throw error }
       const logs = data || []
       // Attach each actor's profile (name/role) via a separate lookup
@@ -175,10 +180,13 @@ export default function AdminTools() {
         const { data: profs } = await supabase.from('profiles').select('id, full_name, role').in('id', ids)
         profById = Object.fromEntries((profs || []).map(p => [p.id, p]))
       }
-      return logs.map(l => ({ ...l, profiles: profById[l.changed_by] || null }))
+      return { rows: logs.map(l => ({ ...l, profiles: profById[l.changed_by] || null })), count: count || 0 }
     },
     refetchInterval: 60000,
   })
+  const auditLogs = auditData.rows
+  const totalLogs = auditData.count
+  const totalLogPages = Math.max(1, Math.ceil(totalLogs / LOG_PAGE_SIZE))
 
   return (
     <div>
@@ -247,9 +255,25 @@ export default function AdminTools() {
                 })}
               </tbody>
             </table>
-            <p style={{ fontSize: 10, color: '#C4BFB6', marginTop: 8, textAlign: 'right' }}>
-              Showing last 30 entries · Auto-refreshes every 60s
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
+              <span style={{ fontSize: 11, color: '#9A9488' }}>
+                {totalLogs === 0 ? 'No entries' : `Showing ${logPage * LOG_PAGE_SIZE + 1}–${logPage * LOG_PAGE_SIZE + auditLogs.length} of ${totalLogs}`}
+                <span style={{ color: '#C4BFB6' }}> · auto-refreshes every 60s</span>
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  className="btn btn-ghost text-xs"
+                  disabled={logPage === 0}
+                  onClick={() => setLogPage(p => Math.max(0, p - 1))}
+                >← Prev</button>
+                <span style={{ fontSize: 11, color: '#5A5A52' }}>Page {logPage + 1} of {totalLogPages}</span>
+                <button
+                  className="btn btn-ghost text-xs"
+                  disabled={logPage >= totalLogPages - 1}
+                  onClick={() => setLogPage(p => Math.min(totalLogPages - 1, p + 1))}
+                >Next →</button>
+              </div>
+            </div>
           </div>
         )}
       </SectionCard>
