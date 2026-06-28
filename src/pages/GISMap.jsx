@@ -596,9 +596,19 @@ export default function GISMap() {
 
                 <div>
                   <label className="form-label" style={{ display: 'block', marginBottom: 4 }}>Sitio *</label>
-                  <select className="form-select" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
-                    {PUROKS.map(p => <option key={p}>{p}</option>)}
-                  </select>
+                  {/* Sitio is taken automatically from the selected household head
+                      (we already know where they live), so it's read-only here. */}
+                  {form.head_name.trim() ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F0FBF9', border: '1px solid #B3E8E2', borderRadius: 6, padding: '8px 12px' }}>
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: PUROK_COLORS[form.purok] || '#1A3A5C', flexShrink: 0 }} />
+                      <span style={{ fontWeight: 600, color: '#0A6B5E', fontSize: 13 }}>{form.purok}</span>
+                      <span style={{ fontSize: 10, color: '#5A8' }}>· from head</span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 11, color: '#9A9488', padding: '8px 0' }}>
+                      Select a household head above — their sitio fills in automatically.
+                    </div>
+                  )}
                 </div>
 
                 <div>
