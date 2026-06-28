@@ -196,6 +196,10 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 > **`residents` ⇄ `households` is the key relationship.** A household's "head" is the
 > resident with `is_household_head = true` whose `household_id` points back to that household.
 > (`households.head_name` is only a text snapshot of that name, not a foreign key.)
+>
+> **Integrity:** a database trigger (`cascade_head_delete.sql`) deletes a household when its
+> head resident is deleted, so no orphan household pins are left behind; remaining members are
+> unlinked (`household_id → NULL`) by the foreign key, not deleted.
 
 `beneficiaries` is a **junction table** resolving the many-to-many between `residents`
 and `assistance_programs`.

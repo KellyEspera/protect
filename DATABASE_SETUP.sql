@@ -342,6 +342,24 @@ VALUES
   (2025, 381, 194, 187, 90, 12, 1, 4, 1, 'Current Year Estimate')
 ON CONFLICT (year) DO NOTHING;
 
+-- ---- Cascade: deleting a household HEAD deletes their household ----
+-- Keeps residents ↔ households in sync so no orphan household pins are left
+-- behind. Other members' household_id is set NULL by the existing FK.
+CREATE OR REPLACE FUNCTION public.cleanup_household_on_head_delete()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  IF OLD.is_household_head AND OLD.household_id IS NOT NULL THEN
+    DELETE FROM public.households WHERE id = OLD.household_id;
+  END IF;
+  RETURN OLD;
+END;
+$$;
+DROP TRIGGER IF EXISTS trg_cleanup_household_on_head_delete ON public.residents;
+CREATE TRIGGER trg_cleanup_household_on_head_delete
+  AFTER DELETE ON public.residents
+  FOR EACH ROW EXECUTE FUNCTION public.cleanup_household_on_head_delete();
+
 
 -- ############################################################################
 -- ## PART 3 — STORAGE BUCKETS (photos)
