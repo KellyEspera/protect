@@ -296,6 +296,96 @@ export default function QRVerification() {
   // `v: 2` marks the new hashed format so the scanner knows how to read it.
   const qrData = (selected && qrHash) ? JSON.stringify({ v: 2, rid: qrHash }) : ''
 
+  // Load the on-screen QR <svg> as an <img> so it can be drawn onto a canvas.
+  const loadQrImage = () => new Promise((resolve, reject) => {
+    const svg = document.getElementById('brgy-id-qr')?.querySelector('svg')
+    if (!svg) { reject(new Error('no qr')); return }
+    const url = URL.createObjectURL(new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' }))
+    const img = new Image()
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img) }
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e) }
+    img.src = url
+  })
+
+  // Render the whole Barangay ID card to a PNG (drawn on a canvas so it's a
+  // normal image, no extra libraries). Mirrors the on-screen preview layout.
+  const downloadIDCard = async () => {
+    if (!selected) return
+    const qrImg = await loadQrImage().catch(() => null)
+    const s = 3                       // scale factor for a crisp image
+    const W = 340, H = 200            // logical card size
+    const canvas = document.createElement('canvas')
+    canvas.width = W * s; canvas.height = H * s
+    const ctx = canvas.getContext('2d')
+    ctx.scale(s, s)
+    const center = (text, y) => ctx.fillText(text, W / 2, y)
+
+    // Card background + border
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H)
+
+    // ── Header (navy with gold accent) ──
+    ctx.fillStyle = '#1A3A5C'; ctx.fillRect(0, 0, W, 56)
+    ctx.fillStyle = '#C9A84C'; ctx.fillRect(0, 53, W, 3)
+    ctx.textAlign = 'center'
+    ctx.fillStyle = 'rgba(255,255,255,0.78)'
+    ctx.font = '7px Arial';       center('REPUBLIC OF THE PHILIPPINES', 13)
+    ctx.font = '7px Arial';       center('Province of Batanes · Municipality of Basco', 23)
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = 'bold 12px Arial'; center('BARANGAY SAN JOAQUIN', 38)
+    ctx.fillStyle = '#C9A84C'
+    ctx.font = 'bold 7px Arial';  center('BARANGAY IDENTIFICATION CARD', 48)
+
+    // ── Body ──
+    ctx.textAlign = 'left'
+    // Photo placeholder
+    ctx.strokeStyle = '#CCCCCC'; ctx.lineWidth = 1
+    ctx.fillStyle = '#F8F8F8'; ctx.fillRect(12, 68, 52, 64)
+    ctx.strokeRect(12, 68, 52, 64)
+    ctx.fillStyle = '#AAAAAA'; ctx.font = '7px Arial'; ctx.textAlign = 'center'
+    ctx.fillText('PHOTO', 38, 98); ctx.fillText('HERE', 38, 107)
+    ctx.textAlign = 'left'
+
+    // Name + fields
+    ctx.fillStyle = '#1A1A2E'; ctx.font = 'bold 12px Arial'
+    ctx.fillText(`${selected.last_name.toUpperCase()}, ${selected.first_name.toUpperCase()}`, 76, 82)
+    const dob = selected.date_of_birth
+      ? new Date(selected.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+      : '—'
+    const fields = [['Sitio', selected.purok || '—'], ['Date of Birth', dob], ['Sex', selected.sex || '—']]
+    let fy = 98
+    fields.forEach(([lbl, val]) => {
+      ctx.fillStyle = '#888888'; ctx.font = '9px Arial'
+      const labelText = `${lbl}: `
+      ctx.fillText(labelText, 76, fy)
+      ctx.fillStyle = '#333333'; ctx.font = '10px Arial'
+      ctx.fillText(String(val), 76 + ctx.measureText(labelText).width, fy)
+      fy += 13
+    })
+
+    // QR (right side)
+    if (qrImg) ctx.drawImage(qrImg, W - 12 - 64, 68, 64, 64)
+
+    // ── Footer ──
+    ctx.fillStyle = '#F5F2EC'; ctx.fillRect(0, 166, W, 34)
+    ctx.strokeStyle = '#E8E4DA'; ctx.beginPath(); ctx.moveTo(0, 166); ctx.lineTo(W, 166); ctx.stroke()
+    ctx.strokeStyle = '#555555'; ctx.beginPath(); ctx.moveTo(12, 184); ctx.lineTo(92, 184); ctx.stroke()
+    ctx.fillStyle = '#555555'; ctx.font = '8px Arial'; ctx.textAlign = 'center'
+    ctx.fillText('Punong Barangay', 52, 194)
+    ctx.fillStyle = '#888888'; ctx.textAlign = 'right'
+    const issued = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+    ctx.fillText(`Issued: ${issued}`, W - 12, 194)
+
+    // Outer border
+    ctx.strokeStyle = '#1A3A5C'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, W - 2, H - 2)
+
+    canvas.toBlob((png) => {
+      const url = URL.createObjectURL(png)
+      const a = document.createElement('a')
+      a.href = url; a.download = `${selected.resident_no}_BarangayID.png`; a.click()
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  }
+
   const handlePrintCertificate = (resident, certPurpose, requestPurpose = '') => {
     const age = resident.date_of_birth
       ? Math.floor((Date.now() - new Date(resident.date_of_birth).getTime()) / 31557600000)
@@ -592,6 +682,14 @@ export default function QRVerification() {
               ⬇️ Download QR
             </button>
           </div>
+          <button
+            className="btn btn-ghost"
+            style={{ width: '100%', marginTop: 8 }}
+            disabled={!selected}
+            onClick={downloadIDCard}
+          >
+            🪪 Download ID Card (PNG)
+          </button>
         </SectionCard>
 
         {/* ── SCAN & VERIFY ── */}
