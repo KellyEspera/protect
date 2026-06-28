@@ -49,6 +49,7 @@ export default function QRVerification() {
   const [scanned, setScanned]     = useState(null)
   const [scanning, setScanning]   = useState(false)
   const [purpose, setPurpose]     = useState('Barangay Clearance')
+  const [otherPurpose, setOtherPurpose] = useState('')    // free-text reason shown when purpose === 'Others'
   const [remarks, setRemarks]     = useState('')          // purpose-of-request for documents
   const [releaseTarget, setReleaseTarget] = useState(null) // beneficiary being released
   const [releaseAmount, setReleaseAmount] = useState('')
@@ -255,6 +256,13 @@ export default function QRVerification() {
     return () => { if (html5QrRef.current) html5QrRef.current.stop().catch(() => {}) }
   }, [])
 
+  // When "Others" is chosen, log the staff's typed reason instead of the bare word
+  // "Others" so the audit trail / Recent Verifications shows the real purpose.
+  const resolvePurpose = () =>
+    purpose === 'Others' && otherPurpose.trim()
+      ? `Others — ${otherPurpose.trim()}`
+      : purpose
+
   const handleScannedResult = (text) => {
     try {
       const data = JSON.parse(text)
@@ -265,7 +273,7 @@ export default function QRVerification() {
         : residents.find(r => r.resident_no === data.id)
       if (match) {
         setScanned(match)
-        logMutation.mutate({ resident_id: match.id, purpose })
+        logMutation.mutate({ resident_id: match.id, purpose: resolvePurpose() })
         toast.success(`Verified: ${match.first_name} ${match.last_name}`)
       } else {
         toast.error('QR code not recognized. Resident not found in database.')
@@ -279,7 +287,7 @@ export default function QRVerification() {
   const simulateScan = () => {
     if (!selected) { toast.error('Select a resident on the left first to simulate scanning their QR.'); return }
     setScanned(selected)
-    logMutation.mutate({ resident_id: selected.id, purpose })
+    logMutation.mutate({ resident_id: selected.id, purpose: resolvePurpose() })
     toast.success(`Verified: ${selected.first_name} ${selected.last_name}`)
   }
 
@@ -575,6 +583,19 @@ export default function QRVerification() {
             <select className="form-select" value={purpose} onChange={e => setPurpose(e.target.value)}>
               {PURPOSES.map(p => <option key={p}>{p}</option>)}
             </select>
+
+            {/* Free-text reason — only when "Others" is selected.
+                Whatever is typed here is what gets logged (see resolvePurpose). */}
+            {purpose === 'Others' && (
+              <input
+                className="form-input"
+                style={{ marginTop: 8, width: '100%' }}
+                placeholder="Specify the reason (e.g. school enrollment requirement)"
+                value={otherPurpose}
+                onChange={e => setOtherPurpose(e.target.value)}
+                maxLength={100}
+              />
+            )}
           </div>
 
           {/* Camera scanner area */}
