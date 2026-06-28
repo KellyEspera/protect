@@ -73,14 +73,42 @@ export default function NeedsAssessment() {
           )}
         </SectionCard>
 
-        <SectionCard title="Response Summary" action={<span className="badge badge-teal">{responses.length} responses</span>}>
-          <div className="text-center py-6">
-            <div className="text-4xl mb-3">📊</div>
-            <p className="text-sm text-navy font-medium mb-2">Community responses are being collected</p>
-            <p className="text-xs text-gray-400">
-              Residents submit their needs through the public portal at <span className="font-mono text-teal">/announcements</span>
-            </p>
-          </div>
+        <SectionCard title="Recent Submissions" action={<span className="badge badge-teal">{responses.length} responses</span>}>
+          {responses.length > 0 ? (
+            <div className="space-y-3" style={{ maxHeight: 360, overflowY: 'auto' }}>
+              {[...responses]
+                .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+                .slice(0, 30)
+                .map(r => (
+                  <div key={r.id} className="flex gap-3 p-3 rounded-lg border border-gray-100">
+                    {/* Photo thumbnail (click to open full size) — only if attached */}
+                    {r.photo_url && (
+                      <a href={r.photo_url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                        <img src={r.photo_url} alt="submission" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6, border: '1px solid #E2E8F0' }} />
+                      </a>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="text-[13px] font-medium text-navy">{r.priority_need}</span>
+                        <span className="text-[11px] text-gray-400 flex-shrink-0">{r.purok}</span>
+                      </div>
+                      {r.comments && <p className="text-xs text-gray-600 mt-1 break-words">{r.comments}</p>}
+                      <div className="text-[10px] text-gray-400 mt-1">
+                        {r.photo_url ? '📷 photo attached · ' : ''}{r.created_at ? new Date(r.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-4xl mb-3">📊</div>
+              <p className="text-sm text-navy font-medium mb-2">No responses yet</p>
+              <p className="text-xs text-gray-400">
+                Residents submit their needs through the public portal at <span className="font-mono text-teal">/announcements</span>
+              </p>
+            </div>
+          )}
         </SectionCard>
       </div>
     </div>
