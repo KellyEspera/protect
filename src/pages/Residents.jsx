@@ -149,8 +149,12 @@ export default function Residents() {
   const { data: residents = mockResidents, isLoading } = useQuery({
     queryKey: ['residents'],
     queryFn: async () => {
+      // Read the residents table directly (not the residents_with_age view):
+      // the view has a fixed column list that omits newer columns like
+      // is_out_of_school_youth, which made the OSY badge never appear. The table
+      // has every column plus `age`, and the UI computes age as a fallback.
       const { data, error } = await supabase
-        .from('residents_with_age')
+        .from('residents')
         .select('*')
         .order('resident_no')
       if (error || !data?.length) return mockResidents
