@@ -106,6 +106,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] Map loads with existing risk zones (red/orange/green circles)
 - [ ] **Click map** → place a zone → fill hazard type / level / radius → save
 - [ ] Zone popup shows **households exposed** count
+- [ ] **Household overlay**: pins appear on the map — red = exposed (inside a zone), teal = safe; clicking one lists its residents + sector flags (read-only); the "Show households" checkbox hides/shows them
 - [ ] Risk Summary by Sitio populates
 - [ ] (tanod) → Disaster Vulnerability is not in the sidebar / "Access Restricted"
 
