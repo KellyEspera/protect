@@ -34,7 +34,7 @@ The system uses **Role-Based Access Control (RBAC)** with 6 defined roles:
 |------|-------------|
 | `brgy_sec` | Full access to all pages and data — Barangay Secretary (the admin) |
 | `tanod` | Limited — Dashboard, Crime Hotspot Map, Crime & Incident only |
-| `viewer` | Read-only on most pages; no QR Verification, Reports, or Admin |
+| *(unassigned)* | A new account has no role until an admin assigns one — no access beyond the Dashboard |
 
 - Every protected route is wrapped in a `<RoleRoute>` component that checks `canAccess(role, path)` before rendering
 - Unauthorized access shows "Access Restricted 🚫" — no data leaks

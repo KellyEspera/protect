@@ -54,7 +54,7 @@ function PrivateRoute({ children }) {
 // role can't open this path, it renders an "Access Restricted" message instead.
 function RoleRoute({ path, children }) {
   const { profile } = useAuthStore()
-  const role = profile?.role ?? 'viewer'   // default to the most restrictive role
+  const role = profile?.role || 'unassigned'   // no role yet → no access (handled by canAccess)
   if (!canAccess(role, path)) {
     return (
       <div className="flex items-center justify-center h-full">

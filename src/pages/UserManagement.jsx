@@ -23,7 +23,6 @@ const ROLE_BADGE = {
   officer:  'teal',
   brgy_sec: 'blue',
   tanod:    'gold',
-  viewer:   'gray',
 }
 
 export default function UserManagement() {
@@ -127,7 +126,6 @@ export default function UserManagement() {
           {[
             { role: 'brgy_sec', pages: 'All pages — full system access (the admin)' },
             { role: 'tanod',    pages: 'Dashboard, Crime Hotspot Map, Crime & Incident' },
-            { role: 'viewer',   pages: 'Most pages — no QR Verification, Reports, or Admin' },
           ].map(({ role, pages }) => (
             <div key={role} className="flex gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
               <ShieldCheck size={16} className="text-teal flex-shrink-0 mt-0.5" />

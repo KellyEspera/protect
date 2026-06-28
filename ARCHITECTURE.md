@@ -71,11 +71,9 @@ This is the heart of your Role-Based Access Control. It's a simple lookup table:
 
 ```js
 ROLE_ROUTES = {
-  admin:    [all pages],
-  officer:  [all pages],
-  brgy_sec: [all pages],
-  tanod:    ['/', '/crime-map', '/crime'],      // only 3 pages
-  viewer:   [most pages, no admin/QR],
+  brgy_sec: [all pages],                        // Barangay Secretary — full access (the admin)
+  tanod:    ['/', '/crime-map', '/crime'],      // peace & order only
+  // (no role assigned yet → no access beyond the Dashboard)
 }
 ```
 
@@ -145,7 +143,7 @@ analytics pages share one residents hook so the data is fetched once and cached.
 ## 7. How roles + login actually work (the part you debugged)
 
 1. You create a user in **Supabase → Authentication** (email + password)
-2. A database **trigger** auto-creates a row in the `profiles` table (role = viewer)
+2. A database **trigger** auto-creates a row in the `profiles` table (role = unassigned/NULL)
 3. Admin opens **User Management** → changes that user's role
 4. User logs in → app reads `profiles.role` → shows only their allowed pages
 

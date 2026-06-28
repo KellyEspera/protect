@@ -13,7 +13,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] (Optional, for charts) Ran `seed_sector_data.sql` so OSY / PWD charts have data
 - [ ] `population_history` has ≥ 2 years (for Predictive Growth) — included in `DATABASE_SETUP.sql`
 - [ ] On Vercel: env vars **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** are set
-- [ ] You have one login per role to test with: **brgy_sec** (Barangay Secretary), **tanod**, **viewer**
+- [ ] You have one login per role to test with: **brgy_sec** (Barangay Secretary) and **tanod**
 
 > If a feature fails and a prerequisite above is unchecked, fix the prerequisite first —
 > it's almost always a database-sync issue, not a code bug.
@@ -39,11 +39,8 @@ If something fails, note: the page, what you clicked, and the exact error
 
 **tanod**
 - [ ] Sidebar shows **only**: Dashboard, Crime Hotspot Map, Crime & Incident
-- [ ] Typing a blocked URL (e.g. `/residents`) shows "Access Restricted"
-
-**viewer**
-- [ ] Sidebar shows most pages **except** QR Verification, Announcements, DILG Reports, User Management
-- [ ] On every page, **no Add / Edit / Delete buttons appear** (read-only)
+- [ ] Typing a blocked URL (e.g. `/residents` or `/admin-tools`) shows "Access Restricted"
+- [ ] Can log incidents + change status (tanod is NOT read-only on its own pages)
 
 ---
 
@@ -94,7 +91,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] **Click empty map** → drop a pin → select a household head → save
 - [ ] Pinning a head who **already has a household** → it **updates that household's location** (no duplicate HH number, no error)
 - [ ] Click an entry in the **Pinned Households** list → map flies to it
-- [ ] (viewer) → cannot pin/edit/remove
+- [ ] (tanod) → GIS Map is not in the sidebar / URL shows "Access Restricted"
 
 ## 10. Crime Hotspot Map
 - [ ] Map loads with incidents
@@ -109,7 +106,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] **Click map** → place a zone → fill hazard type / level / radius → save
 - [ ] Zone popup shows **households exposed** count
 - [ ] Risk Summary by Sitio populates
-- [ ] (viewer) → cannot add/remove zones
+- [ ] (tanod) → Disaster Vulnerability is not in the sidebar / "Access Restricted"
 
 ## 12. Beneficiary Tracking
 - [ ] Cards: active beneficiaries, total distributed, active programs, pending claims
@@ -124,7 +121,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] Incident type breakdown chart shows the **Batanes types**
 - [ ] **Log incident** → type, sitio, date, complainant, optional photo, pick location on mini-map → saves
 - [ ] **Update Status dropdown** → change a case to Resolved / Escalated / Dismissed → badge updates, toast confirms
-- [ ] (viewer) → no log form, no status dropdown
+- [ ] (tanod) → CAN log incidents + change status (this is a tanod page)
 
 ## 14. Predictive Growth
 - [ ] Forecast chart shows historical line + dashed 10-year projection
@@ -147,13 +144,13 @@ If something fails, note: the page, what you clicked, and the exact error
 
 ## 18. User Management (admin)
 - [ ] Lists all users with name, role badge, created date
-- [ ] **Edit** a user → change name and **role** (dropdown shows only: **Barangay Secretary, Barangay Tanod, Viewer**) → saves
+- [ ] **Edit** a user → change name and **role** (dropdown shows only: **Barangay Secretary, Barangay Tanod**) → saves
 - [ ] Changing a role then logging in as that user reflects the new access
 
 ## 18a. System & Audit (admin)
 - [ ] **Activity Log** shows recent audit entries (add/edit/delete)
 - [ ] **Database Backup** downloads a `.json`
-- [ ] A **viewer** cannot see the System & Audit page (not in sidebar; URL shows "Access Restricted")
+- [ ] A **tanod** cannot see the System & Audit page (not in sidebar; URL shows "Access Restricted")
 
 ---
 

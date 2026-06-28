@@ -52,10 +52,13 @@ Wraps the app in: `QueryClientProvider` (React Query cache, `staleTime` 5 min), 
 
 ### Two-layer RBAC (`permissions.js`)
 1. **Page access** — `ROLE_ROUTES[role]` lists allowed paths; `canAccess()` gates `RoleRoute`.
-2. **Edit gating** — `canEdit(role)` is `false` for `READONLY_ROLES` (`viewer`); pages hide their
-   add/edit/delete buttons when `canEdit` is false (`const canWrite = canEdit(profile?.role)`).
+2. **Edit gating** — `canEdit(role)` returns `false` for any role in `READONLY_ROLES`; pages hide
+   their add/edit/delete buttons when `canEdit` is false (`const canWrite = canEdit(profile?.role)`).
+   The mechanism stays in place for the future, though no current role is read-only.
 
-Roles: `brgy_sec` (Barangay Secretary — full access / the admin) · `tanod` (crime pages) · `viewer` (read-only).
+Roles: `brgy_sec` (Barangay Secretary — full access / the admin) · `tanod` (peace & order pages).
+An account with no role yet is *unassigned* — it gets no access beyond the Dashboard until an admin
+assigns one.
 
 ---
 

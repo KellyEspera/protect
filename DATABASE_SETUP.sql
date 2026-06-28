@@ -30,23 +30,23 @@
 -- After this, manage every user from the app's User Management page.
 -- ============================================================
 
--- 1. Allow the 3 roles in the profiles table
---    brgy_sec = Barangay Secretary (full access / the admin), tanod, viewer.
---    (DILG is an external report recipient, not a system login.)
+-- 1. Allow the 2 roles in the profiles table
+--    brgy_sec = Barangay Secretary (full access / the admin); tanod = peace & order.
+--    (DILG is an external report recipient; there is no read-only "viewer" role.)
 -- ------------------------------------------------------------
 -- Reassign any legacy accounts so the new constraint applies cleanly:
---   admin/officer  -> brgy_sec   (they were all full-access)
---   dilg_rep       -> viewer
+--   admin/officer      -> brgy_sec  (they were all full-access)
+--   dilg_rep/viewer    -> NULL      (unassigned — no access until an admin sets a role)
 UPDATE profiles SET role = 'brgy_sec' WHERE role IN ('admin', 'officer');
-UPDATE profiles SET role = 'viewer'   WHERE role = 'dilg_rep';
+UPDATE profiles SET role = NULL       WHERE role IN ('dilg_rep', 'viewer');
 
--- Default role for any new profile row is the most restrictive (viewer)
-ALTER TABLE profiles ALTER COLUMN role SET DEFAULT 'viewer';
+-- New accounts start UNASSIGNED (no access) until an admin assigns brgy_sec or tanod.
+ALTER TABLE profiles ALTER COLUMN role DROP DEFAULT;
 
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE profiles
   ADD CONSTRAINT profiles_role_check
-  CHECK (role IN ('brgy_sec', 'tanod', 'viewer'));
+  CHECK (role IS NULL OR role IN ('brgy_sec', 'tanod'));
 
 
 -- 2. Auto-create a profile row whenever a user is added in Auth
@@ -63,7 +63,7 @@ BEGIN
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
-    COALESCE(NEW.raw_user_meta_data->>'role', 'viewer')
+    NEW.raw_user_meta_data->>'role'   -- NULL (unassigned) unless explicitly provided
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
