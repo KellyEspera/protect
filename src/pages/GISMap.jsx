@@ -393,6 +393,10 @@ export default function GISMap() {
 
   // Stats
   const mapped = households.length
+  // How many households actually have a saved map location (a real pin).
+  // Households created from Resident Profiling have no coordinates until
+  // someone places them on the map here, so this can be < total.
+  const located = households.filter(h => h.latitude && h.longitude).length
   const purokCounts = PUROKS.map(p => ({ purok: p, count: households.filter(h => h.purok === p).length }))
 
   // Auto-generate the next 4-digit household number (HH-0001, HH-0002, ...)
@@ -692,29 +696,37 @@ export default function GISMap() {
           {/* Household list */}
           <div style={{ background: '#fff', border: '1px solid #E8E4DA', borderRadius: 6, overflow: 'hidden' }}>
             <div style={{ background: '#FAFAF7', borderBottom: '1px solid #E8E4DA', padding: '10px 14px' }}>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 600, color: '#1A1A2E' }}>Pinned Households</div>
-              <div style={{ fontSize: 10, color: '#9A9488', marginTop: 2 }}>{mapped} total</div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 600, color: '#1A1A2E' }}>Households</div>
+              <div style={{ fontSize: 10, color: '#9A9488', marginTop: 2 }}>{mapped} registered · {located} on map</div>
             </div>
             <div style={{ maxHeight: 260, overflowY: 'auto' }}>
               {households.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', fontSize: 12, color: '#9A9488' }}>No households pinned yet</div>
+                <div style={{ padding: '20px', textAlign: 'center', fontSize: 12, color: '#9A9488' }}>No households registered yet</div>
               ) : (
-                households.map(h => (
-                  <div key={h.id} style={{ padding: '8px 14px', borderBottom: '1px solid #F5F2EC', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                households.map(h => {
+                  const onMap = Boolean(h.latitude && h.longitude)
+                  return (
+                  <div key={h.id} style={{ padding: '8px 14px', borderBottom: '1px solid #F5F2EC', display: 'flex', alignItems: 'center', gap: 8, cursor: onMap ? 'pointer' : 'default' }}
+                    title={onMap ? 'Click to fly to this household on the map' : 'Not placed on the map yet — click the map to pin it'}
                     onClick={() => {
-                      if (mapInstance.current && h.latitude && h.longitude) {
+                      if (mapInstance.current && onMap) {
                         mapInstance.current.flyTo([h.latitude, h.longitude], 18, { duration: 1 })
                         markersRef.current[h.id]?.openPopup()
                       }
                     }}
                   >
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: PUROK_COLORS[h.purok] || '#1A3A5C', flexShrink: 0 }} />
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: PUROK_COLORS[h.purok] || '#1A3A5C', flexShrink: 0, opacity: onMap ? 1 : 0.35 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.household_no}</div>
                       <div style={{ fontSize: 10, color: '#9A9488' }}>{h.purok} {h.head_name ? `· ${h.head_name}` : ''}</div>
                     </div>
+                    {/* Shows whether this household actually has a map pin yet */}
+                    <span style={{ fontSize: 9, flexShrink: 0, color: onMap ? '#0D9E8C' : '#C0A062' }}>
+                      {onMap ? '📍 on map' : 'not located'}
+                    </span>
                   </div>
-                ))
+                  )
+                })
               )}
             </div>
           </div>
