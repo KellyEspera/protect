@@ -88,7 +88,7 @@ export default function Layout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const role = profile?.role ?? 'viewer'
+  const role = profile?.role || 'unassigned'
   // Build the sidebar for THIS role: keep only the links the role can access,
   // then drop any group (e.g. "Admin") that ends up with zero visible links.
   const filteredGroups = navGroups
@@ -175,7 +175,7 @@ export default function Layout() {
               <div className="text-[12px] text-white font-medium truncate">
                 {profile?.full_name || user?.email || 'Brgy. Officer'}
               </div>
-              <div className="text-[10px] text-white/40">{ROLE_LABELS[role] ?? 'Officer'}</div>
+              <div className="text-[10px] text-white/40">{ROLE_LABELS[role] ?? 'Unassigned'}</div>
             </div>
             <button onClick={handleSignOut} className="text-white/40 hover:text-white transition-colors" title="Sign out">
               <LogOut size={14} />
