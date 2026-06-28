@@ -13,6 +13,7 @@ If something fails, note: the page, what you clicked, and the exact error
 - [ ] (Optional, for charts) Ran `seed_sector_data.sql` so OSY / PWD charts have data
 - [ ] `population_history` has ≥ 2 years (for Predictive Growth) — included in `DATABASE_SETUP.sql`
 - [ ] On Vercel: env vars **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** are set
+- [ ] (Security) Ran **`rls_policies.sql`** for per-role database enforcement — then re-test that brgy_sec and tanod can still do their normal actions (if a write suddenly fails with "row-level security policy", that's RLS working — tell me and I'll tune it)
 - [ ] You have one login per role to test with: **brgy_sec** (Barangay Secretary) and **tanod**
 
 > If a feature fails and a prerequisite above is unchecked, fix the prerequisite first —

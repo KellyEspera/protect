@@ -67,8 +67,8 @@ assigns one.
 | Layer | What it does | Where |
 |-------|--------------|-------|
 | **Authentication** | Supabase Auth issues a **JWT**; only logged-in users get a valid token | `supabase.auth.signInWithPassword` |
-| **RLS (server-side)** | Database policies: only **authenticated** users touch protected tables; public can only **read active announcements** and **insert survey responses** | Supabase policies (SQL files) |
-| **Authorization / roles** | Which pages a role sees + read-only gating | **frontend** (`permissions.js`) |
+| **RLS (server-side)** | **Per-role** database policies enforce authorization at the DB: staff-only reads, `brgy_sec`-only writes (tanod writes only `incidents`), public limited to active announcements + survey insert | `rls_policies.sql` |
+| **Authorization / roles (frontend)** | Which pages a role sees + edit gating — the UX layer on top of RLS | `permissions.js` |
 | **XSS prevention** | Escapes HTML in form input before saving | `sanitize.js` |
 | **Brute-force** | 5 failed logins → 15-min lockout per email | `rateLimiter.js` |
 | **PII masking** | Contact # / PhilHealth shown masked, reveal on click | `Residents.jsx` |
@@ -78,9 +78,12 @@ assigns one.
 **SQL injection?** — *"Not applicable in the usual sense: I never build SQL strings. The Supabase
 client sends parameterized queries, so user input is always treated as data, never executable SQL."*
 
-**Honest limitation to volunteer:** role-based **authorization** is enforced in the frontend, not
-in RLS. Authentication and basic table protection are server-side. For trusted, admin-provisioned
-barangay staff this is acceptable; per-role RLS policies are documented future work.
+**Defense-of-depth answer:** *"Authorization is enforced in TWO layers. The frontend
+(`permissions.js`) controls which pages/buttons a role sees — that's UX. The real enforcement is
+**per-role Row-Level Security in the database** (`rls_policies.sql`): even if someone bypassed the
+React app and called the Supabase API directly, the database itself only lets staff read, only the
+Barangay Secretary write most tables, and the Tanod write only incidents. Authentication and
+authorization are both server-side."*
 
 ---
 

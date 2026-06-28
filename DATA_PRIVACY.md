@@ -28,7 +28,7 @@ The PROTECT system handles **personally identifiable information (PII)** of bara
 
 **Implementation:** `src/lib/permissions.js` + `RoleRoute` in `src/App.jsx`
 
-The system uses **Role-Based Access Control (RBAC)** with 6 defined roles:
+The system uses **Role-Based Access Control (RBAC)** with 2 defined roles:
 
 | Role | Access Level |
 |------|-------------|
@@ -36,7 +36,7 @@ The system uses **Role-Based Access Control (RBAC)** with 6 defined roles:
 | `tanod` | Limited — Dashboard, Crime Hotspot Map, Crime & Incident only |
 | *(unassigned)* | A new account has no role until an admin assigns one — no access beyond the Dashboard |
 
-- Every protected route is wrapped in a `<RoleRoute>` component that checks `canAccess(role, path)` before rendering
+- **Enforced in two layers.** The frontend wraps each route in a `<RoleRoute>` that checks `canAccess(role, path)` (UX), and the **database enforces the same rules with per-role Row-Level Security** (`rls_policies.sql`) — so the restriction holds even if the React app is bypassed.
 - Unauthorized access shows "Access Restricted 🚫" — no data leaks
 - Roles are stored in the `profiles` table in Supabase, not in the client — they cannot be spoofed by manipulating localStorage or cookies
 
@@ -46,20 +46,24 @@ The system uses **Role-Based Access Control (RBAC)** with 6 defined roles:
 
 ## 3. Row Level Security (RLS) — Database-Level Protection
 
-**Implementation:** `supabase_schema.sql` lines 174–210
+**Implementation:** `rls_policies.sql` (per-role policies on every table)
 
-All 8 data tables have RLS enabled at the PostgreSQL level:
+All data tables have RLS enabled at the PostgreSQL level, with **per-role** policies — so the
+database enforces *who can do what*, not just *who is logged in*:
 
 ```
-profiles, households, residents, assistance_programs,
-beneficiaries, incidents, qr_verifications, survey_responses
+profiles, residents, households, incidents, beneficiaries,
+assistance_programs, qr_verifications, survey_responses,
+announcements, disaster_risk_zones, population_history, audit_logs
 ```
 
-**What this means:** Even if an API key were leaked or a request were crafted manually, the PostgreSQL database itself enforces that:
-- Only **authenticated users** (`auth.role() = 'authenticated'`) can read or write resident records
-- Users can only read/update **their own profile** (`auth.uid() = id`)
-- The `audit_logs` table only allows reads — no user can insert directly (only the DB trigger can)
-- The `announcements` table allows public read of **active announcements only** — no resident data is ever publicly exposed
+**What this means:** Even if an API key were leaked or a request were crafted manually, the
+PostgreSQL database itself enforces that:
+- **Reads** are limited to authenticated **staff** (Barangay Secretary or Tanod) — an unassigned or anonymous caller gets nothing
+- **Writes** are limited to the **Barangay Secretary** on every table; the **Tanod** can write only `incidents`
+- A helper function `user_role()` (SECURITY DEFINER) supplies the caller's role to each policy without causing recursive-policy errors
+- The `audit_logs` table is readable only by the Secretary, and is written only by the DB trigger — no one can insert directly
+- The `announcements` table allows public read of **active announcements only**, and `survey_responses` allows public **insert only** — no other data is ever publicly exposed
 
 **RA 10173 mapping:** Satisfies *"technical security measures"* — access cannot be bypassed at the application layer because the database itself enforces the rules (Sec. 20b).
 
@@ -219,7 +223,7 @@ No data is collected beyond what is needed for barangay governance and social se
 ## Panel Defense — Quick Answers
 
 **Q: How do you prevent unauthorized access to resident data?**
-> The system uses Supabase Row Level Security — even if someone had the API key, the database itself blocks unauthenticated reads. On top of that, RBAC at the UI level restricts pages by role.
+> The system uses Supabase Row Level Security with **per-role policies** — even if someone had the API key and bypassed the app, the database itself only lets staff read, only the Barangay Secretary write most tables, and the Tanod write only incident records. RBAC at the UI level restricts pages by role on top of that.
 
 **Q: Are passwords stored securely?**
 > Passwords are never stored in our database. Supabase Auth handles authentication and stores only bcrypt hashes — we never see the actual password.
