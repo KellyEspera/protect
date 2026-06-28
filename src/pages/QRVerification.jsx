@@ -26,6 +26,11 @@ const PURPOSES = [
   'Others',
 ]
 
+// Stable empty array — used as the default for queries so an unresolved query
+// doesn't hand a NEW [] to effects on every render (which caused an infinite
+// re-render loop on the QR page).
+const EMPTY = []
+
 // ---- SHA-256 hashing (privacy for the QR payload) ----
 // We hash the resident_no with the browser's built-in Web Crypto API so the QR
 // code contains NO readable personal data — just a 64-char hex fingerprint.
@@ -65,7 +70,7 @@ export default function QRVerification() {
   }
 
   // Load residents
-  const { data: residents = [] } = useQuery({
+  const { data: residents = EMPTY } = useQuery({
     queryKey: ['residents-qr'],
     queryFn: async () => {
       const { data } = await supabase
@@ -113,6 +118,7 @@ export default function QRVerification() {
   // scanned hash can be matched back to a person instantly (hashing is async, so
   // we precompute the whole map once instead of hashing on every scan).
   useEffect(() => {
+    if (!residents.length) return   // nothing to hash → skip (prevents a re-render loop when empty)
     let cancelled = false
     ;(async () => {
       const entries = await Promise.all(
