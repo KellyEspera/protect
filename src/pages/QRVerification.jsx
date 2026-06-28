@@ -562,11 +562,31 @@ export default function QRVerification() {
                 if (!selected) return
                 const svg = document.getElementById('brgy-id-qr')?.querySelector('svg')
                 if (!svg) return
-                const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url; a.download = `${selected.resident_no}_QR.svg`; a.click()
-                URL.revokeObjectURL(url)
+                // Convert the on-screen QR <svg> to a PNG so it downloads as a
+                // normal image (previewable, paste-able into Word/Messenger).
+                // We draw it onto a canvas with a white border so scanners read it.
+                const size = 512            // output resolution (px)
+                const pad = 32              // white quiet-zone border
+                const svgBlob = new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' })
+                const svgUrl = URL.createObjectURL(svgBlob)
+                const img = new Image()
+                img.onload = () => {
+                  const canvas = document.createElement('canvas')
+                  canvas.width = size + pad * 2
+                  canvas.height = size + pad * 2
+                  const ctx = canvas.getContext('2d')
+                  ctx.fillStyle = '#FFFFFF'
+                  ctx.fillRect(0, 0, canvas.width, canvas.height)
+                  ctx.drawImage(img, pad, pad, size, size)
+                  URL.revokeObjectURL(svgUrl)
+                  canvas.toBlob((pngBlob) => {
+                    const url = URL.createObjectURL(pngBlob)
+                    const a = document.createElement('a')
+                    a.href = url; a.download = `${selected.resident_no}_QR.png`; a.click()
+                    URL.revokeObjectURL(url)
+                  }, 'image/png')
+                }
+                img.src = svgUrl
               }}
             >
               ⬇️ Download QR
