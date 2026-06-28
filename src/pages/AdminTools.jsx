@@ -10,7 +10,7 @@
 // ============================================================================
 
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { SectionCard } from '../components/ui/index'
 import { toast } from 'react-toastify'
@@ -160,7 +160,7 @@ export default function AdminTools() {
   const [logPage, setLogPage] = useState(0)   // 0-indexed
   const { data: auditData = { rows: [], count: 0 }, isFetching: logsFetching, refetch: refetchLogs } = useQuery({
     queryKey: ['audit-logs', logPage],
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,   // v5: keep showing the old page while the next loads (no empty flash)
     queryFn: async () => {
       // NOTE: no FK between audit_logs.changed_by and profiles, so we can't embed
       // profiles(...) directly — fetch the log rows, then look up the actors.
