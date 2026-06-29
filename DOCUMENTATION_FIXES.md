@@ -49,6 +49,59 @@ DILG-compliant reporting."
 
 ---
 
+## CHAPTER I — Coverage gaps (whole capabilities the paper never mentions)
+
+The fixes above correct *wrong* facts. This section is about *missing* coverage — modules and
+capabilities that exist in the deployed system but are absent from Chapter I's Scope/Objectives.
+
+**Altitude rule:** Chapter I is written at **module/capability** level, not feature level. Do NOT
+add micro-refinements here (QR PNG download, drag-to-resize disaster circle, audit-log pagination,
+the "Others" reason field, sitio auto-fill, photo attachments) — those belong in Chapter IV
+screenshots. Only the module-level gaps below belong in Chapter I.
+
+### 🔴 ⓐ Out-of-School Youth (OSY) omitted from vulnerable sectors
+Objective 2, the Scope "Analytics Modules" bullet, and the Significance section all enumerate
+"senior citizens, solo parents, PWDs" — but the system also tracks **Out-of-School Youth (OSY)**
+(Sector Statistics has an OSY-by-Sitio chart) and voter status. **Add "out-of-school youth" to
+every vulnerable-sector list** in Chapter I, e.g.:
+> …senior citizens, solo parents, persons with disabilities (PWDs), **out-of-school youth**, and
+> economically disadvantaged households…
+
+### 🟠 ⓑ Community Announcements — missing from Scope (ADD a bullet)
+> **Community Communication:** Posting of barangay announcements to a public bulletin board that
+> residents can view without logging in, strengthening transparency and information dissemination.
+
+### 🟠 ⓒ QR Scope too narrow — broaden the Resident Management bullet
+**Old:** "…QR-based identity verification to protect resident identity and prevent fraudulent
+assistance claims."
+**New:** "…QR-based identity verification **and on-the-spot issuance of barangay documents**
+(clearance, certificate of indigency/residency), with every verification logged — protecting
+resident identity and preventing fraudulent assistance claims."
+
+### 🟠 ⓓ Crime Hotspot mapping — name it under GIS
+The Scope lists "crime and incident analytics" but not the **spatial heatmap**. Append to the GIS
+Integration bullet: "…and a **crime hotspot heatmap** for spatial crime-pattern analysis."
+
+### 🟠 ⓔ System Administration & Security — missing from Scope (ADD a bullet)
+Data security is the panel's top priority, yet Chapter I never mentions user management, the audit
+trail, RLS, or backup. Add:
+> **System Administration & Security:** Role-based user management, an automatic audit trail
+> logging every record change, per-role database security (Row-Level Security), and on-demand
+> database backup.
+
+### 🟢 ⓕ Conceptual Framework (p.8) — feature count + Process box
+Change "twelve integrated features" → "its integrated modules" (or update the number), and add
+**Announcements & Audit Logging** to the Process box so the framework reflects all modules.
+
+### Summary — what to add vs leave
+- **Add (module-level):** OSY sector · Community Announcements · QR document issuance · Crime
+  Hotspot heatmap · System Administration & Security (user mgmt + audit + RLS + backup).
+- **Leave out (feature-level → Chapter IV only):** PNG/ID downloads, drag-resize circle, household
+  overlay, radius slider, status dropdown, pagination, "Others" reason, sitio auto-fill, photo
+  attachments.
+
+---
+
 ## CHAPTER III — Technical Background (tool list)
 
 🔴 **Remove / replace these — they are NOT what the system uses:**
