@@ -1,0 +1,6 @@
+flowchart TD
+    M((M)) --> Tool{System &amp; Audit}
+    Tool -- Activity Log --> Audit[View audit trail - paginated<br/>add / edit / delete on<br/>residents · households · incidents]
+    Tool -- Database Backup --> Backup[Download full JSON backup of all data]
+    Audit --> R((R))
+    Backup --> R((R))

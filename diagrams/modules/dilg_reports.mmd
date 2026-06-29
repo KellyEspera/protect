@@ -3,9 +3,3 @@ flowchart TD
     Pick --> Compile[Compile figures live from Supabase<br/>residents · incidents · beneficiaries · zones]
     Compile --> PDF[Generate PDF with barangay letterhead]
     PDF --> R((R))
-
-    K --> Admin{Admin tools<br/>hidden from DILG rep}
-    Admin -- Activity log --> AuditView[View audit_logs]
-    Admin -- Database backup --> Backup[Export data backup]
-    AuditView --> R
-    Backup --> R
