@@ -73,7 +73,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 
 This creates all tables, RLS policies, seed data, and triggers automatically.
 
-### 5. Create your first user (Barangay Officer)
+### 5. Create your first user (Barangay Secretary)
 
 1. Go to **Supabase Dashboard → Authentication → Users**
 2. Click **Add User** → fill in email and password

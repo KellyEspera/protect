@@ -54,7 +54,8 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | `is_voter`, `is_pwd`, `is_solo_parent`, `is_senior_citizen`, `is_out_of_school_youth` | bool | sector flags |
 | *`pwd_type`* | text | Physical / Visual / Hearing / Intellectual / Psychosocial |
 | `monthly_income` | numeric | |
-| *`occupation`, `educational_attainment`, `contact_number`, `philhealth_no`* | text | |
+| `occupation`, `contact_number` | text | |
+| *`educational_attainment`, `philhealth_no`* | text | legacy columns — retained in the table but no longer collected or shown in the UI (data minimization) |
 | `created_at`, `updated_at` | timestamptz | |
 
 > **View `residents_with_age`** = `residents` + computed `age`. The Resident Profiling list reads from this view.
