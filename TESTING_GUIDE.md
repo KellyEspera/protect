@@ -10,7 +10,7 @@ If something fails, note: the page, what you clicked, and the exact error
 
 - [ ] Ran **`DATABASE_SETUP.sql`** in Supabase → SQL Editor (no red errors)
 - [ ] Storage buckets exist: **`incident-photos`** and **`announcement-photos`**
-- [ ] (Optional, for charts) Ran `seed_sector_data.sql` so OSY / PWD charts have data
+- [ ] (Optional, for charts) Ran `sql_archive/seed_sector_data.sql` so OSY / PWD charts have data
 - [ ] `population_history` has ≥ 2 years (for Predictive Growth) — included in `DATABASE_SETUP.sql`
 - [ ] On Vercel: env vars **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** are set
 - [ ] (Security) Ran **`rls_policies.sql`** for per-role database enforcement — then re-test that brgy_sec and tanod can still do their normal actions (if a write suddenly fails with "row-level security policy", that's RLS working — tell me and I'll tune it)
@@ -84,7 +84,7 @@ If something fails, note: the page, what you clicked, and the exact error
 
 ## 8. Sector Statistics
 - [ ] Cards: Senior Citizens, Solo Parents, PWDs (with % of population)
-- [ ] "Senior Citizens by Age Group", "PWD by Disability Type", "OSY by Sitio" charts render (run `seed_sector_data.sql` if empty)
+- [ ] "Senior Citizens by Age Group", "PWD by Disability Type", "OSY by Sitio" charts render (run `sql_archive/seed_sector_data.sql` if empty)
 - [ ] **Export PDF** works
 
 ## 9. GIS Household Map

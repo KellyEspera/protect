@@ -68,7 +68,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 ### 4. Set up the database
 
 1. Go to **Supabase Dashboard → SQL Editor**
-2. Open `supabase_schema.sql` from this project
+2. Open `DATABASE_SETUP.sql` from this project
 3. Paste the entire contents and click **Run**
 
 This creates all tables, RLS policies, seed data, and triggers automatically.
@@ -109,7 +109,7 @@ protect/
 ├── index.html
 ├── vite.config.js
 ├── tailwind.config.js
-├── supabase_schema.sql       ← Run this in Supabase SQL Editor
+├── DATABASE_SETUP.sql        ← Run this in Supabase SQL Editor
 ├── .env.example              ← Copy to .env and fill credentials
 └── src/
     ├── App.jsx               ← Routes + auth guard

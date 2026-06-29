@@ -136,7 +136,7 @@ the QR exposes no personal data by default.
 
 ## 7. Audit Trail — Accountability
 
-**Implementation:** `audit_logs.sql` + Activity Log in System & Audit (Admin)
+**Implementation:** `DATABASE_SETUP.sql` + Activity Log in System & Audit (Admin)
 
 The system records every INSERT, UPDATE, and DELETE on the three most sensitive tables:
 

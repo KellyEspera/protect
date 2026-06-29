@@ -2,7 +2,7 @@
 
 **Barangay San Joaquin, Basco, Batanes**
 Single source of truth for the database. Derived from the actual application code
-(every table and field the app reads/writes) reconciled with `schema.sql` and the
+(every table and field the app reads/writes) reconciled with `DATABASE_SETUP.sql` and the
 migrations consolidated in `DATABASE_SETUP.sql`.
 
 > Use this as the basis for your **ERD**, **System Flowchart**, and **Data Flow Diagram (DFD)**.
@@ -15,7 +15,7 @@ The live database = **base schema** + **migrations**:
 
 | Layer | File | Brings |
 |-------|------|--------|
-| Base tables | `schema.sql` | residents, households, incidents, profiles, beneficiaries, assistance_programs, qr_verifications, survey_responses, the `residents_with_age` view |
+| Base tables | `DATABASE_SETUP.sql` | residents, households, incidents, profiles, beneficiaries, assistance_programs, qr_verifications, survey_responses, the `residents_with_age` view |
 | Migrations (all-in-one) | `DATABASE_SETUP.sql` | 6-role profiles, Batanes crime types, `is_out_of_school_youth`, photo columns + buckets, and the tables `announcements`, `audit_logs`, `population_history`, `disaster_risk_zones` |
 
 **To make Supabase match the system: run `DATABASE_SETUP.sql` once.**
@@ -197,7 +197,7 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 > resident with `is_household_head = true` whose `household_id` points back to that household.
 > (`households.head_name` is only a text snapshot of that name, not a foreign key.)
 >
-> **Integrity:** a database trigger (`cascade_head_delete.sql`) deletes a household when its
+> **Integrity:** a database trigger (`DATABASE_SETUP.sql`) deletes a household when its
 > head resident is deleted, so no orphan household pins are left behind; remaining members are
 > unlinked (`household_id → NULL`) by the foreign key, not deleted.
 
