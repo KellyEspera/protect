@@ -1,7 +1,7 @@
 flowchart TD
     J((J)) --> Who{Staff or public?}
 
-    Who -- "Staff (Announcements admin)" --> AAct{Action?}
+    Who -- "Staff (manage announcements)" --> AAct{Action?}
     AAct -- Post --> Post[Write title · body · category<br/>+ optional image upload]
     Post --> SaveA[Save to announcements + storage]
     AAct -- Hide / show --> Toggle[Toggle is_active]
