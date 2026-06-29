@@ -778,13 +778,6 @@ export default function Residents() {
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
-                  onClick={() => setShowSensitive(s => !s)}
-                  style={{ padding: '5px 12px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 4, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}
-                  title="Contact number and PhilHealth number are masked to protect privacy"
-                >
-                  {showSensitive ? '🙈 Hide PII' : '👁️ Reveal PII'}
-                </button>
-                <button
                   onClick={() => { setViewResident(null); handleEdit(viewResident) }}
                   style={{ padding: '5px 12px', background: '#C9A84C', border: 'none', borderRadius: 4, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}
                 >
@@ -825,7 +818,18 @@ export default function Residents() {
                 ['Residence & Contact', [
                   ['Sitio',           viewResident.purok],
                   ['Household No.',   households.find(h => h.id === viewResident.household_id)?.household_no || '—'],
-                  ['Contact Number',  showSensitive ? (viewResident.contact_number || '—') : maskPII(viewResident.contact_number)],
+                  ['Contact Number', viewResident.contact_number ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      {showSensitive ? viewResident.contact_number : maskPII(viewResident.contact_number)}
+                      <button
+                        onClick={() => setShowSensitive(s => !s)}
+                        title={showSensitive ? 'Hide contact number' : 'Reveal contact number (PII)'}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}
+                      >
+                        {showSensitive ? '🙈' : '👁️'}
+                      </button>
+                    </span>
+                  ) : '—'],
                 ]],
                 ['Socioeconomic', [
                   ['Occupation',     viewResident.occupation             || '—'],
