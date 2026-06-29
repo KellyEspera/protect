@@ -1,9 +1,9 @@
 flowchart TD
     B((B)) --> Sel[Select resident from list]
-    Sel --> Gen[Generate QR code<br/>encodes resident no · name · sitio]
+    Sel --> Gen[Generate QR code<br/>encodes a SHA-256 hash - no PII]
     Gen --> Card{Print or scan?}
 
-    Card -- Print ID --> Print[Print / download QR card]
+    Card -- Print ID --> Print[Print / download QR or<br/>full ID card as PNG]
     Card -- Verify --> Scan[Start camera scan<br/>or Simulate Scan]
 
     Scan --> Found[Identify resident<br/>show Head / Member + sector badges]
