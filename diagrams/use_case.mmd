@@ -1,73 +1,38 @@
 flowchart LR
-    %% ===== Left actors =====
-    Sec["👤 Barangay Secretary<br/>(full access)"]
-    Tanod["👮 Barangay<br/>Tanod"]
+    %% ===== Actors =====
+    Sec["👤 Barangay Secretary<br/>(full access)"]:::actor
+    Tanod["👮 Barangay<br/>Tanod"]:::actor
 
-    %% ===== System boundary with use cases stacked vertically =====
+    %% ===== System boundary: consolidated high-level use cases (readable) =====
     subgraph SYS[PROTECT System]
       direction TB
-      U0(["View Community<br/>Dashboard"])
-      U1(["Manage Resident &<br/>Household Profiles"])
-      U2(["Generate & Verify QR /<br/>Issue Documents"])
-      U3(["Track Assistance<br/>Beneficiaries"])
-      U4(["View Analytics<br/>Dashboards"])
-      U5(["View GIS &<br/>Disaster Maps"])
-      U6(["View Crime<br/>Hotspot Map"])
-      U7(["Log Crime /<br/>Incident Reports"])
-      U8(["Update Incident<br/>Status"])
-      U9(["View Predictive<br/>Population Growth"])
-      U10(["Generate DILG<br/>Reports"])
-      U11(["Manage Announcements"])
-      U12(["Submit Needs<br/>Assessment"])
-      U13(["View Public<br/>Announcements"])
-      U14(["Manage Users<br/>& Roles"])
-      U15(["Review Audit Log<br/>& Database Backup"])
-      U16(["Authenticate / Login"])
-      U0 ~~~ U1 ~~~ U2 ~~~ U3 ~~~ U4 ~~~ U5 ~~~ U6 ~~~ U7 ~~~ U8 ~~~ U9 ~~~ U10 ~~~ U11 ~~~ U12 ~~~ U13 ~~~ U14 ~~~ U15 ~~~ U16
+      UC1(["Manage Residents<br/>& Households"]):::resident
+      UC2(["QR Verification &<br/>Document Issuance"]):::resident
+      UC3(["Track Beneficiaries<br/>& Assistance"]):::resident
+      UC4(["View Dashboard &<br/>Crime Hotspot Map"]):::analytics
+      UC5(["View Analytics &<br/>GIS / Disaster Maps"]):::analytics
+      UC6(["Log & Manage<br/>Incidents"]):::safety
+      UC7(["Manage Announcements<br/>& Review Needs"]):::needs
+      UC8(["Generate DILG<br/>Reports"]):::reporting
+      UC9(["Administer Users,<br/>Audit & Backup"]):::admin
+      UC10(["Authenticate / Login"]):::auth
+      UC1 ~~~ UC2 ~~~ UC3 ~~~ UC4 ~~~ UC5 ~~~ UC6 ~~~ UC7 ~~~ UC8 ~~~ UC9 ~~~ UC10
     end
 
-    %% ===== Right actor =====
-    Res["🧑 Resident /<br/>Public"]
+    %% ===== Resident actor (right) =====
+    Res["🧑 Resident /<br/>Public"]:::actor
+    RUC1(["Submit Needs<br/>Assessment"]):::needs
+    RUC2(["View Public<br/>Announcements"]):::needs
 
-    %% ===== Barangay Secretary — full access =====
-    Sec --- U0
-    Sec --- U1
-    Sec --- U2
-    Sec --- U3
-    Sec --- U4
-    Sec --- U5
-    Sec --- U6
-    Sec --- U7
-    Sec --- U8
-    Sec --- U9
-    Sec --- U10
-    Sec --- U11
-    Sec --- U14
-    Sec --- U15
-    Sec --- U16
+    %% ===== Secretary — full access =====
+    Sec --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC7 & UC8 & UC9 & UC10
 
-    %% ===== Tanod — peace & order (Dashboard, Hotspot, Incidents) =====
-    Tanod --- U0
-    Tanod --- U6
-    Tanod --- U7
-    Tanod --- U8
-    Tanod --- U16
+    %% ===== Tanod — peace & order only (Dashboard+Hotspot, Incidents, Login) =====
+    Tanod --- UC4 & UC6 & UC10
 
-    %% ===== Resident / Public — no login (right side) =====
-    U12 --- Res
-    U13 --- Res
-
-    %% ===== Legend =====
-    subgraph LEGEND[Legend]
-      direction TB
-      Lg1["Resident Management"]:::resident
-      Lg2["Analytics & Maps"]:::analytics
-      Lg3["Incident Logging"]:::safety
-      Lg4["Reporting & Prediction"]:::reporting
-      Lg5["Needs & Community"]:::needs
-      Lg6["Administration & Security"]:::admin
-      Lg1 ~~~ Lg2 ~~~ Lg3 ~~~ Lg4 ~~~ Lg5 ~~~ Lg6
-    end
+    %% ===== Resident / Public — no login (separate, public use cases) =====
+    RUC1 --- Res
+    RUC2 --- Res
 
     %% ===== Styling =====
     classDef actor fill:#1A3A5C,stroke:#10243a,color:#fff,font-weight:bold;
@@ -78,12 +43,3 @@ flowchart LR
     classDef needs fill:#F9D7DC,stroke:#D88894,color:#7A2A3A;
     classDef admin fill:#D9D4EA,stroke:#7A6FA8,color:#2A2350;
     classDef auth fill:#EDE9DF,stroke:#9A9488,color:#3A3A32;
-
-    class Sec,Tanod,Res actor;
-    class U0,U4,U5,U6 analytics;
-    class U1,U2,U3 resident;
-    class U7,U8 safety;
-    class U9,U10 reporting;
-    class U11,U12,U13 needs;
-    class U14,U15 admin;
-    class U16 auth;
