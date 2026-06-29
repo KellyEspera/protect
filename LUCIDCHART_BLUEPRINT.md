@@ -110,45 +110,117 @@ Standard flowchart shapes: **rounded rectangle** = start/end, **rectangle** = pr
 
 ## 3) DATA FLOW DIAGRAM (DFD)
 
-### Context Diagram (Level 0)
-**External entities** (rectangles): **Barangay Staff** (Secretary / Tanod), **Resident / Public**,
-**DILG / Government**. **One process** (circle/rounded): **PROTECT System**.
+**First, what a DFD is (and how it differs from the flowchart):** a DFD shows how **data moves**
+around the system — *who sends data, what the system does to it, and where it is stored*. It does
+**not** show step-by-step order or decisions (that's the System Flowchart). A DFD uses only **four
+symbols**:
 
-Data flows (arrows):
-- Barangay Staff → System: *resident, household, incident, beneficiary, announcement data*
-- System → Barangay Staff: *dashboards, maps, certificates, reports*
-- System → DILG / Government: *compliance reports (submitted by the barangay)*
-- Resident / Public → System: *community needs survey*
-- System → Resident / Public: *public announcements*
+- **External entity** — a *rectangle*. A person or office **outside** the system that sends or
+  receives data (Barangay Staff, Resident/Public, DILG).
+- **Process** — a *circle* (or rounded box). Something the system **does** to data
+  (e.g., "Manage Residents"). In Level 1 each process gets a number (1.0, 2.0, …).
+- **Data store** — an *open-ended rectangle* (two parallel lines). Where data is **kept** — i.e., a
+  database table.
+- **Data flow** — a *labeled arrow*. Shows **what** data moves and **which direction** it goes.
 
-### Level 1 Diagram
-**External entities:** Barangay Staff · Resident/Public · DILG/Government
-**Processes (numbered circles):**
-- 1.0 Authenticate & Authorize
-- 2.0 Manage Residents & Households / GIS
-- 3.0 Log Incidents & Map Crime
-- 4.0 Manage Beneficiaries & Assistance
-- 5.0 QR Verification & Documents
-- 6.0 Announcements & Needs Survey
-- 7.0 Analytics & DILG Reports
+---
 
-**Data stores (open-ended rectangles):**
-- D1 profiles
-- D2 residents · households
-- D3 incidents · disaster_risk_zones
-- D4 beneficiaries · assistance_programs
-- D5 qr_verifications
-- D6 announcements · survey_responses
-- D7 population_history · audit_logs
+### Context Diagram (Level 0) — the whole system as ONE bubble
 
-**Flows:**
-- Staff → 1.0 → D1
-- Staff ↔ 2.0 ↔ D2
-- Staff ↔ 3.0 ↔ D3
-- Staff ↔ 4.0 ↔ D4
-- Staff → 5.0; D2 → 5.0; 5.0 → D5; 5.0 → D4 *(assistance release)*
-- Staff → 6.0; Public → 6.0; 6.0 ↔ D6; D6 → Public *(public announcements)*
-- Staff → 7.0; D2, D3, D4, D7 → 7.0; 7.0 → DILG *(compliance reports)*
+Draw one big circle, **PROTECT System**, in the middle. Put the three external entities around it
+and connect them with labeled arrows. That's the entire diagram — it just shows what goes in and out.
+
+```
+                          (resident, household, incident,
+                           beneficiary, announcement data)
+   ┌──────────────────┐  ───────────────────────────────▶   ╭──────────────╮
+   │  Barangay Staff  │                                      │              │   (compliance
+   │ (Secretary/Tanod)│  ◀───────────────────────────────   │   PROTECT    │    reports)     ┌────────────────┐
+   └──────────────────┘   (dashboards, maps, certificates,   │    System    │ ───────────────▶│ DILG/Government │
+                            reports)                         │              │                 └────────────────┘
+   ┌──────────────────┐  ───(community needs survey)──────▶  │              │
+   │ Resident/Public  │                                      │              │
+   └──────────────────┘  ◀──(public announcements)────────   ╰──────────────╯
+```
+
+**In plain words:** Staff type data IN and get dashboards/maps/reports OUT. Residents submit their
+needs and read announcements. The barangay sends compliance reports to DILG. One picture, the whole
+system.
+
+---
+
+### Level 1 Diagram — the ONE bubble "exploded" into 7 processes
+
+Level 1 takes that single PROTECT bubble and opens it up to show the **7 things the system actually
+does**, plus the **database tables** each one reads from or writes to. The same three external
+entities stay on the edges.
+
+**The 7 processes (draw each as a numbered circle):**
+
+| # | Process | Triggered by | Reads / writes these data stores |
+|---|---|---|---|
+| 1.0 | Authenticate & Authorize | Staff | writes/reads **D1 profiles** |
+| 2.0 | Manage Residents & Households / GIS | Staff | reads + writes **D2 residents · households** |
+| 3.0 | Log Incidents & Map Crime | Staff | reads + writes **D3 incidents · disaster_risk_zones** |
+| 4.0 | Manage Beneficiaries & Assistance | Staff | reads + writes **D4 beneficiaries · assistance_programs** |
+| 5.0 | QR Verification & Documents | Staff | reads **D2**, writes **D5 qr_verifications**, updates **D4** (assistance release) |
+| 6.0 | Announcements & Needs Survey | Staff **and** Public | reads + writes **D6 announcements · survey_responses**; sends announcements out to Public |
+| 7.0 | Analytics & DILG Reports | Staff | reads **D2, D3, D4, D7**; sends compliance reports out to DILG |
+
+**The 7 data stores (draw each as an open-ended rectangle):**
+
+| ID | Data store (database tables) |
+|---|---|
+| D1 | profiles |
+| D2 | residents · households |
+| D3 | incidents · disaster_risk_zones |
+| D4 | beneficiaries · assistance_programs |
+| D5 | qr_verifications |
+| D6 | announcements · survey_responses |
+| D7 | population_history · audit_logs |
+
+**How to read/draw the arrows (the key to understanding it):**
+- Arrow **from an entity → a process** = that person is *sending data in* (e.g., Staff → 2.0 = staff enters a resident).
+- Arrow **from a process → a data store** = the system is *saving* data (e.g., 2.0 → D2 = save the resident).
+- Arrow **from a data store → a process** = the system is *reading* saved data (e.g., D2 → 7.0 = analytics reads residents).
+- Arrow **from a process → an entity** = the system is *sending output out* (e.g., 7.0 → DILG = a report).
+
+So for each process you typically draw: **entity → process**, **process ↔ its data store(s)**, and
+(for 6.0 and 7.0) **process → an external entity** for the output.
+
+---
+
+## 4) USE CASE DIAGRAM
+
+Three actors, one system boundary, use cases grouped into four packages in a **2×2 grid** (keeps it
+balanced — not a tall ribbon). Actors on the sides; ovals = use cases; lines = associations.
+
+```
+ [Barangay Secretary]        ┌──────────────── PROTECT System ────────────────┐
+  (actor, left)              │  ┌── Resident Services ──┐ ┌── Community & Needs ──┐
+                             │  │ ( Manage Profiles )   │ │ ( Manage Announcements)│
+ [Barangay Tanod]            │  │ ( QR / Issue Docs )   │ │ ( Submit Needs ) *─────┼─▶ [Resident /
+  (actor, left)              │  │ ( Track Beneficiaries)│ │ ( View Announcements)* │    Public]
+                             │  └───────────────────────┘ └───────────────────────┘   (actor, right)
+                             │  ┌── Analytics, Maps & Prediction ┐ ┌── Safety, Reporting & Admin ┐
+                             │  │ ( View Dashboard )             │ │ ( Log Incident )            │
+                             │  │ ( View Analytics )             │ │ ( Update Incident Status )  │
+                             │  │ ( View GIS & Disaster Maps )   │ │ ( Generate DILG Reports )   │
+                             │  │ ( View Crime Hotspot Map )     │ │ ( Manage Users & Roles )    │
+                             │  │ ( View Predictive Growth )     │ │ ( Review Audit Log & Backup)│
+                             │  └────────────────────────────────┘ │ ( Authenticate / Login )    │
+                             │                                      └─────────────────────────────┘
+                             └──────────────────────────────────────────────────────────────────┘
+```
+
+**Associations (who connects to which use case):**
+- **Barangay Secretary** → every use case **except** the two resident-only ones.
+- **Barangay Tanod** → only: View Community Dashboard, View Crime Hotspot Map, Log Incident,
+  Update Incident Status, Authenticate/Login.
+- **Resident / Public** → only the two marked `*`: Submit Needs Assessment, View Public Announcements.
+
+**Colors (match the legend):** Resident=green · Analytics/Maps=purple · Incident=tan ·
+Reporting/Prediction=blue · Needs/Community=pink · Administration/Security=lavender.
 
 ---
 
