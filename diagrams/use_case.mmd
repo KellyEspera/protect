@@ -6,6 +6,7 @@ flowchart LR
     %% ===== System boundary with use cases stacked vertically =====
     subgraph SYS[PROTECT System]
       direction TB
+      U0(["View Community<br/>Dashboard"])
       U1(["Manage Resident &<br/>Household Profiles"])
       U2(["Generate & Verify QR /<br/>Issue Documents"])
       U3(["Track Assistance<br/>Beneficiaries"])
@@ -19,14 +20,17 @@ flowchart LR
       U11(["Manage Announcements"])
       U12(["Submit Needs<br/>Assessment"])
       U13(["View Public<br/>Announcements"])
-      U14(["Authenticate / Login"])
-      U1 ~~~ U2 ~~~ U3 ~~~ U4 ~~~ U5 ~~~ U6 ~~~ U7 ~~~ U8 ~~~ U9 ~~~ U10 ~~~ U11 ~~~ U12 ~~~ U13 ~~~ U14
+      U14(["Manage Users<br/>& Roles"])
+      U15(["Review Audit Log<br/>& Database Backup"])
+      U16(["Authenticate / Login"])
+      U0 ~~~ U1 ~~~ U2 ~~~ U3 ~~~ U4 ~~~ U5 ~~~ U6 ~~~ U7 ~~~ U8 ~~~ U9 ~~~ U10 ~~~ U11 ~~~ U12 ~~~ U13 ~~~ U14 ~~~ U15 ~~~ U16
     end
 
     %% ===== Right actor =====
     Res["🧑 Resident /<br/>Public"]
 
-    %% ===== Secretary / Officer — full access =====
+    %% ===== Barangay Secretary — full access =====
+    Sec --- U0
     Sec --- U1
     Sec --- U2
     Sec --- U3
@@ -39,12 +43,15 @@ flowchart LR
     Sec --- U10
     Sec --- U11
     Sec --- U14
+    Sec --- U15
+    Sec --- U16
 
-    %% ===== Tanod — peace & order =====
+    %% ===== Tanod — peace & order (Dashboard, Hotspot, Incidents) =====
+    Tanod --- U0
     Tanod --- U6
     Tanod --- U7
     Tanod --- U8
-    Tanod --- U14
+    Tanod --- U16
 
     %% ===== Resident / Public — no login (right side) =====
     U12 --- Res
@@ -58,7 +65,8 @@ flowchart LR
       Lg3["Incident Logging"]:::safety
       Lg4["Reporting & Prediction"]:::reporting
       Lg5["Needs & Community"]:::needs
-      Lg1 ~~~ Lg2 ~~~ Lg3 ~~~ Lg4 ~~~ Lg5
+      Lg6["Administration & Security"]:::admin
+      Lg1 ~~~ Lg2 ~~~ Lg3 ~~~ Lg4 ~~~ Lg5 ~~~ Lg6
     end
 
     %% ===== Styling =====
@@ -68,12 +76,14 @@ flowchart LR
     classDef safety fill:#EDE3C8,stroke:#C9A84C,color:#5A4A1A;
     classDef reporting fill:#D6E4F5,stroke:#7FA3DB,color:#1A3A5C;
     classDef needs fill:#F9D7DC,stroke:#D88894,color:#7A2A3A;
+    classDef admin fill:#D9D4EA,stroke:#7A6FA8,color:#2A2350;
     classDef auth fill:#EDE9DF,stroke:#9A9488,color:#3A3A32;
 
     class Sec,Tanod,Res actor;
+    class U0,U4,U5,U6 analytics;
     class U1,U2,U3 resident;
-    class U4,U5,U6 analytics;
     class U7,U8 safety;
     class U9,U10 reporting;
     class U11,U12,U13 needs;
-    class U14 auth;
+    class U14,U15 admin;
+    class U16 auth;
