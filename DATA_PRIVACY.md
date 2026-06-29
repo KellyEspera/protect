@@ -213,7 +213,7 @@ No data is collected beyond what is needed for barangay governance and social se
 | Sec. 11b — Legitimate Purpose | Data collected only for barangay governance functions |
 | Sec. 11c — Proportionality | Minimum data collected; RBAC limits access to what each role needs |
 | Sec. 11f — Accountability | Audit log traces every data change to the responsible user |
-| Sec. 20a — Organizational measures | RBAC with 5 defined roles enforced at both UI and DB level |
+| Sec. 20a — Organizational measures | RBAC with 2 defined roles (Barangay Secretary, Barangay Tanod) enforced at both UI and DB level |
 | Sec. 20b — Technical measures | TLS in transit, AES-256 at rest, RLS at DB level, XSS sanitization |
 | Sec. 20c — Physical measures | Data hosted on Supabase/AWS with enterprise-grade physical security |
 | Sec. 20d — Breach detection | Audit log provides full activity history for incident investigation |

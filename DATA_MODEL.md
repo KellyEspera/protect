@@ -223,7 +223,7 @@ erDiagram
     PROFILES {
         uuid id PK "= auth.users.id"
         text full_name
-        text role "6 roles"
+        text role "brgy_sec / tanod"
     }
     HOUSEHOLDS {
         uuid id PK
