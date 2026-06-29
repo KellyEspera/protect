@@ -1,0 +1,7 @@
+flowchart TD
+    L((L)) --> List[View all user accounts<br/>name · role badge · created date]
+    List --> Act{Action?}
+    Act -- Edit user --> Edit[Change name / assign role<br/>Barangay Secretary or Tanod]
+    Edit --> Save[Save to profiles<br/>role enforced by Row-Level Security]
+    Save --> R((R))
+    Act -- View only --> R((R))
