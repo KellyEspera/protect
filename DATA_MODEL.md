@@ -15,10 +15,18 @@ The live database = **base schema** + **migrations**:
 
 | Layer | File | Brings |
 |-------|------|--------|
-| Base tables | `DATABASE_SETUP.sql` | residents, households, incidents, profiles, beneficiaries, assistance_programs, qr_verifications, survey_responses, the `residents_with_age` view |
-| Migrations (all-in-one) | `DATABASE_SETUP.sql` | 6-role profiles, Batanes crime types, `is_out_of_school_youth`, photo columns + buckets, and the tables `announcements`, `audit_logs`, `population_history`, `disaster_risk_zones` |
+| Base tables | `DATABASE_SETUP.sql` | residents, households, incidents, profiles, beneficiaries, assistance_programs, qr_verifications, survey_responses |
+| Migrations (all-in-one) | `DATABASE_SETUP.sql` | 2-role profiles (brgy_sec / tanod), Batanes crime types, `is_out_of_school_youth`, photo columns + buckets, and the tables `announcements`, `audit_logs`, `population_history`, `disaster_risk_zones` |
+| Column trim | `trim_unused_columns.sql` | drops columns the app never uses (see note below) so the DB matches the system |
 
-**To make Supabase match the system: run `DATABASE_SETUP.sql` once.**
+**To make Supabase match the system: run `DATABASE_SETUP.sql`, then `trim_unused_columns.sql`, once.**
+
+> **Note:** This reference reflects the **trimmed** schema (after `trim_unused_columns.sql`). The
+> following columns were removed as unused: `residents.age/suffix/educational_attainment/philhealth_no`,
+> `households.water_source/electricity`, `qr_verifications.officer_id`,
+> `incidents.respondent/resolved_date`, `survey_responses.other_need`,
+> `population_history` male/female/household/birth/death/migration/source, and the
+> `residents_with_age` view.
 
 ---
 
@@ -44,9 +52,8 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | `resident_no` | text | e.g. `RES-0001` |
 | 🔗 *`household_id`* | uuid | → `households.id` (the household this person lives in) |
 | `first_name`, `last_name` | text | |
-| *`middle_name`, `suffix`* | text | |
-| `date_of_birth` | date | |
-| `age` | int | auto-set from DOB by trigger |
+| *`middle_name`* | text | |
+| `date_of_birth` | date | age is computed from this in the app |
 | `sex` | text | `Male` / `Female` |
 | `civil_status` | text | Single / Married / Widowed / Separated / Annulled |
 | `purok` | text | Sitio Hunan / Sitio Hagu / Sitio Tuva |
@@ -55,10 +62,7 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | *`pwd_type`* | text | Physical / Visual / Hearing / Intellectual / Psychosocial |
 | `monthly_income` | numeric | |
 | `occupation`, `contact_number` | text | |
-| *`educational_attainment`, `philhealth_no`* | text | legacy columns — retained in the table but no longer collected or shown in the UI (data minimization) |
 | `created_at`, `updated_at` | timestamptz | |
-
-> **View `residents_with_age`** = `residents` + computed `age`. The Resident Profiling list reads from this view.
 
 ### `households` — physical households / map pins
 | Column | Type | Notes |
@@ -70,7 +74,6 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | *`head_name`* | text | head's name (text snapshot; the real link is via `residents.is_household_head`) |
 | *`housing_type`* | text | Concrete / Semi-concrete / Wood / Makeshift |
 | *`latitude`, `longitude`* | numeric | GIS map pin |
-| ~~`water_source`, `electricity`~~ | text/bool | **deprecated** — still in DB with defaults, no longer used by the app |
 | `created_at`, `updated_at` | timestamptz | |
 
 ### `incidents` — blotter / crime & incident records
@@ -80,13 +83,12 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | `case_no` | text | e.g. `INC-2025-001` |
 | `incident_type` | text | Public Intoxication/Disorderly Conduct · Minor Physical Altercation · Domestic Dispute · Property Damage (Typhoon-related) · Environmental/Ordinance Violation · Stray Animal Complaint · Noise Disturbance · Others |
 | `purok` | text | sitio |
-| *`complainant`, `respondent`, `description`* | text | |
+| *`complainant`, `description`* | text | |
 | `incident_date` | timestamptz | |
 | `status` | text | Ongoing / Resolved / Escalated / Dismissed |
-| *`resolved_date`* | date | |
 | *`latitude`, `longitude`* | numeric | exact location → heatmap / pins |
 | *`photo_url`* | text | evidence photo (Storage) |
-| 🔗 *`officer_id`* | uuid | → `auth.users` |
+| 🔗 *`officer_id`* | uuid | → `profiles.id` |
 | `created_at`, `updated_at` | timestamptz | |
 
 ### `assistance_programs` — aid programs (4Ps, AICS, etc.)
@@ -117,7 +119,6 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | 🔑 `id` | uuid | |
 | 🔗 `resident_id` | uuid | → `residents.id` |
 | `purpose` | text | e.g. "Barangay Clearance", "Assistance Release — 4Ps" |
-| 🔗 *`officer_id`* | uuid | → `auth.users` |
 | `verified_at` | timestamptz | |
 
 ### `survey_responses` — community needs assessment submissions
@@ -127,7 +128,8 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | 🔗 *`resident_id`* | uuid | → `residents.id` (null for anonymous public submissions) |
 | `purok` | text | |
 | `priority_need` | text | Health Services / Road / Educational / Livelihood / Water / Peace & Order / Others |
-| *`other_need`, `comments`* | text | |
+| *`comments`* | text | |
+| *`photo_url`* | text | optional attached photo (Storage) |
 | `submitted_at` | timestamptz | |
 
 ### `announcements` — community bulletin board
@@ -158,9 +160,7 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 |--------|------|-------|
 | 🔑 `id` | uuid | |
 | `year` | int | **unique** |
-| `total_population` | int | |
-| *`male_count`, `female_count`, `household_count`, `birth_count`, `death_count`, `migration_in`, `migration_out`* | int | |
-| *`source`* | text | |
+| `total_population` | int | the only figure the forecast uses |
 | `created_at` | timestamptz | |
 
 ### `audit_logs` — automatic change log (triggers on residents/households/incidents)
@@ -179,6 +179,7 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 |--------|-------|---------------|
 | `incident-photos` | evidence images | `incidents.photo_url` |
 | `announcement-photos` | poster images | `announcements.image_url` |
+| `needs-photos` | community needs photos | `survey_responses.photo_url` |
 
 ---
 
@@ -192,7 +193,8 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | `qr_verifications.resident_id` | `residents.id` | many-to-one | scan history per resident |
 | `survey_responses.resident_id` | `residents.id` | many-to-one *(nullable)* | optional link; public submissions are anonymous |
 | `profiles.id` | `auth.users.id` | one-to-one | each login has one profile/role |
-| `incidents.officer_id` / `announcements.posted_by` / `audit_logs.changed_by` / `qr_verifications.officer_id` | `auth.users.id` | many-to-one | who created/changed the record |
+| `incidents.officer_id` | `profiles.id` | many-to-one | which staff logged the incident |
+| `announcements.posted_by` / `audit_logs.changed_by` | `auth.users.id` | many-to-one | who posted/changed the record |
 
 > **`residents` ⇄ `households` is the key relationship.** A household's "head" is the
 > resident with `is_household_head = true` whose `household_id` points back to that household.
@@ -217,7 +219,7 @@ erDiagram
     ASSISTANCE_PROGRAMS ||--o{ BENEFICIARIES : "grants"
     RESIDENTS ||--o{ QR_VERIFICATIONS : "scanned"
     RESIDENTS ||--o{ SURVEY_RESPONSES : "submits"
-    AUTH_USERS ||--o{ INCIDENTS : "logs (officer_id)"
+    PROFILES ||--o{ INCIDENTS : "logs (officer_id)"
     AUTH_USERS ||--o{ ANNOUNCEMENTS : "posts (posted_by)"
     AUTH_USERS ||--o{ AUDIT_LOGS : "records (changed_by)"
 
@@ -308,8 +310,8 @@ erDiagram
     }
 ```
 
-> `INCIDENTS`, `ANNOUNCEMENTS`, and `AUDIT_LOGS` link to `AUTH_USERS` through the user who
-> created the record (`officer_id` / `posted_by` / `changed_by`). `DISASTER_RISK_ZONES` and
+> `INCIDENTS` links to `PROFILES` via `officer_id`; `ANNOUNCEMENTS` and `AUDIT_LOGS` link to
+> `AUTH_USERS` via `posted_by` / `changed_by` (the user who created the record). `DISASTER_RISK_ZONES` and
 > `POPULATION_HISTORY` are the only truly standalone tables — they have **no foreign keys**
 > (keyed by `purok` and `year`), so they correctly stand alone in the ERD.
 
@@ -323,7 +325,7 @@ Which screen reads (R) / writes (W) which table:
 |-----------------|--------------|
 | Login / Auth | `profiles` (R) |
 | User Management | `profiles` (R/W) |
-| Resident Profiling | `residents_with_age` (R), `residents` (W), `households` (R/W) |
+| Resident Profiling | `residents` (R/W), `households` (R/W) |
 | GIS Household Map | `households` (R/W), `residents` (R) |
 | Crime & Incident | `incidents` (R/W), `incident-photos` bucket (W) |
 | Crime Hotspot Map | `incidents` (R) |
@@ -334,7 +336,7 @@ Which screen reads (R) / writes (W) which table:
 | Needs form (public + portal) | `survey_responses` (W) |
 | Announcements (admin) | `announcements` (R/W), `announcement-photos` bucket (W) |
 | Public Announcements `/announcements` | `announcements` (R, active only) |
-| Poverty / Sector / Population analytics | `residents_with_age` (R) |
+| Poverty / Sector / Population analytics | `residents` (R) |
 | Predictive Growth | `population_history` (R) |
 | DILG Reports | residents, households, incidents, beneficiaries, assistance_programs, survey_responses, disaster_risk_zones, `audit_logs` (R) |
 | *(automatic)* Audit logging | `audit_logs` (W) via DB triggers on residents/households/incidents |
