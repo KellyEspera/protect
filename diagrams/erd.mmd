@@ -1,57 +1,112 @@
 erDiagram
-    AUTH_USERS ||--|| PROFILES : "has role"
+    AUTH_USERS ||--|| PROFILES : "has profile"
     HOUSEHOLDS ||--o{ RESIDENTS : "houses"
     RESIDENTS ||--o{ BENEFICIARIES : "enrolled in"
     ASSISTANCE_PROGRAMS ||--o{ BENEFICIARIES : "grants"
     RESIDENTS ||--o{ QR_VERIFICATIONS : "scanned"
     RESIDENTS ||--o{ SURVEY_RESPONSES : "submits"
-    AUTH_USERS ||--o{ INCIDENTS : "logs (officer_id)"
+    PROFILES ||--o{ INCIDENTS : "logs (officer_id)"
+    PROFILES ||--o{ QR_VERIFICATIONS : "verifies (officer_id)"
     AUTH_USERS ||--o{ ANNOUNCEMENTS : "posts (posted_by)"
     AUTH_USERS ||--o{ AUDIT_LOGS : "records (changed_by)"
 
+    AUTH_USERS {
+        uuid id PK
+        text email
+        text encrypted_password
+        timestamptz created_at
+    }
     PROFILES {
         uuid id PK "= auth.users.id"
         text full_name
         text role "brgy_sec / tanod"
+        text barangay
+        timestamptz created_at
     }
     HOUSEHOLDS {
         uuid id PK
         text household_no UK "HH-0001"
         text purok
+        text address
         text head_name
         numeric latitude
         numeric longitude
+        text housing_type
+        text water_source
+        bool electricity
+        timestamptz created_at
+        timestamptz updated_at
     }
     RESIDENTS {
         uuid id PK
-        text resident_no
+        text resident_no UK "RES-0001"
         uuid household_id FK
         text first_name
         text last_name
+        text middle_name
+        text suffix
         date date_of_birth
+        text sex
+        text civil_status
         text purok
         bool is_household_head
+        bool is_voter
         bool is_pwd
+        text pwd_type
+        bool is_solo_parent
+        bool is_senior_citizen
         bool is_out_of_school_youth
         numeric monthly_income
+        text occupation
+        text educational_attainment
+        text contact_number
+        text philhealth_no
+        timestamptz created_at
+        timestamptz updated_at
     }
     ASSISTANCE_PROGRAMS {
         uuid id PK
         text name
+        text description
+        text agency
         bool is_active
+        timestamptz created_at
     }
     BENEFICIARIES {
         uuid id PK
         uuid resident_id FK
         uuid program_id FK
         text status
+        date enrolled_at
         date last_release_date
         numeric total_released
+        text notes
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    INCIDENTS {
+        uuid id PK
+        text case_no UK
+        text incident_type
+        text purok
+        text complainant
+        text respondent
+        text description
+        timestamptz incident_date
+        text status
+        date resolved_date
+        uuid officer_id FK
+        numeric latitude
+        numeric longitude
+        text photo_url
+        timestamptz created_at
+        timestamptz updated_at
     }
     QR_VERIFICATIONS {
         uuid id PK
         uuid resident_id FK
         text purpose
+        uuid officer_id FK
         timestamptz verified_at
     }
     SURVEY_RESPONSES {
@@ -59,39 +114,53 @@ erDiagram
         uuid resident_id FK "nullable"
         text purok
         text priority_need
-        text photo_url "optional"
-    }
-    INCIDENTS {
-        uuid id PK
-        text case_no
-        text incident_type
-        text status
-        uuid officer_id FK
-        numeric latitude
-        numeric longitude
+        text other_need
+        text comments
+        text photo_url
+        timestamptz submitted_at
     }
     DISASTER_RISK_ZONES {
         uuid id PK
         text hazard_type
         text risk_level
+        text purok
+        text description
         numeric radius
+        numeric latitude
+        numeric longitude
+        timestamptz created_at
     }
     ANNOUNCEMENTS {
         uuid id PK
         text title
+        text body
         text category
-        bool is_active
+        text image_url
         uuid posted_by FK
+        bool is_active
+        timestamptz created_at
     }
     POPULATION_HISTORY {
         uuid id PK
         int year UK
         int total_population
+        int male_count
+        int female_count
+        int household_count
+        int birth_count
+        int death_count
+        int migration_in
+        int migration_out
+        text source
+        timestamptz created_at
     }
     AUDIT_LOGS {
         uuid id PK
         text table_name
         text action
-        uuid changed_by FK
+        uuid record_id
+        jsonb old_data
         jsonb new_data
+        uuid changed_by FK
+        timestamptz changed_at
     }
