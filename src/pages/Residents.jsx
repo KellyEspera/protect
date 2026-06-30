@@ -25,12 +25,10 @@ import * as XLSX from 'xlsx'
 
 const PUROKS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
 const CIVIL = ['Single', 'Married', 'Widowed', 'Separated', 'Annulled']
-const EDU = ['Elementary', 'High School', 'Senior High School', 'College', 'Vocational', 'Post-Graduate', 'None']
-
 const emptyForm = {
   resident_no: '', first_name: '', last_name: '', middle_name: '', date_of_birth: '',
   sex: 'Male', civil_status: 'Single', purok: 'Sitio Hunan', monthly_income: '',
-  occupation: '', educational_attainment: 'High School', contact_number: '',
+  occupation: '', contact_number: '',
   is_household_head: false, is_pwd: false, pwd_type: '', is_solo_parent: false,
   is_senior_citizen: false, is_voter: false, is_out_of_school_youth: false,
   household_id: '',
