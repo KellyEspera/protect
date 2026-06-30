@@ -16,13 +16,13 @@
 DROP VIEW IF EXISTS residents_with_age;
 
 -- 1. residents — remove legacy / unused fields
---    (age is computed from date_of_birth in the app; suffix,
---     educational_attainment, philhealth_no are no longer collected)
+--    (suffix, educational_attainment, philhealth_no are no longer collected;
+--     `age` is KEPT — used in Add/View Resident)
 ALTER TABLE residents
-  DROP COLUMN IF EXISTS age,
   DROP COLUMN IF EXISTS suffix,
   DROP COLUMN IF EXISTS educational_attainment,
   DROP COLUMN IF EXISTS philhealth_no;
+-- NOTE: `age` is kept (used in Add/View Resident).
 
 -- 2. households — remove unused utility fields
 ALTER TABLE households

@@ -22,7 +22,7 @@ The live database = **base schema** + **migrations**:
 **To make Supabase match the system: run `DATABASE_SETUP.sql`, then `trim_unused_columns.sql`, once.**
 
 > **Note:** This reference reflects the **trimmed** schema (after `trim_unused_columns.sql`). The
-> following columns were removed as unused: `residents.age/suffix/educational_attainment/philhealth_no`,
+> following columns were removed as unused: `residents.suffix/educational_attainment/philhealth_no`,
 > `households.water_source/electricity`, `qr_verifications.officer_id`,
 > `incidents.respondent/resolved_date`, `survey_responses.other_need`,
 > `population_history` male/female/household/birth/death/migration/source, and the
@@ -53,7 +53,8 @@ One row per Supabase Auth user (created automatically by a trigger on signup).
 | 🔗 *`household_id`* | uuid | → `households.id` (the household this person lives in) |
 | `first_name`, `last_name` | text | |
 | *`middle_name`* | text | |
-| `date_of_birth` | date | age is computed from this in the app |
+| `date_of_birth` | date | |
+| `age` | int | resident's age (also computed from DOB in the app) |
 | `sex` | text | `Male` / `Female` |
 | `civil_status` | text | Single / Married / Widowed / Separated / Annulled |
 | `purok` | text | Sitio Hunan / Sitio Hagu / Sitio Tuva |
