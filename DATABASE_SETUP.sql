@@ -320,7 +320,7 @@ DROP POLICY IF EXISTS "population_history_read"  ON population_history;
 DROP POLICY IF EXISTS "population_history_admin" ON population_history;
 CREATE POLICY "population_history_read" ON population_history FOR SELECT USING (true);
 CREATE POLICY "population_history_admin" ON population_history FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'officer'))
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'brgy_sec')
 );
 
 -- Historical seed data — Barangay San Joaquin, Basco, Batanes
