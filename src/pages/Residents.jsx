@@ -184,6 +184,19 @@ export default function Residents() {
       const fullName    = `${payload.first_name} ${payload.last_name}`
       const selectedHH  = payload.household_id || null   // household chosen in the form (may be null)
 
+      // Only send columns that actually exist on the residents table, so a form
+      // field or a trimmed/renamed column can never cause a "column does not
+      // exist" insert failure. (age is computed in the app, not stored on save.)
+      const RESIDENT_COLS = [
+        'resident_no', 'first_name', 'last_name', 'middle_name', 'date_of_birth',
+        'sex', 'civil_status', 'purok', 'monthly_income', 'occupation', 'contact_number',
+        'is_household_head', 'is_pwd', 'pwd_type', 'is_solo_parent', 'is_senior_citizen',
+        'is_voter', 'is_out_of_school_youth', 'household_id',
+      ]
+      const clean = (obj) => Object.fromEntries(
+        Object.entries(obj).filter(([k]) => RESIDENT_COLS.includes(k))
+      )
+
       // Make `householdId` headed by this resident: stamp head_name and demote
       // whoever was previously flagged head of that household (excluding ourself).
       const promoteToHead = async (householdId, excludeResidentId) => {
@@ -238,7 +251,7 @@ export default function Residents() {
           }
         }
 
-        const { error } = await supabase.from('residents').update(payload).eq('id', editId)
+        const { error } = await supabase.from('residents').update(clean(payload)).eq('id', editId)
         if (error) throw error
 
       } else {
@@ -256,8 +269,15 @@ export default function Residents() {
           }
         }
 
-        const { error } = await supabase.from('residents').insert({ ...payload, household_id })
-        if (error) throw error
+        const { error } = await supabase.from('residents').insert(clean({ ...payload, household_id }))
+        if (error) {
+          // If we just created a household for this (would-be) head, roll it back
+          // so a failed insert doesn't leave an orphan household pin behind.
+          if (wantsHead && !selectedHH && household_id) {
+            await supabase.from('households').delete().eq('id', household_id)
+          }
+          throw error
+        }
       }
     },
     onSuccess: () => {
