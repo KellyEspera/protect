@@ -665,13 +665,10 @@ export default function Residents() {
           </div>
         )}
 
-        {/* Pagination — numbered */}
+        {/* Pagination — numbered, centered */}
         {!isLoading && sorted.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
-            <span className="text-xs text-gray-400">
-              Showing {(safePage - 1) * PAGE_SIZE + 1}–{(safePage - 1) * PAGE_SIZE + pageRows.length} of {sorted.length}
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
               <button
                 className="btn btn-ghost text-xs"
                 disabled={safePage <= 1}
@@ -702,6 +699,9 @@ export default function Residents() {
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               >Next ›</button>
             </div>
+            <span className="text-xs text-gray-400">
+              Showing {(safePage - 1) * PAGE_SIZE + 1}–{(safePage - 1) * PAGE_SIZE + pageRows.length} of {sorted.length}
+            </span>
           </div>
         )}
       </SectionCard>
