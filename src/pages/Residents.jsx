@@ -58,6 +58,8 @@ export default function Residents() {
   const [sectorFilter, setSectorFilter] = useState('All')
   const [sortKey, setSortKey] = useState('resident_no')
   const [sortDir, setSortDir] = useState('asc')
+  const [page, setPage] = useState(1)   // residents table pagination (1-indexed)
+  const PAGE_SIZE = 10
   const [modalOpen, setModalOpen] = useState(false)
   const [viewResident, setViewResident] = useState(null)
   const [showSensitive, setShowSensitive] = useState(false)   // mask PII (contact, PhilHealth) until revealed
@@ -487,9 +489,15 @@ export default function Residents() {
     return 0
   })
 
+  // Pagination — clamp the current page to the available range, then slice
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageRows = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
     else { setSortKey(key); setSortDir('asc') }
+    setPage(1)   // jump back to the first page when the sort changes
   }
   const sortArrow = (key) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ''
 
@@ -582,14 +590,14 @@ export default function Residents() {
               className="form-input pl-8"
               placeholder="Search name, ID, or sitio..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             />
           </div>
-          <select className="form-select w-auto" value={sitioFilter} onChange={e => setSitioFilter(e.target.value)}>
+          <select className="form-select w-auto" value={sitioFilter} onChange={e => { setSitioFilter(e.target.value); setPage(1) }}>
             <option value="All">All Sitios</option>
             {PUROKS.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
-          <select className="form-select w-auto" value={sectorFilter} onChange={e => setSectorFilter(e.target.value)}>
+          <select className="form-select w-auto" value={sectorFilter} onChange={e => { setSectorFilter(e.target.value); setPage(1) }}>
             <option value="All">All Sectors</option>
             <option value="Senior">Senior Citizen</option>
             <option value="PWD">PWD</option>
@@ -601,9 +609,9 @@ export default function Residents() {
         </div>
 
         {isLoading ? <Loader /> : sorted.length === 0 ? <EmptyState message="No residents found" /> : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
             <table className="data-table">
-              <thead>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: '#fff' }}>
                 <tr>
                   <th className="cursor-pointer select-none" onClick={() => toggleSort('resident_no')}>Res. ID{sortArrow('resident_no')}</th>
                   <th className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Name{sortArrow('name')}</th>
@@ -615,7 +623,7 @@ export default function Residents() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((r) => (
+                {pageRows.map((r) => (
                   <tr key={r.id}>
                     <td><span className="font-mono text-[11px] text-teal">{r.resident_no}</span></td>
                     <td><strong>{r.first_name} {r.last_name}</strong></td>
@@ -638,6 +646,20 @@ export default function Residents() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && sorted.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
+            <span className="text-xs text-gray-400">
+              Showing {(safePage - 1) * PAGE_SIZE + 1}–{(safePage - 1) * PAGE_SIZE + pageRows.length} of {sorted.length}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className="btn btn-ghost text-xs" disabled={safePage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>← Prev</button>
+              <span className="text-xs text-gray-500">Page {safePage} of {totalPages}</span>
+              <button className="btn btn-ghost text-xs" disabled={safePage >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next →</button>
+            </div>
           </div>
         )}
       </SectionCard>
