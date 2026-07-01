@@ -9,7 +9,7 @@
 //  are gated by canEdit() so read-only roles see no add/edit/delete buttons.
 // ============================================================================
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { supabase } from '../lib/supabase'
@@ -32,6 +32,17 @@ const emptyForm = {
   is_household_head: false, is_pwd: false, pwd_type: '', is_solo_parent: false,
   is_senior_citizen: false, is_voter: false, is_out_of_school_youth: false,
   household_id: '',
+}
+
+// Build the list of page buttons: first, last, current ±1, with "…" gaps.
+function pageItems(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const items = [1]
+  if (current > 3) items.push('…')
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) items.push(i)
+  if (current < total - 2) items.push('…')
+  items.push(total)
+  return items
 }
 
 // Auto-generate next HH No. based on existing households
@@ -60,6 +71,7 @@ export default function Residents() {
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)   // residents table pagination (1-indexed)
   const PAGE_SIZE = 10
+  const tableScrollRef = useRef(null)   // to reset scroll to top when the page changes
   const [modalOpen, setModalOpen] = useState(false)
   const [viewResident, setViewResident] = useState(null)
   const [showSensitive, setShowSensitive] = useState(false)   // mask PII (contact, PhilHealth) until revealed
@@ -494,6 +506,10 @@ export default function Residents() {
   const safePage = Math.min(page, totalPages)
   const pageRows = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
+  // Reset the table scroll to the top whenever the page changes, so switching
+  // to a shorter page never leaves the view scrolled past the (fewer) rows.
+  useEffect(() => { tableScrollRef.current?.scrollTo({ top: 0 }) }, [safePage])
+
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
     else { setSortKey(key); setSortDir('asc') }
@@ -609,7 +625,7 @@ export default function Residents() {
         </div>
 
         {isLoading ? <Loader /> : sorted.length === 0 ? <EmptyState message="No residents found" /> : (
-          <div className="overflow-x-auto" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+          <div ref={tableScrollRef} className="overflow-x-auto" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
             <table className="data-table">
               <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: '#fff' }}>
                 <tr>
@@ -649,16 +665,42 @@ export default function Residents() {
           </div>
         )}
 
-        {/* Pagination */}
+        {/* Pagination — numbered */}
         {!isLoading && sorted.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
             <span className="text-xs text-gray-400">
               Showing {(safePage - 1) * PAGE_SIZE + 1}–{(safePage - 1) * PAGE_SIZE + pageRows.length} of {sorted.length}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button className="btn btn-ghost text-xs" disabled={safePage <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>← Prev</button>
-              <span className="text-xs text-gray-500">Page {safePage} of {totalPages}</span>
-              <button className="btn btn-ghost text-xs" disabled={safePage >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next →</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button
+                className="btn btn-ghost text-xs"
+                disabled={safePage <= 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >‹ Previous</button>
+
+              {pageItems(safePage, totalPages).map((it, i) =>
+                it === '…' ? (
+                  <span key={`e${i}`} style={{ padding: '0 6px', color: '#9A9488', fontSize: 12 }}>…</span>
+                ) : (
+                  <button
+                    key={it}
+                    onClick={() => setPage(it)}
+                    style={{
+                      minWidth: 30, height: 30, borderRadius: 6, fontSize: 12, cursor: 'pointer',
+                      border: it === safePage ? '1px solid #0D9E8C' : '1px solid #E8E4DA',
+                      background: it === safePage ? '#0D9E8C' : '#fff',
+                      color: it === safePage ? '#fff' : '#1A1A2E',
+                      fontWeight: it === safePage ? 700 : 500,
+                    }}
+                  >{it}</button>
+                )
+              )}
+
+              <button
+                className="btn btn-ghost text-xs"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              >Next ›</button>
             </div>
           </div>
         )}
