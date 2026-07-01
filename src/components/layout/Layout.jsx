@@ -14,7 +14,8 @@ import { canAccess, ROLE_LABELS } from '../../lib/permissions'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Flame, Gift, Shield, BrainCircuit,
-  ClipboardList, FileText, LogOut, Bell, Menu, X, UserCog, Megaphone, Database
+  ClipboardList, FileText, LogOut, Bell, Menu, X, UserCog, Megaphone, Database,
+  ChevronDown
 } from 'lucide-react'
 
 const navGroups = [
@@ -87,6 +88,8 @@ export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState({})   // which sidebar groups are collapsed
+  const toggleGroup = (label) => setCollapsed(c => ({ ...c, [label]: !c[label] }))
 
   const role = profile?.role || 'unassigned'
   // Build the sidebar for THIS role: keep only the links the role can access,
@@ -144,25 +147,35 @@ export default function Layout() {
 
         {/* Nav */}
         <nav className="flex-1 py-2">
-          {filteredGroups.map((group) => (
-            <div key={group.label}>
-              <div className="px-3 pt-3 pb-1 text-[10px] text-white/50 uppercase tracking-widest font-semibold">
-                {group.label}
-              </div>
-              {group.items.map(({ to, icon: Icon, label }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={to === '/'}
-                  onClick={closeSidebar}
-                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+          {filteredGroups.map((group) => {
+            const isCollapsed = collapsed[group.label]
+            return (
+              <div key={group.label}>
+                <button
+                  onClick={() => toggleGroup(group.label)}
+                  className="w-full flex items-center justify-between px-3 pt-3 pb-1 text-[10px] text-white/50 uppercase tracking-widest font-semibold hover:text-white/80 transition-colors"
                 >
-                  <Icon size={15} />
-                  <span>{label}</span>
-                </NavLink>
-              ))}
-            </div>
-          ))}
+                  <span>{group.label}</span>
+                  <ChevronDown
+                    size={13}
+                    style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 0.15s' }}
+                  />
+                </button>
+                {!isCollapsed && group.items.map(({ to, icon: Icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={to === '/'}
+                    onClick={closeSidebar}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  >
+                    <Icon size={15} />
+                    <span>{label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )
+          })}
         </nav>
 
         {/* Footer */}
