@@ -593,7 +593,7 @@ export default function QRVerification() {
     doc.setDrawColor(180, 180, 180); doc.setLineWidth(0.3); doc.rect(boxX, boxY, 55, 20)
     doc.setFontSize(9); doc.setTextColor(120, 120, 120)
     doc.text('O.R. No.: ____________', boxX + 4, boxY + 6)
-    doc.text('Amount: ₱ ___________', boxX + 4, boxY + 12)
+    doc.text('Amount (PHP): _________', boxX + 4, boxY + 12)
     doc.text('Date Paid: ___________', boxX + 4, boxY + 18)
 
     // ── Footer ──
