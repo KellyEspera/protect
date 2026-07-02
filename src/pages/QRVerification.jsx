@@ -309,10 +309,20 @@ export default function QRVerification() {
     img.src = url
   })
 
+  // Load the barangay logo (public/brgy-logo.jpg). Resolves null if missing so
+  // the document still generates without it.
+  const loadLogo = () => new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => resolve(null)
+    img.src = '/brgy-logo.jpg'
+  })
+
   // Draw the whole Barangay ID card onto a canvas (shared by the PNG and PDF
   // exports). Mirrors the on-screen preview layout. Returns the canvas.
   const renderIDCardCanvas = async () => {
     const qrImg = await loadQrImage().catch(() => null)
+    const logo = await loadLogo()
     const s = 3                       // scale factor for a crisp image
     const W = 340, H = 200            // logical card size
     const canvas = document.createElement('canvas')
@@ -327,6 +337,7 @@ export default function QRVerification() {
     // ── Header (navy with gold accent) ──
     ctx.fillStyle = '#1A3A5C'; ctx.fillRect(0, 0, W, 56)
     ctx.fillStyle = '#C9A84C'; ctx.fillRect(0, 53, W, 3)
+    if (logo) ctx.drawImage(logo, 9, 9, 38, 38)   // barangay seal, header left
     ctx.textAlign = 'center'
     ctx.fillStyle = 'rgba(255,255,255,0.78)'
     ctx.font = '7px Arial';       center('REPUBLIC OF THE PHILIPPINES', 13)
@@ -521,7 +532,7 @@ export default function QRVerification() {
   }
 
   // Generate the certificate as a real PDF (consistent everywhere; print or save).
-  const generateCertificatePDF = () => {
+  const generateCertificatePDF = async () => {
     if (!certCtx) return
     const { resident, certPurpose, requestPurpose } = certCtx
     const age = resident.date_of_birth
@@ -567,7 +578,9 @@ export default function QRVerification() {
       doc.text(txt, cx, y, { align: 'center' })
     }
 
-    // ── Header ──
+    // ── Header (with barangay logo as a letterhead seal on the left) ──
+    const logo = await loadLogo()
+    if (logo) doc.addImage(logo, 'JPEG', marginX, 16, 24, 24)
     centerText('Republic of the Philippines', 10, 'normal', [85, 85, 85]); y += 5
     centerText('Province of Batanes  ·  Municipality of Basco', 10, 'normal', [85, 85, 85]); y += 7
     centerText('BARANGAY SAN JOAQUIN', 16, 'bold', [26, 58, 92]); y += 5
