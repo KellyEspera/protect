@@ -309,10 +309,9 @@ export default function QRVerification() {
     img.src = url
   })
 
-  // Render the whole Barangay ID card to a PNG (drawn on a canvas so it's a
-  // normal image, no extra libraries). Mirrors the on-screen preview layout.
-  const downloadIDCard = async () => {
-    if (!selected) return
+  // Draw the whole Barangay ID card onto a canvas (shared by the PNG and PDF
+  // exports). Mirrors the on-screen preview layout. Returns the canvas.
+  const renderIDCardCanvas = async () => {
     const qrImg = await loadQrImage().catch(() => null)
     const s = 3                       // scale factor for a crisp image
     const W = 340, H = 200            // logical card size
@@ -380,12 +379,41 @@ export default function QRVerification() {
     // Outer border
     ctx.strokeStyle = '#1A3A5C'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, W - 2, H - 2)
 
+    return canvas
+  }
+
+  // Download the ID card as a PNG image.
+  const downloadIDCard = async () => {
+    if (!selected) return
+    const canvas = await renderIDCardCanvas()
     canvas.toBlob((png) => {
       const url = URL.createObjectURL(png)
       const a = document.createElement('a')
       a.href = url; a.download = `${selected.resident_no}_BarangayID.png`; a.click()
       URL.revokeObjectURL(url)
     }, 'image/png')
+  }
+
+  // Download the ID card as a PDF (the card image placed on an A4 page,
+  // ready to print or archive — consistent output everywhere).
+  const downloadIDCardPDF = async () => {
+    if (!selected) return
+    const canvas = await renderIDCardCanvas()
+    const imgData = canvas.toDataURL('image/png')
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const cardW = 105, cardH = cardW * 200 / 340   // keep the card's aspect ratio
+    const x = (pageW - cardW) / 2
+    const y = 32
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(26, 58, 92)
+    doc.text('Barangay Identification Card', pageW / 2, 22, { align: 'center' })
+    doc.addImage(imgData, 'PNG', x, y, cardW, cardH)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(120, 120, 120)
+    doc.text(`${selected.last_name}, ${selected.first_name}  ·  ${selected.resident_no}`, pageW / 2, y + cardH + 8, { align: 'center' })
+
+    logMutation.mutate({ resident_id: selected.id, purpose: 'Barangay ID (PDF)' })
+    doc.save(`${selected.resident_no}_BarangayID.pdf`)
   }
 
   const handlePrintCertificate = (resident, certPurpose, requestPurpose = '') => {
@@ -801,14 +829,24 @@ export default function QRVerification() {
               ⬇️ Download QR
             </button>
           </div>
-          <button
-            className="btn btn-ghost"
-            style={{ width: '100%', marginTop: 8 }}
-            disabled={!selected}
-            onClick={downloadIDCard}
-          >
-            🪪 Download ID Card (PNG)
-          </button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button
+              className="btn btn-ghost"
+              style={{ flex: 1 }}
+              disabled={!selected}
+              onClick={downloadIDCard}
+            >
+              🪪 ID (PNG)
+            </button>
+            <button
+              className="btn btn-ghost"
+              style={{ flex: 1 }}
+              disabled={!selected}
+              onClick={downloadIDCardPDF}
+            >
+              📄 ID (PDF)
+            </button>
+          </div>
         </SectionCard>
 
         {/* ── SCAN & VERIFY ── */}
