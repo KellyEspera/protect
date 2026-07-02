@@ -15,6 +15,7 @@ import QRCode from 'react-qr-code'
 import { supabase } from '../lib/supabase'
 import { SectionCard, Badge } from '../components/ui/index'
 import { toast } from 'react-toastify'
+import jsPDF from 'jspdf'
 
 const PURPOSES = [
   'Barangay Clearance',
@@ -54,6 +55,7 @@ export default function QRVerification() {
   const [releaseTarget, setReleaseTarget] = useState(null) // beneficiary being released
   const [releaseAmount, setReleaseAmount] = useState('')
   const [docPreview, setDocPreview] = useState(null)       // HTML of the document to preview/print
+  const [certCtx, setCertCtx] = useState(null)             // { resident, certPurpose, requestPurpose } for the PDF export (null = ID card, not a cert)
   const [cameraError, setCameraError] = useState(null)
   const [qrHash, setQrHash] = useState('')                 // SHA-256 of the selected resident's number (goes in the QR)
   const [hashMap, setHashMap] = useState({})               // { sha256(resident_no): resident } — used to identify a scanned hash
@@ -387,6 +389,7 @@ export default function QRVerification() {
   }
 
   const handlePrintCertificate = (resident, certPurpose, requestPurpose = '') => {
+    setCertCtx({ resident, certPurpose, requestPurpose })   // enables the "Download PDF" button in the preview
     const age = resident.date_of_birth
       ? Math.floor((Date.now() - new Date(resident.date_of_birth).getTime()) / 31557600000)
       : '—'
@@ -489,8 +492,124 @@ export default function QRVerification() {
 </body></html>`)
   }
 
+  // Generate the certificate as a real PDF (consistent everywhere; print or save).
+  const generateCertificatePDF = () => {
+    if (!certCtx) return
+    const { resident, certPurpose, requestPurpose } = certCtx
+    const age = resident.date_of_birth
+      ? Math.floor((Date.now() - new Date(resident.date_of_birth).getTime()) / 31557600000)
+      : '—'
+    const dob = resident.date_of_birth
+      ? new Date(resident.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+      : '—'
+    const issued = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+    const docNo = `BRY-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
+    const fullName = `${resident.first_name} ${resident.last_name}`.toUpperCase()
+    const sitio = resident.purok || 'Barangay San Joaquin'
+
+    const CERT_TITLE = {
+      'Barangay Clearance':       'BARANGAY CLEARANCE',
+      'Certificate of Indigency': 'CERTIFICATE OF INDIGENCY',
+      'Certificate of Residency': 'CERTIFICATE OF RESIDENCY',
+      'Assistance Claim':         'CERTIFICATE OF INDIGENCY',
+      'Business Permit':          'BARANGAY BUSINESS CLEARANCE',
+    }
+    const title = CERT_TITLE[certPurpose] || 'BARANGAY CERTIFICATION'
+
+    const CERT_BODY = {
+      'Barangay Clearance': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has no derogatory record on file at this office as of the date of this certification, and is known to be of good moral character and a law-abiding citizen in the community.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
+      'Certificate of Indigency': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is one of the identified indigent/low-income residents of this barangay and belongs to an underprivileged family whose income is insufficient to meet the family's basic needs.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
+      'Certificate of Residency': `This is to certify that ${fullName}, ${age} years old, born on ${dob}, ${resident.sex || ''}, is a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
+      'Business Permit': `This is to certify that ${fullName}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has applied for a Barangay Business Clearance and has been found to have no violations or pending cases in this barangay.\n\nThis clearance is issued for business permit application purposes only.`,
+    }
+    let bodyText = CERT_BODY[certPurpose] || CERT_BODY['Certificate of Residency']
+    if (requestPurpose && requestPurpose.trim()) {
+      bodyText += `\n\nThis certification is issued specifically for the purpose of ${requestPurpose.trim()}.`
+    }
+
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const marginX = 25
+    const contentW = pageW - marginX * 2
+    const cx = pageW / 2
+    let y = 24
+
+    const centerText = (txt, size, style, color) => {
+      doc.setFont('times', style); doc.setFontSize(size); doc.setTextColor(color[0], color[1], color[2])
+      doc.text(txt, cx, y, { align: 'center' })
+    }
+
+    // ── Header ──
+    centerText('Republic of the Philippines', 10, 'normal', [85, 85, 85]); y += 5
+    centerText('Province of Batanes  ·  Municipality of Basco', 10, 'normal', [85, 85, 85]); y += 7
+    centerText('BARANGAY SAN JOAQUIN', 16, 'bold', [26, 58, 92]); y += 5
+    centerText('Basco, Batanes, Philippines', 9, 'normal', [120, 120, 120]); y += 5
+    doc.setDrawColor(26, 58, 92); doc.setLineWidth(0.8); doc.line(marginX, y, pageW - marginX, y)
+    y += 1; doc.setLineWidth(0.3); doc.line(marginX, y, pageW - marginX, y)
+    y += 15
+
+    // ── Title (underlined) ──
+    doc.setFont('times', 'bold'); doc.setFontSize(15); doc.setTextColor(26, 58, 92)
+    doc.text(title, cx, y, { align: 'center' })
+    const tw = doc.getTextWidth(title)
+    doc.setLineWidth(0.4); doc.line(cx - tw / 2, y + 1.6, cx + tw / 2, y + 1.6)
+    y += 13
+
+    // ── Doc no / date ──
+    doc.setFont('times', 'normal'); doc.setFontSize(9); doc.setTextColor(120, 120, 120)
+    doc.text(`Doc. No.: ${docNo}    Date: ${issued}`, pageW - marginX, y, { align: 'right' })
+    y += 11
+
+    // ── Greeting ──
+    doc.setFontSize(12); doc.setTextColor(26, 26, 26)
+    doc.text('To Whom It May Concern:', marginX, y); y += 9
+
+    // ── Body (justified paragraphs) ──
+    doc.setFontSize(11.5); doc.setLineHeightFactor(1.5)
+    bodyText.split('\n\n').forEach(par => {
+      const lines = doc.splitTextToSize(par.trim(), contentW)
+      doc.text(lines, marginX, y, { align: 'justify', maxWidth: contentW })
+      y += lines.length * 6.2 + 5
+    })
+    doc.setLineHeightFactor(1.15)
+    y += 3
+
+    // ── Closing ──
+    const d = new Date().getDate()
+    const ord = ['th', 'st', 'nd', 'rd'][Math.min(d % 10, 3)] || 'th'
+    const closing = `Given this ${d}${ord} day of ${new Date().toLocaleDateString('en-PH', { month: 'long' })}, ${new Date().getFullYear()} at Barangay San Joaquin, Basco, Batanes, Philippines.`
+    const cl = doc.splitTextToSize(closing, contentW)
+    doc.text(cl, marginX, y); y += cl.length * 6.2 + 20
+
+    // ── Signature ──
+    doc.setDrawColor(26, 26, 26); doc.setLineWidth(0.4); doc.line(marginX, y, marginX + 65, y)
+    doc.setFont('times', 'bold'); doc.setFontSize(11); doc.setTextColor(26, 26, 26)
+    doc.text('PUNONG BARANGAY', marginX + 32.5, y + 5, { align: 'center' })
+    doc.setFont('times', 'normal'); doc.setFontSize(9); doc.setTextColor(85, 85, 85)
+    doc.text('Barangay San Joaquin', marginX + 32.5, y + 10, { align: 'center' })
+
+    // ── O.R. box (right) ──
+    const boxX = pageW - marginX - 55, boxY = y - 4
+    doc.setDrawColor(180, 180, 180); doc.setLineWidth(0.3); doc.rect(boxX, boxY, 55, 20)
+    doc.setFontSize(9); doc.setTextColor(120, 120, 120)
+    doc.text('O.R. No.: ____________', boxX + 4, boxY + 6)
+    doc.text('Amount: ₱ ___________', boxX + 4, boxY + 12)
+    doc.text('Date Paid: ___________', boxX + 4, boxY + 18)
+
+    // ── Footer ──
+    const footY = 285
+    doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2); doc.line(marginX, footY, pageW - marginX, footY)
+    doc.setFontSize(8); doc.setTextColor(150, 150, 150)
+    doc.text(`Generated by the PROTECT Barangay Analytics System  ·  Resident ID: ${resident.resident_no}`, cx, footY + 5, { align: 'center' })
+
+    // Log this issuance too, then save
+    logMutation.mutate({ resident_id: resident.id, purpose: `${title} (PDF)` })
+    doc.save(`${resident.resident_no}_${title.replace(/\s+/g, '_')}.pdf`)
+  }
+
   const handlePrintID = () => {
     if (!selected) return
+    setCertCtx(null)   // this is the ID card, not a certificate
     const qrSvg = document.getElementById('brgy-id-qr')?.querySelector('svg')?.outerHTML || ''
     const dob = selected.date_of_birth
       ? new Date(selected.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -945,7 +1064,10 @@ export default function QRVerification() {
 
             <div style={{ padding: '12px 18px', borderTop: '1px solid #E8E4DA', display: 'flex', gap: 8, justifyContent: 'flex-end', background: '#FAFAF7' }}>
               <button className="btn btn-ghost" onClick={() => setDocPreview(null)}>Close</button>
-              <button className="btn btn-primary" onClick={doPrint}>🖨️ Print</button>
+              <button className="btn btn-ghost" onClick={doPrint}>🖨️ Print (browser)</button>
+              {certCtx && (
+                <button className="btn btn-primary" onClick={generateCertificatePDF}>⬇️ Download PDF</button>
+              )}
             </div>
           </div>
         </div>
