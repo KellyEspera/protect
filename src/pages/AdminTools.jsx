@@ -5,6 +5,8 @@
 //    • Activity Log    — a live viewer of the audit_logs table (who changed what)
 //    • Database Backup — downloads a full JSON backup of all barangay data, with
 //      a simple schedule reminder.
+//    • Restore         — uploads a backup .json and re-inserts its rows (upsert by
+//      id, in foreign-key-safe order) to recover the system after data loss.
 //  Grouped under Admin (next to User Management) because these are system
 //  administration functions, not report documents.
 // ============================================================================
@@ -71,6 +73,41 @@ async function runBackup() {
   return log[0]
 }
 
+// ── DATA RESTORE HELPERS ──────────────────────────────────────
+// The order matters: a table must be restored AFTER any table it points to
+// (foreign keys), so parents (households, programs) go before children
+// (residents), and residents before beneficiaries/surveys that reference them.
+const RESTORE_ORDER = ['households', 'assistance_programs', 'residents', 'incidents', 'beneficiaries', 'survey_responses']
+
+// Reads a backup .json file and re-inserts its rows into Supabase. Uses upsert
+// keyed on `id`, so existing records are overwritten and re-running is safe
+// (idempotent). Runs while logged in as the Secretary, so RLS allows the writes.
+async function runRestore(file) {
+  const text = await file.text()
+  let parsed
+  try { parsed = JSON.parse(text) } catch { throw new Error('That file is not valid JSON.') }
+  const tables = parsed?.tables
+  if (!tables || typeof tables !== 'object') {
+    throw new Error('This does not look like a PROTECT backup — it has no "tables" section.')
+  }
+
+  const results = []
+  for (const name of RESTORE_ORDER) {
+    const rows = tables[name]
+    if (!Array.isArray(rows) || rows.length === 0) { results.push({ name, count: 0, skipped: true }); continue }
+    // Upsert in chunks of 500 so a large table doesn't hit request-size limits.
+    let done = 0
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500)
+      const { error } = await supabase.from(name).upsert(chunk, { onConflict: 'id' })
+      if (error) throw new Error(`Failed restoring "${name}" (${done} of ${rows.length} done): ${error.message}`)
+      done += chunk.length
+    }
+    results.push({ name, count: done })
+  }
+  return results
+}
+
 // Small hook holding all the backup UI state (last backup, schedule, etc.).
 function useBackupState() {
   const [lastBackup, setLastBackup] = useState(() => {
@@ -114,7 +151,34 @@ function useBackupState() {
     }
   }
 
-  return { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, changeFrequency, nextDue, daysUntilDue }
+  // ── Restore ──
+  const [restoring, setRestoring] = useState(false)
+  const [restoreSummary, setRestoreSummary] = useState(null)
+
+  const doRestore = async (file) => {
+    if (!file) return
+    const ok = window.confirm(
+      'Restore from this backup?\n\n' +
+      'This re-inserts the backed-up records into the LIVE database. Any record with the ' +
+      'same ID will be OVERWRITTEN with the backup version. This cannot be undone.\n\n' +
+      'Continue?'
+    )
+    if (!ok) return
+    setRestoring(true)
+    setRestoreSummary(null)
+    try {
+      const results = await runRestore(file)
+      const total = results.reduce((s, r) => s + r.count, 0)
+      setRestoreSummary(results)
+      toast.success(`Restore complete — ${total.toLocaleString()} record${total !== 1 ? 's' : ''} restored.`)
+    } catch (err) {
+      toast.error('Restore failed: ' + err.message)
+    } finally {
+      setRestoring(false)
+    }
+  }
+
+  return { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, changeFrequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore }
 }
 
 // ── AUDIT LOG HELPERS ─────────────────────────────────────────
@@ -153,7 +217,7 @@ const ACTION_STYLE = {
 const TABLE_LABEL = { residents: 'Resident', households: 'Household', incidents: 'Incident' }
 
 export default function AdminTools() {
-  const { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, changeFrequency, nextDue, daysUntilDue } = useBackupState()
+  const { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, changeFrequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore } = useBackupState()
 
   // Live audit log — paginated (10 per page), auto-refreshes every 60 seconds.
   const LOG_PAGE_SIZE = 10
@@ -280,8 +344,8 @@ export default function AdminTools() {
 
       {/* ── DATABASE BACKUP ─────────────────────────────── */}
       <SectionCard
-        title="Database Backup"
-        subtitle="Download a full JSON backup of all barangay data"
+        title="Database Backup & Restore"
+        subtitle="Download a full JSON backup of all barangay data — or restore the system from one"
         action={
           isOverdue ? (
             <span className="badge badge-red">
@@ -344,6 +408,46 @@ export default function AdminTools() {
             Downloads a <code>.json</code> file with all data. Store it in a safe location.
           </p>
         </div>
+
+        {/* ── RESTORE ── upload a backup file to re-insert its data ── */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+          <label
+            className="btn btn-ghost"
+            style={{ minWidth: 160, textAlign: 'center', cursor: restoring ? 'not-allowed' : 'pointer', opacity: restoring ? 0.6 : 1 }}
+          >
+            {restoring ? '⏳ Restoring...' : '⬆️ Restore from Backup'}
+            <input
+              type="file"
+              accept="application/json,.json"
+              disabled={restoring}
+              style={{ display: 'none' }}
+              onChange={e => { doRestore(e.target.files?.[0]); e.target.value = '' }}
+            />
+          </label>
+          <p style={{ fontSize: 11, color: '#9A9488', margin: 0 }}>
+            Upload a <code>.json</code> backup to re-insert its data. Records with the same ID are overwritten — this cannot be undone.
+          </p>
+        </div>
+
+        {restoreSummary && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9A9488', marginBottom: 8 }}>Restore Summary</div>
+            <div className="overflow-x-auto"><table className="data-table">
+              <thead><tr><th>Table</th><th>Result</th></tr></thead>
+              <tbody>
+                {restoreSummary.map(r => (
+                  <tr key={r.name}>
+                    <td style={{ textTransform: 'capitalize' }}>{r.name.replace(/_/g, ' ')}</td>
+                    <td>{r.skipped
+                      ? <span style={{ color: '#C4BFB6' }}>— none in file</span>
+                      : <span style={{ color: '#0D9E8C', fontWeight: 600 }}>{r.count.toLocaleString()} restored</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table></div>
+          </div>
+        )}
 
         {backupLog.length > 0 && (
           <div>
