@@ -78,6 +78,8 @@ export default function App() {
     //    We AWAIT fetchProfile before clearing `loading` so the app never renders a
     //    gated page while the role is still unknown — otherwise RoleRoute would
     //    briefly see 'unassigned' and flash "Access Restricted" on refresh.
+    //    (fetchProfile never rejects — it handles its own errors — so `loading`
+    //    is always cleared and we can't get stuck on the loading screen.)
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) await fetchProfile(session.user.id)   // wait for their role

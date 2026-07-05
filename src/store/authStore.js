@@ -41,12 +41,22 @@ export const useAuthStore = create((set) => ({
   },
 
   // ---- Load the user's profile row (to know their role) after login ----
+  //  IMPORTANT: this must NEVER reject. App.jsx awaits it before clearing the
+  //  `loading` flag, so if it threw (e.g. a network drop) the app would be stuck
+  //  on the loading screen forever. On any failure we log it and fall back to a
+  //  null profile (treated as unassigned) — never leaving the user stranded.
   fetchProfile: async (userId) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)   // profiles.id == auth.users.id (1-to-1)
-      .single()           // expect exactly one row
-    set({ profile: data })
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)   // profiles.id == auth.users.id (1-to-1)
+        .maybeSingle()      // 0 rows → null (unassigned), not an error
+      if (error) throw error
+      set({ profile: data })
+    } catch (err) {
+      console.error('[PROTECT] Failed to fetch profile:', err)
+      set({ profile: null })   // safe fallback — unassigned, but app still loads
+    }
   },
 }))
