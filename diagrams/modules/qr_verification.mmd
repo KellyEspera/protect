@@ -3,14 +3,14 @@ flowchart TD
     Sel --> Gen[Generate QR code<br/>encodes a SHA-256 hash - no PII]
     Gen --> Card{Print or scan?}
 
-    Card -- Print ID --> Print[Print / download QR or<br/>full ID card as PNG]
+    Card -- Print ID --> Print[Download QR PNG or<br/>full ID card PNG / PDF]
     Card -- Verify --> Scan[Start camera scan<br/>or Simulate Scan]
 
     Scan --> Found[Identify resident<br/>show Head / Member + sector badges]
     Found --> Purpose{Purpose of verification?}
 
-    Purpose -- "Document request" --> Doc[Preview filled barangay document<br/>Clearance · Indigency · Residency · Permit]
-    Doc --> DocPrint[Print for Punong Barangay signature]
+    Purpose -- "Document request" --> Doc[Generate barangay document as PDF jsPDF<br/>Clearance · Indigency · Residency · Permit]
+    Doc --> DocPrint[Print autoPrint or download<br/>for Punong Barangay signature]
     DocPrint --> Log
 
     Purpose -- "Assistance claim" --> Verify[Confirm household head]

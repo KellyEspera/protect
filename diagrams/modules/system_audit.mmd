@@ -1,6 +1,8 @@
 flowchart TD
     M((M)) --> Tool{System &amp; Audit}
     Tool -- Activity Log --> Audit[View audit trail - paginated<br/>add / edit / delete on<br/>residents · households · incidents]
-    Tool -- Database Backup --> Backup[Download full JSON backup of all data]
+    Tool -- Download Backup --> Backup[Download full JSON backup<br/>of core data]
+    Tool -- Restore --> Restore[Upload JSON backup →<br/>re-insert in FK-safe order<br/>overwrite by id + per-table summary]
     Audit --> R((R))
     Backup --> R((R))
+    Restore --> R((R))
