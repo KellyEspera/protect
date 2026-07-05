@@ -75,17 +75,20 @@ export default function App() {
   // Auth bootstrap — runs once on mount.
   useEffect(() => {
     // 1) On first load, check if there's already a saved session (e.g. page refresh).
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    //    We AWAIT fetchProfile before clearing `loading` so the app never renders a
+    //    gated page while the role is still unknown — otherwise RoleRoute would
+    //    briefly see 'unassigned' and flash "Access Restricted" on refresh.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)   // load their role
+      if (session?.user) await fetchProfile(session.user.id)   // wait for their role
       setLoading(false)
     })
 
     // 2) Subscribe to future auth changes (login/logout) so the UI updates live.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      else setLoading(false)
+      if (session?.user) await fetchProfile(session.user.id)   // wait for their role
+      setLoading(false)
     })
 
     // 3) Clean up the subscription when the component unmounts (prevents leaks).
