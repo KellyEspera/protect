@@ -70,7 +70,7 @@ export default function Residents() {
   const [sortKey, setSortKey] = useState('resident_no')
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)   // residents table pagination (1-indexed)
-  const PAGE_SIZE = 10
+  const [pageSize, setPageSize] = useState(10)   // rows per page (selectable)
   const tableScrollRef = useRef(null)   // to reset scroll to top when the page changes
   const [modalOpen, setModalOpen] = useState(false)
   const [viewResident, setViewResident] = useState(null)
@@ -502,9 +502,9 @@ export default function Residents() {
   })
 
   // Pagination — clamp the current page to the available range, then slice
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
   const safePage = Math.min(page, totalPages)
-  const pageRows = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+  const pageRows = sorted.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   // Reset the table scroll to the top whenever the page changes, so switching
   // to a shorter page never leaves the view scrolled past the (fewer) rows.
@@ -621,7 +621,9 @@ export default function Residents() {
             <option value="OSY">Out-of-School Youth</option>
             <option value="HH Head">Household Head</option>
           </select>
-          <span className="text-xs text-gray-400 ml-auto">{sorted.length} of {residents.length} shown</span>
+          {sorted.length !== residents.length && (
+            <span className="text-xs text-gray-400 ml-auto">{sorted.length} of {residents.length} shown</span>
+          )}
         </div>
 
         {isLoading ? <Loader /> : sorted.length === 0 ? <EmptyState message="No residents found" /> : (
@@ -665,15 +667,31 @@ export default function Residents() {
           </div>
         )}
 
-        {/* Pagination — numbered, centered */}
+        {/* Pagination — page-size selector (left) + numbered pager (right) */}
         {!isLoading && sorted.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+            {/* left: how many rows per page */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: '#9A9488' }}>Show on page by</span>
+              <select
+                className="form-select w-auto"
+                value={pageSize}
+                onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
+                style={{ fontSize: 12, padding: '4px 8px' }}
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+
+            {/* right: numbered pager */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
               <button
                 className="btn btn-ghost text-xs"
                 disabled={safePage <= 1}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-              >‹ Previous</button>
+              >‹</button>
 
               {pageItems(safePage, totalPages).map((it, i) =>
                 it === '…' ? (
@@ -697,7 +715,7 @@ export default function Residents() {
                 className="btn btn-ghost text-xs"
                 disabled={safePage >= totalPages}
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              >Next ›</button>
+              >›</button>
             </div>
           </div>
         )}
