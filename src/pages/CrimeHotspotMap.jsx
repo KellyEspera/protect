@@ -13,7 +13,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { StatCard } from '../components/ui/index'
 
-const PUROKS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
+const SITIOS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
 
 const SITIO_CENTERS = {
   'Sitio Hunan': [20.44531, 121.98450],  // Barangay Hall (west / inland)
@@ -85,7 +85,7 @@ export default function CrimeHotspotMap() {
     queryKey: ['incidents-hotspot'],
     queryFn: async () => {
       const { data } = await supabase.from('incidents')
-        .select('id, incident_type, purok, incident_date, status, latitude, longitude')
+        .select('id, incident_type, sitio, incident_date, status, latitude, longitude')
         .order('incident_date', { ascending: false })
       return data || []
     },
@@ -103,11 +103,11 @@ export default function CrimeHotspotMap() {
     return true
   })
 
-  const sitioCounts = PUROKS.map(p => ({
-    purok: p,
-    total: filtered.filter(i => i.purok === p).length,
+  const sitioCounts = SITIOS.map(p => ({
+    sitio: p,
+    total: filtered.filter(i => i.sitio === p).length,
     byType: Object.entries(
-      filtered.filter(i => i.purok === p)
+      filtered.filter(i => i.sitio === p)
         .reduce((acc, i) => { acc[i.incident_type] = (acc[i.incident_type] || 0) + 1; return acc }, {})
     ).sort((a, b) => b[1] - a[1]),
   }))
@@ -165,7 +165,7 @@ export default function CrimeHotspotMap() {
         const heatPoints = filtered.map(inc => {
           let lat = inc.latitude, lng = inc.longitude
           if (lat == null || lng == null) {
-            const c = SITIO_CENTERS[inc.purok]
+            const c = SITIO_CENTERS[inc.sitio]
             if (!c) return null
             ;[lat, lng] = c   // no exact pin → fall back to sitio centre
           }
@@ -187,8 +187,8 @@ export default function CrimeHotspotMap() {
 
       // -------- PINS MODE: numbered per-sitio clusters + density circles --------
       if (viewMode === 'pins') {
-        sitioCounts.forEach(({ purok, total, byType }) => {
-          const center = SITIO_CENTERS[purok]
+        sitioCounts.forEach(({ sitio, total, byType }) => {
+          const center = SITIO_CENTERS[sitio]
           if (!center) return
           const { fill, border } = getCrimeColor(total, maxCrime)
           const radius = Math.max(80, Math.sqrt(total + 1) * 90)
@@ -210,7 +210,7 @@ export default function CrimeHotspotMap() {
           })
 
           const popup = `<div style="font-family:Inter,sans-serif;min-width:190px">
-            <div style="font-weight:700;font-size:13px;color:#1A1A2E;margin-bottom:6px;padding-bottom:5px;border-bottom:3px solid ${fill}">🔴 ${purok}</div>
+            <div style="font-weight:700;font-size:13px;color:#1A1A2E;margin-bottom:6px;padding-bottom:5px;border-bottom:3px solid ${fill}">🔴 ${sitio}</div>
             <div style="font-size:12px;color:#5A5A52;margin-bottom:8px"><b style="color:${fill};font-size:17px">${total}</b> incident${total !== 1 ? 's' : ''}</div>
             ${byType.length
               ? byType.map(([t, c]) => `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid #F5F2EC">
@@ -240,7 +240,7 @@ export default function CrimeHotspotMap() {
           .addTo(mapInstance.current)
           .bindPopup(`<div style="font-family:Inter,sans-serif;min-width:150px">
             <div style="font-weight:700;font-size:12px;color:#1A1A2E;margin-bottom:3px">${inc.incident_type}</div>
-            <div style="font-size:11px;color:#5A5A52">${inc.purok} · ${date}</div>
+            <div style="font-size:11px;color:#5A5A52">${inc.sitio} · ${date}</div>
             <div style="font-size:11px;color:${inc.status === 'Resolved' ? '#0D9E8C' : '#B83232'};margin-top:2px">${inc.status}</div>
           </div>`, { maxWidth: 220 })
         crimeRef.current.push(m)
@@ -254,7 +254,7 @@ export default function CrimeHotspotMap() {
       {/* Stats */}
       <div className="map-stats">
         <StatCard icon="🚨" value={filtered.length} label="Total Incidents" color="red" />
-        <StatCard icon="🔴" value={hotspot.total > 0 ? hotspot.purok.replace('Sitio ', '') : 'None'} label="Crime Hotspot" color="navy" />
+        <StatCard icon="🔴" value={hotspot.total > 0 ? hotspot.sitio.replace('Sitio ', '') : 'None'} label="Crime Hotspot" color="navy" />
         <StatCard icon="✅" value={resolved} label="Cases Resolved" color="teal" />
         <StatCard icon="⚡" value={topType} label="Most Common" color="gold" />
       </div>
@@ -362,13 +362,13 @@ export default function CrimeHotspotMap() {
               <div style={{ fontSize: 10, color: '#9A9488', marginTop: 1 }}>by incident count</div>
             </div>
             <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[...sitioCounts].sort((a, b) => b.total - a.total).map(({ purok, total, byType }) => {
+              {[...sitioCounts].sort((a, b) => b.total - a.total).map(({ sitio, total, byType }) => {
                 const { fill } = getCrimeColor(total, maxCrime)
                 const pct = maxCrime > 0 ? (total / maxCrime) * 100 : 0
                 return (
-                  <div key={purok}>
+                  <div key={sitio}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E' }}>{purok.replace('Sitio ', '')}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E' }}>{sitio.replace('Sitio ', '')}</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: fill }}>{total}</span>
                     </div>
                     <div style={{ height: 6, background: '#F0EDE4', borderRadius: 3, overflow: 'hidden', marginBottom: 3 }}>
@@ -407,7 +407,7 @@ export default function CrimeHotspotMap() {
                     }}>{inc.status}</span>
                   </div>
                   <div style={{ fontSize: 10, color: '#9A9488', marginTop: 2 }}>
-                    {inc.purok} · {inc.incident_date
+                    {inc.sitio} · {inc.incident_date
                       ? new Date(inc.incident_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
                       : '—'}
                   </div>

@@ -34,7 +34,7 @@ export default function CrimeIncident() {
   const qc = useQueryClient()
   const [form, setForm] = useState({
     incident_type: 'Public Intoxication / Disorderly Conduct',
-    purok: 'Sitio Hunan',
+    sitio: 'Sitio Hunan',
     complainant: '',
     incident_date: '',
   })
@@ -54,7 +54,7 @@ export default function CrimeIncident() {
     let cancelled = false
     import('leaflet').then(L => {
       if (cancelled || !locMapRef.current || locMapInstance.current) return
-      const center = SITIO_CENTERS[form.purok] || [20.44531, 121.98450]
+      const center = SITIO_CENTERS[form.sitio] || [20.44531, 121.98450]
       const map = L.default.map(locMapRef.current).setView(center, 15)
       L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map)
       map.on('click', (e) => {
@@ -76,10 +76,10 @@ export default function CrimeIncident() {
   // Recenter the picker when the sitio changes (only if nothing placed yet)
   useEffect(() => {
     if (locMapInstance.current && !pinLoc) {
-      const center = SITIO_CENTERS[form.purok]
+      const center = SITIO_CENTERS[form.sitio]
       if (center) locMapInstance.current.setView(center, 15)
     }
-  }, [form.purok])
+  }, [form.sitio])
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0]
@@ -132,7 +132,7 @@ export default function CrimeIncident() {
     onSuccess: () => {
       toast.success('Incident logged!')
       qc.invalidateQueries(['incidents'])
-      setForm({ incident_type: 'Public Intoxication / Disorderly Conduct', purok: 'Sitio Hunan', complainant: '', incident_date: '' })
+      setForm({ incident_type: 'Public Intoxication / Disorderly Conduct', sitio: 'Sitio Hunan', complainant: '', incident_date: '' })
       setPhotoFile(null)
       setPhotoPreview(null)
       setPinLoc(null)
@@ -272,7 +272,7 @@ export default function CrimeIncident() {
           </div>
           <div>
             <label className="form-label">Sitio</label>
-            <select className="form-select mt-1" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
+            <select className="form-select mt-1" value={form.sitio} onChange={e => setForm({ ...form, sitio: e.target.value })}>
               {['Sitio Hunan','Sitio Hagu','Sitio Tuva'].map(p => <option key={p}>{p}</option>)}
             </select>
           </div>
@@ -360,7 +360,7 @@ export default function CrimeIncident() {
                 <tr key={inc.id}>
                   <td><span className="font-mono text-[11px] text-teal">{inc.case_no}</span></td>
                   <td>{inc.incident_type}</td>
-                  <td>{inc.purok}</td>
+                  <td>{inc.sitio}</td>
                   <td className="text-xs text-gray-500">
                     {new Date(inc.incident_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>

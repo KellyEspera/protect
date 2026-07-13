@@ -100,7 +100,7 @@ export function sanitizeIncidentForm(form) {
     // constraints exactly. Sanitizing them encoded the "/" in types like
     // "Public Intoxication / Disorderly Conduct" and broke inserts.
     incident_type: form.incident_type,
-    purok: form.purok,
+    sitio: form.sitio,
     complainant: (base.complainant || '').slice(0, 200),
     description: (base.description || '').slice(0, 1000),
   }
@@ -108,11 +108,11 @@ export function sanitizeIncidentForm(form) {
 
 /**
  * Sanitizes the survey response form.
- * Do NOT sanitize select dropdown values (priority_need, purok) as they violate database constraints.
+ * Do NOT sanitize select dropdown values (priority_need, sitio) as they violate database constraints.
  */
 export function sanitizeSurveyForm(form) {
   return {
-    purok: form.purok, // Dropdown value - don't sanitize
+    sitio: form.sitio, // Dropdown value - don't sanitize
     priority_need: form.priority_need, // Dropdown value - don't sanitize
     comments: (form.comments || '').slice(0, 500), // Only sanitize free-text comments
   }

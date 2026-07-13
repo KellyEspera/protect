@@ -25,10 +25,10 @@ Barangay Kayvaluganan, Basco, Batanes
 ## Features (All 12)
 
 1. **Household Profiling Dashboard** — Add, edit, search residents with full demographic data
-2. **Population Analytics** — Trend charts, sex distribution, purok breakdown
-3. **Poverty Incidence Analytics** — Classification by income, purok poverty rates
+2. **Population Analytics** — Trend charts, sex distribution, sitio breakdown
+3. **Poverty Incidence Analytics** — Classification by income, sitio poverty rates
 4. **Senior Citizen, Solo Parent, PWD Statistics** — Sector registry and charts
-5. **GIS-based Household Mapping** — Leaflet + OpenStreetMap with purok color-coding
+5. **GIS-based Household Mapping** — Leaflet + OpenStreetMap with sitio color-coding
 6. **Disaster Vulnerability Mapping** — Risk overlays (typhoon, flood, landslide)
 7. **Assistance Beneficiary Tracking** — Program enrollment, status tracking, distribution trends
 8. **Crime and Incident Analytics** — Log incidents, view trends, update status
@@ -174,7 +174,7 @@ Add your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel's environmen
 - All data is stored in Supabase (PostgreSQL) hosted on secure cloud infrastructure
 - Row Level Security (RLS) is enabled on all tables — only authenticated users can access data
 - Supabase Auth handles passwords with bcrypt hashing — plaintext passwords are never stored
-- QR codes contain only non-sensitive identifiers (resident_no, name, purok)
+- QR codes contain only non-sensitive identifiers (resident_no, name, sitio)
 - For full RA 10173 compliance, document a Privacy Impact Assessment (PIA) and appoint a Data Protection Officer (DPO) per NPC Advisory
 
 ---

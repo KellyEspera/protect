@@ -112,7 +112,7 @@ export default function BeneficiaryTracking() {
     queryFn: async () => {
       const { data } = await supabase
         .from('beneficiaries')
-        .select('*, residents(first_name, last_name, resident_no, purok), assistance_programs(name)')
+        .select('*, residents(first_name, last_name, resident_no, sitio), assistance_programs(name)')
         .order('enrolled_at', { ascending: false })
       return data || []
     },
@@ -138,7 +138,7 @@ export default function BeneficiaryTracking() {
   const { data: allResidents = [] } = useQuery({
     queryKey: ['residents-for-enroll'],
     queryFn: async () => {
-      const { data } = await supabase.from('residents').select('id, resident_no, first_name, last_name, purok').order('last_name')
+      const { data } = await supabase.from('residents').select('id, resident_no, first_name, last_name, sitio').order('last_name')
       return data || []
     },
   })
@@ -318,7 +318,7 @@ export default function BeneficiaryTracking() {
                   <td><strong>{b.residents?.first_name} {b.residents?.last_name}</strong></td>
                   <td><span className="font-mono text-[11px] text-teal">{b.residents?.resident_no}</span></td>
                   <td>{b.assistance_programs?.name}</td>
-                  <td>{b.residents?.purok}</td>
+                  <td>{b.residents?.sitio}</td>
                   <td className="text-xs text-gray-500">{b.last_release_date || '—'}</td>
                   <td>₱{(b.total_released || 0).toLocaleString()}</td>
                   <td>
@@ -436,7 +436,7 @@ export default function BeneficiaryTracking() {
                           onMouseLeave={e => e.currentTarget.style.background = enrollForm.resident_id === r.id ? '#F0FBF9' : '#fff'}
                         >
                           <span style={{ fontWeight:600 }}>{r.first_name} {r.last_name}</span>
-                          <span style={{ fontSize:11,color:'#9A9488',marginLeft:8 }}>{r.resident_no} · {r.purok}</span>
+                          <span style={{ fontSize:11,color:'#9A9488',marginLeft:8 }}>{r.resident_no} · {r.sitio}</span>
                         </div>
                       ))
                     }

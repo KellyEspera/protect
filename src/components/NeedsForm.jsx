@@ -11,7 +11,7 @@ import { sanitizeSurveyForm } from '../lib/sanitize'
 export default function NeedsForm({ onClose }) {
   const qc = useQueryClient()
   const [submitted, setSubmitted] = useState(false)
-  const [form, setForm] = useState({ purok: 'Sitio Hunan', priority_need: 'Health Services', comments: '' })
+  const [form, setForm] = useState({ sitio: 'Sitio Hunan', priority_need: 'Health Services', comments: '' })
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
 
@@ -54,7 +54,7 @@ export default function NeedsForm({ onClose }) {
       setSubmitted(true)
       qc.invalidateQueries({ queryKey: ['survey-responses'] })
       setTimeout(() => {
-        setForm({ purok: 'Sitio Hunan', priority_need: 'Health Services', comments: '' })
+        setForm({ sitio: 'Sitio Hunan', priority_need: 'Health Services', comments: '' })
         clearPhoto()
         setSubmitted(false)
       }, 3000)
@@ -102,8 +102,8 @@ export default function NeedsForm({ onClose }) {
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1A3A5C', marginBottom: 8 }}>📍 Your Sitio</label>
               <select
-                value={form.purok}
-                onChange={(e) => setForm({ ...form, purok: e.target.value })}
+                value={form.sitio}
+                onChange={(e) => setForm({ ...form, sitio: e.target.value })}
                 style={{
                   width: '100%', padding: '12px 14px', fontSize: 14,
                   border: '1px solid #E2E8F0', borderRadius: '6px', fontFamily: 'inherit',

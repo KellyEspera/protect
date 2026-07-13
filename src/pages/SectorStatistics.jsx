@@ -29,7 +29,7 @@ export default function SectorStatistics() {
   const now = new Date()
   const getAge = dob => Math.floor((now - new Date(dob)) / 31557600000)
 
-  const purokLabels = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
+  const sitioLabels = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
   const pct = n => residents.length ? `${((n / residents.length) * 100).toFixed(1)}% of population` : ''
 
   const scByGroup = [
@@ -41,8 +41,8 @@ export default function SectorStatistics() {
   const pwdTypes = ['Physical','Visual','Hearing','Intellectual','Psychosocial']
   const pwdByType = pwdTypes.map(t => pwds.filter(r => r.pwd_type === t).length)
 
-  const osyBySitio = purokLabels.map(p => osys.filter(r => r.purok === p).length)
-  const workingBySitio = purokLabels.map(p => working.filter(r => r.purok === p).length)
+  const osyBySitio = sitioLabels.map(p => osys.filter(r => r.sitio === p).length)
+  const workingBySitio = sitioLabels.map(p => working.filter(r => r.sitio === p).length)
 
   const sectorList = [
     ...seniors.slice(0, 2).map(r => ({ ...r, cat: 'Senior Citizen', catColor: 'blue' })),
@@ -114,7 +114,7 @@ export default function SectorStatistics() {
           <div className="h-52">
             {osys.length > 0 ? (
               <Bar
-                data={{ labels: purokLabels, datasets: [{ data: osyBySitio, backgroundColor: '#EF4444', borderRadius: 6 }] }}
+                data={{ labels: sitioLabels, datasets: [{ data: osyBySitio, backgroundColor: '#EF4444', borderRadius: 6 }] }}
                 options={{ ...noLeg, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }}
               />
             ) : <Empty message="No out-of-school youth recorded" />}
@@ -125,7 +125,7 @@ export default function SectorStatistics() {
           <div className="h-52">
             {working.length > 0 ? (
               <Bar
-                data={{ labels: purokLabels, datasets: [{ data: workingBySitio, backgroundColor: '#0D9E8C', borderRadius: 6 }] }}
+                data={{ labels: sitioLabels, datasets: [{ data: workingBySitio, backgroundColor: '#0D9E8C', borderRadius: 6 }] }}
                 options={{ ...noLeg, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }}
               />
             ) : <Empty message="No working residents recorded" />}
@@ -142,7 +142,7 @@ export default function SectorStatistics() {
                 <tr key={r.id + r.cat}>
                   <td><strong>{r.first_name} {r.last_name}</strong></td>
                   <td><span className={`badge badge-${r.catColor}`}>{r.cat}</span></td>
-                  <td>{r.purok}</td>
+                  <td>{r.sitio}</td>
                   <td>{getAge(r.date_of_birth)}</td>
                   <td>{r.civil_status}</td>
                 </tr>

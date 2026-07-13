@@ -81,9 +81,9 @@ export function exportResidentsToPDF(residents) {
 
   doc.autoTable({
     startY: 28,
-    head: [['Res. ID', 'Last Name', 'First Name', 'Purok', 'Age', 'Sex', 'Civil Status', 'HH Head', 'PWD', 'Solo Parent', 'Senior']],
+    head: [['Res. ID', 'Last Name', 'First Name', 'Sitio', 'Age', 'Sex', 'Civil Status', 'HH Head', 'PWD', 'Solo Parent', 'Senior']],
     body: residents.map(r => [
-      r.resident_no, r.last_name, r.first_name, r.purok,
+      r.resident_no, r.last_name, r.first_name, r.sitio,
       r.age ?? '', r.sex, r.civil_status,
       r.is_household_head ? 'Yes' : 'No',
       r.is_pwd ? 'Yes' : 'No',
@@ -105,7 +105,7 @@ export function exportResidentsToExcel(residents) {
     'Last Name': r.last_name,
     'First Name': r.first_name,
     'Middle Name': r.middle_name || '',
-    'Purok': r.purok,
+    'Sitio': r.sitio,
     'Date of Birth': r.date_of_birth,
     'Age': r.age ?? '',
     'Sex': r.sex,
@@ -129,7 +129,7 @@ export function exportIncidentsToExcel(incidents) {
   const ws = XLSX.utils.json_to_sheet(incidents.map(i => ({
     'Case No.': i.case_no,
     'Incident Type': i.incident_type,
-    'Purok': i.purok,
+    'Sitio': i.sitio,
     'Date': i.incident_date,
     'Complainant': i.complainant || '',
     'Status': i.status,

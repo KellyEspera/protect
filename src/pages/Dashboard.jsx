@@ -25,7 +25,7 @@ export default function Dashboard() {
   const { data: residents = [] } = useQuery({
     queryKey: ['residents-dashboard'],
     queryFn: async () => {
-      const { data } = await supabase.from('residents').select('purok, sex, is_senior_citizen, is_pwd, is_solo_parent, date_of_birth')
+      const { data } = await supabase.from('residents').select('sitio, sex, is_senior_citizen, is_pwd, is_solo_parent, date_of_birth')
       return data || []
     },
   })
@@ -81,9 +81,9 @@ export default function Dashboard() {
   const youth    = residents.filter(r => { const a = getAge(r.date_of_birth); return a >= 18 && a <= 30 }).length
   const adults   = residents.filter(r => { const a = getAge(r.date_of_birth); return a >= 31 && a <= 59 }).length
 
-  // Purok breakdown
-  const purokCounts = ['Sitio Hunan','Sitio Hagu','Sitio Tuva'].map(p =>
-    residents.filter(r => r.purok === p).length
+  // Sitio breakdown
+  const sitioCounts = ['Sitio Hunan','Sitio Hagu','Sitio Tuva'].map(p =>
+    residents.filter(r => r.sitio === p).length
   )
 
   const statusColor = { Ongoing: 'gold', Resolved: 'blue', Escalated: 'red', Dismissed: 'gray' }
@@ -102,9 +102,9 @@ export default function Dashboard() {
         ['Persons with Disability', String(pwds)],
         ['Solo Parents', String(soloParents)],
         ['Active Beneficiaries', String(beneficiaryCount)],
-        ['Residents — Sitio Hunan', String(purokCounts[0])],
-        ['Residents — Sitio Hagu', String(purokCounts[1])],
-        ['Residents — Sitio Tuva', String(purokCounts[2])],
+        ['Residents — Sitio Hunan', String(sitioCounts[0])],
+        ['Residents — Sitio Hagu', String(sitioCounts[1])],
+        ['Residents — Sitio Tuva', String(sitioCounts[2])],
       ],
     })
   }
@@ -164,7 +164,7 @@ export default function Dashboard() {
               <Bar
                 data={{
                   labels: ['Sitio Hunan','Sitio Hagu','Sitio Tuva'],
-                  datasets: [{ data: purokCounts, backgroundColor: TEAL, borderRadius: 6 }],
+                  datasets: [{ data: sitioCounts, backgroundColor: TEAL, borderRadius: 6 }],
                 }}
                 options={{ ...chartDefaults, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' } } } }}
               />
@@ -203,7 +203,7 @@ export default function Dashboard() {
                 <tr key={inc.id}>
                   <td><span className="font-mono text-[11px] text-teal">{inc.case_no}</span></td>
                   <td>{inc.incident_type}</td>
-                  <td>{inc.purok}</td>
+                  <td>{inc.sitio}</td>
                   <td>{new Date(inc.incident_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                   <td><Badge variant={statusColor[inc.status] || 'gray'}>{inc.status}</Badge></td>
                 </tr>

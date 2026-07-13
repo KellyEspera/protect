@@ -19,10 +19,10 @@ import { toast } from 'react-toastify'
 import { useAuthStore } from '../store/authStore'
 import { canEdit } from '../lib/permissions'
 
-const PUROKS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
+const SITIOS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
 const HOUSING_TYPES = ['Concrete', 'Semi-concrete', 'Wood', 'Makeshift']
 
-const EMPTY_HH_FORM = { household_no: '', purok: 'Sitio Hunan', address: '', housing_type: 'Concrete', head_name: '', resident_id: '', existing_household_id: null }
+const EMPTY_HH_FORM = { household_no: '', sitio: 'Sitio Hunan', address: '', housing_type: 'Concrete', head_name: '', resident_id: '', existing_household_id: null }
 
 // ── Offline tile helpers ──────────────────────────────────────
 function latLngToTile(lat, lng, z) {
@@ -50,7 +50,7 @@ function getBascoTiles() {
   return tiles
 }
 
-const PUROK_COLORS = {
+const SITIO_COLORS = {
   'Sitio Hunan': '#0D9E8C',
   'Sitio Hagu':  '#F5A623',
   'Sitio Tuva':  '#3B82F6',
@@ -72,7 +72,7 @@ export default function GISMap() {
   const [form, setForm]             = useState(EMPTY_HH_FORM)
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
-  const [filterPurok, setFilterPurok]   = useState('All')
+  const [filterSitio, setFilterSitio]   = useState('All')
   const [hhHeadSearch, setHhHeadSearch] = useState('')
   const [showHHDropdown, setShowHHDropdown] = useState(false)
 
@@ -118,7 +118,7 @@ export default function GISMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('residents')
-        .select('id, first_name, last_name, purok, household_id, households(household_no)')
+        .select('id, first_name, last_name, sitio, household_id, households(household_no)')
         .eq('is_household_head', true)
         .order('last_name')
       if (error) return []
@@ -253,11 +253,11 @@ export default function GISMap() {
       Object.values(markersRef.current).forEach(m => mapInstance.current.removeLayer(m))
       markersRef.current = {}
 
-      const filtered = filterPurok === 'All' ? households : households.filter(h => h.purok === filterPurok)
+      const filtered = filterSitio === 'All' ? households : households.filter(h => h.sitio === filterSitio)
 
       filtered.forEach(h => {
         if (!h.latitude || !h.longitude) return
-        const color = PUROK_COLORS[h.purok] || '#1A3A5C'
+        const color = SITIO_COLORS[h.sitio] || '#1A3A5C'
         const icon = L.default.divIcon({
           html: `<div style="
             width:14px;height:14px;border-radius:50%;
@@ -292,7 +292,7 @@ export default function GISMap() {
             <div style="font-family:Inter,sans-serif;min-width:220px">
               <div style="font-weight:700;font-size:13px;color:#1A1A2E;margin-bottom:4px">${h.household_no || 'Household'}</div>
               <div style="font-size:11px;color:#5A5A52;line-height:1.6">
-                <b>Sitio:</b> ${h.purok}<br/>
+                <b>Sitio:</b> ${h.sitio}<br/>
                 ${h.address ? `<b>Address:</b> ${h.address}<br/>` : ''}
                 ${h.housing_type ? `<b>Type:</b> ${h.housing_type}<br/>` : ''}
                 ${h.head_name ? `<b>HH Head:</b> ${h.head_name}<br/>` : ''}
@@ -315,12 +315,12 @@ export default function GISMap() {
         const h = households.find(x => x.id === id)
         if (!h) return
         setEditTarget(h)
-        setForm({ household_no: h.household_no || '', purok: h.purok, address: h.address || '', housing_type: h.housing_type || 'Concrete', head_name: h.head_name || '', resident_id: '' })
+        setForm({ household_no: h.household_no || '', sitio: h.sitio, address: h.address || '', housing_type: h.housing_type || 'Concrete', head_name: h.head_name || '', resident_id: '' })
         setHhHeadSearch(h.head_name || '')
       }
       window.__deleteHH = (id) => setDeleteTarget(id)
     })
-  }, [households, filterPurok, allMembers])
+  }, [households, filterSitio, allMembers])
 
   // ── Service Worker + Online/Offline ──
   useEffect(() => {
@@ -379,7 +379,7 @@ export default function GISMap() {
       head_name: fullName,
       resident_id: resident.id,
       household_no: householdNo,
-      purok: resident.purok,
+      sitio: resident.sitio,
       existing_household_id: resident.household_id || null,   // their household from Resident Profiling
     }))
     setHhHeadSearch(fullName)
@@ -397,7 +397,7 @@ export default function GISMap() {
   // Households created from Resident Profiling have no coordinates until
   // someone places them on the map here, so this can be < total.
   const located = households.filter(h => h.latitude && h.longitude).length
-  const purokCounts = PUROKS.map(p => ({ purok: p, count: households.filter(h => h.purok === p).length }))
+  const sitioCounts = SITIOS.map(p => ({ sitio: p, count: households.filter(h => h.sitio === p).length }))
 
   // Auto-generate the next 4-digit household number (HH-0001, HH-0002, ...)
   const nextHouseholdNo = (() => {
@@ -412,7 +412,7 @@ export default function GISMap() {
   const handleSave = () => {
     if (!pendingPin) return
     const fields = {
-      purok: form.purok,
+      sitio: form.sitio,
       address: form.address.trim(),
       housing_type: form.housing_type,
       head_name: form.head_name.trim(),
@@ -434,7 +434,7 @@ export default function GISMap() {
       id: editTarget.id,
       payload: {
         household_no: form.household_no.trim(),
-        purok: form.purok,
+        sitio: form.sitio,
         address: form.address.trim(),
         housing_type: form.housing_type,
         head_name: form.head_name.trim(),
@@ -479,7 +479,7 @@ export default function GISMap() {
                   {r.first_name} {r.last_name}
                 </div>
                 <div style={{ fontSize: 10, color: '#9A9488', marginTop: 1 }}>
-                  {r.purok}
+                  {r.sitio}
                   {r.households?.household_no ? ` · ${r.households.household_no}` : ' · No HH No. yet'}
                 </div>
               </div>
@@ -547,18 +547,18 @@ export default function GISMap() {
           {/* Sitio filter + legend */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
             <select
-              value={filterPurok}
-              onChange={e => setFilterPurok(e.target.value)}
+              value={filterSitio}
+              onChange={e => setFilterSitio(e.target.value)}
               style={{ fontSize: 11, padding: '4px 8px', border: '1px solid #D4D0C8', borderRadius: 4, color: '#1A1A2E', fontFamily: 'Inter,sans-serif' }}
             >
               <option value="All">All Sitios</option>
-              {PUROKS.map(p => <option key={p}>{p}</option>)}
+              {SITIOS.map(p => <option key={p}>{p}</option>)}
             </select>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {PUROKS.map(p => (
+              {SITIOS.map(p => (
                 <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#5A5A52' }}>
-                  <div style={{ width: 9, height: 9, borderRadius: '50%', background: PUROK_COLORS[p], border: '1.5px solid #fff', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', flexShrink: 0 }} />
-                  {p.replace('Sitio ', '')} ({purokCounts.find(x => x.purok === p)?.count || 0})
+                  <div style={{ width: 9, height: 9, borderRadius: '50%', background: SITIO_COLORS[p], border: '1.5px solid #fff', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', flexShrink: 0 }} />
+                  {p.replace('Sitio ', '')} ({sitioCounts.find(x => x.sitio === p)?.count || 0})
                 </div>
               ))}
             </div>
@@ -600,8 +600,8 @@ export default function GISMap() {
                       (we already know where they live), so it's read-only here. */}
                   {form.head_name.trim() ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F0FBF9', border: '1px solid #B3E8E2', borderRadius: 6, padding: '8px 12px' }}>
-                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: PUROK_COLORS[form.purok] || '#1A3A5C', flexShrink: 0 }} />
-                      <span style={{ fontWeight: 600, color: '#0A6B5E', fontSize: 13 }}>{form.purok}</span>
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: SITIO_COLORS[form.sitio] || '#1A3A5C', flexShrink: 0 }} />
+                      <span style={{ fontWeight: 600, color: '#0A6B5E', fontSize: 13 }}>{form.sitio}</span>
                       <span style={{ fontSize: 10, color: '#5A8' }}>· from head</span>
                     </div>
                   ) : (
@@ -656,8 +656,8 @@ export default function GISMap() {
                 </div>
                 <div>
                   <label className="form-label" style={{ display: 'block', marginBottom: 4 }}>Sitio</label>
-                  <select className="form-select" value={form.purok} onChange={e => setForm({ ...form, purok: e.target.value })}>
-                    {PUROKS.map(p => <option key={p}>{p}</option>)}
+                  <select className="form-select" value={form.sitio} onChange={e => setForm({ ...form, sitio: e.target.value })}>
+                    {SITIOS.map(p => <option key={p}>{p}</option>)}
                   </select>
                 </div>
 
@@ -725,10 +725,10 @@ export default function GISMap() {
                       }
                     }}
                   >
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: PUROK_COLORS[h.purok] || '#1A3A5C', flexShrink: 0, opacity: onMap ? 1 : 0.35 }} />
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: SITIO_COLORS[h.sitio] || '#1A3A5C', flexShrink: 0, opacity: onMap ? 1 : 0.35 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: '#1A1A2E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.household_no}</div>
-                      <div style={{ fontSize: 10, color: '#9A9488' }}>{h.purok} {h.head_name ? `· ${h.head_name}` : ''}</div>
+                      <div style={{ fontSize: 10, color: '#9A9488' }}>{h.sitio} {h.head_name ? `· ${h.head_name}` : ''}</div>
                     </div>
                     {/* Shows whether this household actually has a map pin yet */}
                     <span style={{ fontSize: 9, flexShrink: 0, color: onMap ? '#0D9E8C' : '#C0A062' }}>

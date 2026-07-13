@@ -78,7 +78,7 @@ export default function QRVerification() {
     queryFn: async () => {
       const { data } = await supabase
         .from('residents')
-        .select('id, resident_no, first_name, last_name, purok, sex, date_of_birth, monthly_income, household_id, is_household_head, is_senior_citizen, is_pwd, is_solo_parent')
+        .select('id, resident_no, first_name, last_name, sitio, sex, date_of_birth, monthly_income, household_id, is_household_head, is_senior_citizen, is_pwd, is_solo_parent')
         .order('last_name')
       return data || []
     },
@@ -363,7 +363,7 @@ export default function QRVerification() {
     const dob = selected.date_of_birth
       ? new Date(selected.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
       : '—'
-    const fields = [['Sitio', selected.purok || '—'], ['Date of Birth', dob], ['Sex', selected.sex || '—']]
+    const fields = [['Sitio', selected.sitio || '—'], ['Date of Birth', dob], ['Sex', selected.sex || '—']]
     let fy = 98
     fields.forEach(([lbl, val]) => {
       ctx.fillStyle = '#888888'; ctx.font = '9px Arial'
@@ -452,7 +452,7 @@ export default function QRVerification() {
     const issued = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
     const docNo = `BRY-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
     const fullName = `${resident.first_name} ${resident.last_name}`.toUpperCase()
-    const sitio = resident.purok || 'Barangay San Joaquin'
+    const sitio = resident.sitio || 'Barangay San Joaquin'
 
     const CERT_TITLE = {
       'Barangay Clearance':       'BARANGAY CLEARANCE',
@@ -558,7 +558,7 @@ export default function QRVerification() {
     const issued = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
     const docNo = `BRY-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
     const fullName = `${resident.first_name} ${resident.last_name}`.toUpperCase()
-    const sitio = resident.purok || 'Barangay San Joaquin'
+    const sitio = resident.sitio || 'Barangay San Joaquin'
 
     const CERT_TITLE = {
       'Barangay Clearance':       'BARANGAY CLEARANCE',
@@ -719,7 +719,7 @@ export default function QRVerification() {
     <div class="photo">PHOTO<br/>HERE</div>
     <div class="info">
       <div class="name">${selected.last_name.toUpperCase()}, ${selected.first_name.toUpperCase()}</div>
-      <div class="row"><span class="lbl">Sitio: </span>${selected.purok}</div>
+      <div class="row"><span class="lbl">Sitio: </span>${selected.sitio}</div>
       <div class="row"><span class="lbl">Date of Birth: </span>${dob}</div>
       <div class="row"><span class="lbl">Sex: </span>${selected.sex}</div>
     </div>
@@ -798,7 +798,7 @@ export default function QRVerification() {
                     {selected.last_name.toUpperCase()}, {selected.first_name.toUpperCase()}
                   </div>
                   {[
-                    ['Sitio', selected.purok],
+                    ['Sitio', selected.sitio],
                     ['Date of Birth', selected.date_of_birth ? new Date(selected.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'],
                     ['Sex', selected.sex],
                   ].map(([lbl, val]) => (
@@ -984,7 +984,7 @@ export default function QRVerification() {
                     {scanned.first_name} {scanned.last_name}
                   </div>
                   <div style={{ fontSize: 11, color: '#5A5A52', marginTop: 2 }}>
-                    {scanned.purok} · {age} yrs · {scanned.sex}
+                    {scanned.sitio} · {age} yrs · {scanned.sex}
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
                     <span className="badge badge-teal">✓ Verified</span>

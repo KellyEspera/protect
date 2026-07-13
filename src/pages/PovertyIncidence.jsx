@@ -45,11 +45,11 @@ export default function PovertyIncidence() {
     : 0
   const povertyRate = hhHeads > 0 ? ((poorHH / hhHeads) * 100).toFixed(1) : '0'
 
-  const purokLabels = ['Sitio Hunan','Sitio Hagu','Sitio Tuva']
-  const purokPoverty = purokLabels.map(p => {
-    const hhInPurok = hhHeadsList.filter(r => r.purok === p)
-    if (!hhInPurok.length) return 0
-    return Math.round((hhInPurok.filter(r => getFamilyIncome(r) < poorThreshold).length / hhInPurok.length) * 100)
+  const sitioLabels = ['Sitio Hunan','Sitio Hagu','Sitio Tuva']
+  const sitioPoverty = sitioLabels.map(p => {
+    const hhInSitio = hhHeadsList.filter(r => r.sitio === p)
+    if (!hhInSitio.length) return 0
+    return Math.round((hhInSitio.filter(r => getFamilyIncome(r) < poorThreshold).length / hhInSitio.length) * 100)
   })
 
   // People living in poor households (every resident whose family income is below the line)
@@ -61,10 +61,10 @@ export default function PovertyIncidence() {
     : 0
 
   // Sitio with the highest poverty rate
-  const maxPovertyIdx   = purokPoverty.indexOf(Math.max(...purokPoverty))
-  const mostAffectedRate = purokPoverty[maxPovertyIdx] || 0
+  const maxPovertyIdx   = sitioPoverty.indexOf(Math.max(...sitioPoverty))
+  const mostAffectedRate = sitioPoverty[maxPovertyIdx] || 0
   const mostAffectedSitio = (total > 0 && mostAffectedRate > 0)
-    ? purokLabels[maxPovertyIdx].replace('Sitio ', '')
+    ? sitioLabels[maxPovertyIdx].replace('Sitio ', '')
     : '—'
 
   // Income classification by family income, relative to the ₱10,000 poverty line
@@ -97,7 +97,7 @@ export default function PovertyIncidence() {
         ['People in Poverty', String(peopleInPoverty)],
         ['Registered Household Heads', String(hhHeads)],
         ['Average Individual Income', `₱${avgIncome.toLocaleString()}`],
-        ...purokLabels.map((p, i) => [`Poverty Rate — ${p}`, `${purokPoverty[i]}%`]),
+        ...sitioLabels.map((p, i) => [`Poverty Rate — ${p}`, `${sitioPoverty[i]}%`]),
         ...incomeBrackets.map(b => [`${b.label} (${b.sub})`, String(b.count)]),
       ],
     })
@@ -123,7 +123,7 @@ export default function PovertyIncidence() {
           <div className="h-52">
             {total > 0 ? (
               <Bar
-                data={{ labels: purokLabels, datasets: [{ data: purokPoverty, backgroundColor: purokPoverty.map(v => v > 20 ? '#EF4444' : v > 10 ? '#F5A623' : '#0D9E8C'), borderRadius: 6 }] }}
+                data={{ labels: sitioLabels, datasets: [{ data: sitioPoverty, backgroundColor: sitioPoverty.map(v => v > 20 ? '#EF4444' : v > 10 ? '#F5A623' : '#0D9E8C'), borderRadius: 6 }] }}
                 options={{ ...noLeg, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v+'%' } } } }}
               />
             ) : <Empty />}
@@ -169,7 +169,7 @@ export default function PovertyIncidence() {
               {poorResidents.map(r => (
                 <tr key={r.id}>
                   <td><strong>{r.first_name} {r.last_name}</strong></td>
-                  <td>{r.purok}</td>
+                  <td>{r.sitio}</td>
                   <td>₱{(r.family_income || 0).toLocaleString()}</td>
                   <td>{r.is_pwd ? <span className="badge badge-gold">Yes</span> : 'No'}</td>
                   <td>{r.is_solo_parent ? <span className="badge badge-teal">Yes</span> : 'No'}</td>

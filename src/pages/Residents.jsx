@@ -23,11 +23,11 @@ import { useAuthStore } from '../store/authStore'
 import { canEdit } from '../lib/permissions'
 import * as XLSX from 'xlsx'
 
-const PUROKS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
+const SITIOS = ['Sitio Hunan', 'Sitio Hagu', 'Sitio Tuva']
 const CIVIL = ['Single', 'Married', 'Widowed', 'Separated', 'Annulled']
 const emptyForm = {
   resident_no: '', first_name: '', last_name: '', middle_name: '', date_of_birth: '',
-  sex: 'Male', civil_status: 'Single', purok: 'Sitio Hunan', monthly_income: '',
+  sex: 'Male', civil_status: 'Single', sitio: 'Sitio Hunan', monthly_income: '',
   occupation: '', contact_number: '',
   is_household_head: false, is_pwd: false, pwd_type: '', is_solo_parent: false,
   is_senior_citizen: false, is_voter: false, is_out_of_school_youth: false,
@@ -95,7 +95,7 @@ export default function Residents() {
   const makeQrData = (r) => JSON.stringify({
     id: r.resident_no,
     name: `${r.first_name} ${r.last_name}`,
-    purok: r.purok,
+    sitio: r.sitio,
     barangay: 'San Joaquin',
     issued: new Date().toISOString().split('T')[0],
   })
@@ -142,7 +142,7 @@ export default function Residents() {
     <div class="info">
       <div class="name">${r.last_name.toUpperCase()}, ${r.first_name.toUpperCase()}</div>
       <div class="row"><span class="lbl">Resident No.: </span>${r.resident_no}</div>
-      <div class="row"><span class="lbl">Sitio: </span>${r.purok}</div>
+      <div class="row"><span class="lbl">Sitio: </span>${r.sitio}</div>
       <div class="row"><span class="lbl">Date of Birth: </span>${dob}</div>
       <div class="row"><span class="lbl">Sex: </span>${r.sex}</div>
     </div>
@@ -203,7 +203,7 @@ export default function Residents() {
       // exist" insert failure. (age is computed in the app, not stored on save.)
       const RESIDENT_COLS = [
         'resident_no', 'first_name', 'last_name', 'middle_name', 'date_of_birth',
-        'sex', 'civil_status', 'purok', 'monthly_income', 'occupation', 'contact_number',
+        'sex', 'civil_status', 'sitio', 'monthly_income', 'occupation', 'contact_number',
         'is_household_head', 'is_pwd', 'pwd_type', 'is_solo_parent', 'is_senior_citizen',
         'is_voter', 'is_out_of_school_youth', 'household_id',
       ]
@@ -228,7 +228,7 @@ export default function Residents() {
         const household_no = await generateHouseholdNo()
         const { data: newHH, error: hhErr } = await supabase
           .from('households')
-          .insert({ household_no, purok: payload.purok, head_name: fullName })
+          .insert({ household_no, sitio: payload.sitio, head_name: fullName })
           .select('id')
           .single()
         if (hhErr) throw hhErr
@@ -337,7 +337,7 @@ export default function Residents() {
         last_name:              String(row['Last Name'] || '').trim(),
         first_name:             String(row['First Name'] || '').trim(),
         middle_name:            String(row['Middle Name'] || '').trim() || null,
-        purok:                  String(row['Purok'] || row['Sitio'] || '').trim(),
+        sitio:                  String(row['Sitio'] || row['Sitio'] || '').trim(),
         date_of_birth:          row['Date of Birth'] ? String(row['Date of Birth']).trim() : null,
         sex:                    String(row['Sex'] || 'Male').trim(),
         civil_status:           String(row['Civil Status'] || 'Single').trim(),
@@ -388,7 +388,7 @@ export default function Residents() {
                 .from('households')
                 .insert({
                   household_no,
-                  purok: row.purok,
+                  sitio: row.sitio,
                   head_name: `${row.first_name} ${row.last_name}`,
                 })
                 .select('id')
@@ -418,7 +418,7 @@ export default function Residents() {
                 .from('households')
                 .insert({
                   household_no,
-                  purok: row.purok,
+                  sitio: row.sitio,
                   head_name: `${row.first_name} ${row.last_name}`,
                 })
                 .select('id')
@@ -484,8 +484,8 @@ export default function Residents() {
 
   // Search + sitio + sector filters
   const filtered = residents.filter(r =>
-    `${r.first_name} ${r.last_name} ${r.resident_no} ${r.purok}`.toLowerCase().includes(search.toLowerCase())
-    && (sitioFilter === 'All' || r.purok === sitioFilter)
+    `${r.first_name} ${r.last_name} ${r.resident_no} ${r.sitio}`.toLowerCase().includes(search.toLowerCase())
+    && (sitioFilter === 'All' || r.sitio === sitioFilter)
     && matchesSector(r)
   )
 
@@ -611,7 +611,7 @@ export default function Residents() {
           </div>
           <select className="form-select w-auto" value={sitioFilter} onChange={e => { setSitioFilter(e.target.value); setPage(1) }}>
             <option value="All">All Sitios</option>
-            {PUROKS.map(p => <option key={p} value={p}>{p}</option>)}
+            {SITIOS.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
           <select className="form-select w-auto" value={sectorFilter} onChange={e => { setSectorFilter(e.target.value); setPage(1) }}>
             <option value="All">All Sectors</option>
@@ -633,7 +633,7 @@ export default function Residents() {
                 <tr>
                   <th className="cursor-pointer select-none" onClick={() => toggleSort('resident_no')}>Res. ID{sortArrow('resident_no')}</th>
                   <th className="cursor-pointer select-none" onClick={() => toggleSort('name')}>Name{sortArrow('name')}</th>
-                  <th className="cursor-pointer select-none" onClick={() => toggleSort('purok')}>Sitio{sortArrow('purok')}</th>
+                  <th className="cursor-pointer select-none" onClick={() => toggleSort('sitio')}>Sitio{sortArrow('sitio')}</th>
                   <th className="cursor-pointer select-none" onClick={() => toggleSort('age')}>Age{sortArrow('age')}</th>
                   <th className="cursor-pointer select-none" onClick={() => toggleSort('sex')}>Sex{sortArrow('sex')}</th>
                   <th className="cursor-pointer select-none" onClick={() => toggleSort('civil_status')}>Civil Status{sortArrow('civil_status')}</th>
@@ -645,7 +645,7 @@ export default function Residents() {
                   <tr key={r.id}>
                     <td><span className="font-mono text-[11px] text-teal">{r.resident_no}</span></td>
                     <td><strong>{r.first_name} {r.last_name}</strong></td>
-                    <td>{r.purok}</td>
+                    <td>{r.sitio}</td>
                     <td>{r.age ?? Math.floor((Date.now() - new Date(r.date_of_birth)) / 31557600000)}</td>
                     <td>{r.sex}</td>
                     <td>{r.civil_status}</td>
@@ -757,8 +757,8 @@ export default function Residents() {
             </div>
             <div>
               <label className="form-label">Sitio *</label>
-              <select className="form-select mt-1" value={form.purok} onChange={e => setForm({...form, purok: e.target.value})}>
-                {PUROKS.map(p => <option key={p}>{p}</option>)}
+              <select className="form-select mt-1" value={form.sitio} onChange={e => setForm({...form, sitio: e.target.value})}>
+                {SITIOS.map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
             <div>
@@ -872,7 +872,7 @@ export default function Residents() {
                   {viewResident.first_name} {viewResident.last_name}
                 </div>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
-                  {viewResident.resident_no} · {viewResident.purok}
+                  {viewResident.resident_no} · {viewResident.sitio}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -915,7 +915,7 @@ export default function Residents() {
                   ['Civil Status',   viewResident.civil_status],
                 ]],
                 ['Residence & Contact', [
-                  ['Sitio',           viewResident.purok],
+                  ['Sitio',           viewResident.sitio],
                   ['Household No.',   households.find(h => h.id === viewResident.household_id)?.household_no || '—'],
                   ['Contact Number', viewResident.contact_number ? (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -1041,7 +1041,7 @@ export default function Residents() {
                     </div>
                     {[
                       ['Resident No.', idResident.resident_no],
-                      ['Sitio', idResident.purok],
+                      ['Sitio', idResident.sitio],
                       ['Date of Birth', idResident.date_of_birth ? new Date(idResident.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'],
                       ['Sex', idResident.sex],
                     ].map(([lbl, val]) => (

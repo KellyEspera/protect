@@ -43,7 +43,7 @@ export default function NeedsAssessment() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
         <StatCard icon="📋" value={responses.length} label="Survey Responses" color="teal" />
         <StatCard icon="🏆" value={responses.length > 0 ? topNeed.need.split(' ')[0] : '—'} label="Top Priority Need" color="gold" />
-        <StatCard icon="🗂️" value={[...new Set(responses.map(r => r.purok))].length || 0} label="Sitios Covered" color="blue" />
+        <StatCard icon="🗂️" value={[...new Set(responses.map(r => r.sitio))].length || 0} label="Sitios Covered" color="blue" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -90,7 +90,7 @@ export default function NeedsAssessment() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-2">
                         <span className="text-[13px] font-medium text-navy">{r.priority_need}</span>
-                        <span className="text-[11px] text-gray-400 flex-shrink-0">{r.purok}</span>
+                        <span className="text-[11px] text-gray-400 flex-shrink-0">{r.sitio}</span>
                       </div>
                       {r.comments && <p className="text-xs text-gray-600 mt-1 break-words">{r.comments}</p>}
                       <div className="text-[10px] text-gray-400 mt-1">

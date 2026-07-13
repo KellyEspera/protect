@@ -25,7 +25,7 @@ erDiagram
     HOUSEHOLDS {
         uuid id PK
         text household_no UK "HH-0001"
-        text purok
+        text sitio
         text address
         text head_name
         numeric latitude
@@ -45,7 +45,7 @@ erDiagram
         int age
         text sex
         text civil_status
-        text purok
+        text sitio
         bool is_household_head
         bool is_voter
         bool is_pwd
@@ -83,7 +83,7 @@ erDiagram
         uuid id PK
         text case_no UK
         text incident_type
-        text purok
+        text sitio
         text complainant
         text description
         timestamptz incident_date
@@ -104,7 +104,7 @@ erDiagram
     SURVEY_RESPONSES {
         uuid id PK
         uuid resident_id FK "nullable"
-        text purok
+        text sitio
         text priority_need
         text comments
         text photo_url
@@ -114,7 +114,7 @@ erDiagram
         uuid id PK
         text hazard_type
         text risk_level
-        text purok
+        text sitio
         text description
         numeric radius
         numeric latitude

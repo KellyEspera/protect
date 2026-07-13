@@ -38,8 +38,8 @@ export default function PopulationAnalytics() {
   const seniors = residents.filter(r => r.is_senior_citizen).length  // boolean flag on the row
 
   // Count residents in each of the three sitios for the "Population by Sitio" bar chart.
-  const purokLabels = ['Sitio Hunan','Sitio Hagu','Sitio Tuva']
-  const purokData = purokLabels.map(p => residents.filter(r => r.purok === p).length)
+  const sitioLabels = ['Sitio Hunan','Sitio Hagu','Sitio Tuva']
+  const sitioData = sitioLabels.map(p => residents.filter(r => r.sitio === p).length)
 
   // Build a printable PDF report of these same figures (uses jsPDF under the hood).
   const handleExportPDF = () => {
@@ -51,7 +51,7 @@ export default function PopulationAnalytics() {
         ['Female', `${females} (${total ? ((females/total)*100).toFixed(1) : 0}%)`],
         ['Under 18', `${under18} (${total ? ((under18/total)*100).toFixed(1) : 0}%)`],
         ['Senior Citizens (60+)', `${seniors} (${total ? ((seniors/total)*100).toFixed(1) : 0}%)`],
-        ...purokLabels.map((p, i) => [`Population — ${p}`, String(purokData[i])]),
+        ...sitioLabels.map((p, i) => [`Population — ${p}`, String(sitioData[i])]),
       ],
     })
   }
@@ -119,7 +119,7 @@ export default function PopulationAnalytics() {
         <div className="h-48">
           {total > 0 ? (
             <Bar
-              data={{ labels: purokLabels, datasets: [{ data: purokData, backgroundColor: TEAL, borderRadius: 6 }] }}
+              data={{ labels: sitioLabels, datasets: [{ data: sitioData, backgroundColor: TEAL, borderRadius: 6 }] }}
               options={{ ...noLeg, scales: { y: { beginAtZero: true } } }}
             />
           ) : <Empty />}
