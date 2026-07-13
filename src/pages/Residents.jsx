@@ -699,9 +699,6 @@ export default function Residents() {
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               >Next ›</button>
             </div>
-            <span className="text-xs text-gray-400">
-              Showing {(safePage - 1) * PAGE_SIZE + 1}–{(safePage - 1) * PAGE_SIZE + pageRows.length} of {sorted.length}
-            </span>
           </div>
         )}
       </SectionCard>
