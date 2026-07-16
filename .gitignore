@@ -7,3 +7,12 @@ dist
 
 # Claude Code local config
 .claude/
+
+# Local-only documentation, study materials, and SQL — kept off the public repo
+*.md
+!README.md
+*.docx
+docx/
+*.sql
+sql_archive/
+screenshots/
