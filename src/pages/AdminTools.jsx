@@ -20,14 +20,8 @@ import { toast } from 'react-toastify'
 // ── DATA BACKUP HELPERS ───────────────────────────────────────
 const BACKUP_KEY = 'protect_last_backup'
 const BACKUP_LOG_KEY = 'protect_backup_log'
-const BACKUP_FREQ_KEY = 'protect_backup_freq'
 
-// Backup schedule options (in days)
-const BACKUP_SCHEDULES = [
-  { value: 7,  label: 'Weekly' },
-  { value: 14, label: 'Every 2 weeks' },
-  { value: 30, label: 'Monthly' },
-]
+const DEFAULT_BACKUP_FREQUENCY_DAYS = 7
 
 // Pulls every table, bundles it into one JSON file, and triggers a download.
 async function runBackup() {
@@ -116,18 +110,13 @@ function useBackupState() {
   })
   const [backupLog, setBackupLog] = useState(() => JSON.parse(localStorage.getItem(BACKUP_LOG_KEY) || '[]'))
   const [backing, setBacking] = useState(false)
-  const [frequency, setFrequency] = useState(() => Number(localStorage.getItem(BACKUP_FREQ_KEY)) || 7)
+  const frequency = DEFAULT_BACKUP_FREQUENCY_DAYS
 
-  // Next backup is due `frequency` days after the last one
+  // Next backup is due weekly after the last one
   const nextDue = lastBackup ? new Date(lastBackup.getTime() + frequency * 86400000) : null
   const isOverdue = !lastBackup || (Date.now() - lastBackup.getTime()) > frequency * 86400000
   const daysSince = lastBackup ? Math.floor((Date.now() - lastBackup.getTime()) / 86400000) : null
   const daysUntilDue = nextDue ? Math.ceil((nextDue.getTime() - Date.now()) / 86400000) : null
-
-  const changeFrequency = (days) => {
-    setFrequency(days)
-    localStorage.setItem(BACKUP_FREQ_KEY, String(days))
-  }
 
   // On load, remind the user once if a scheduled backup is overdue
   useEffect(() => {
@@ -178,7 +167,7 @@ function useBackupState() {
     }
   }
 
-  return { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, changeFrequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore }
+  return { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore }
 }
 
 // ── AUDIT LOG HELPERS ─────────────────────────────────────────
@@ -217,7 +206,7 @@ const ACTION_STYLE = {
 const TABLE_LABEL = { residents: 'Resident', households: 'Household', incidents: 'Incident' }
 
 export default function AdminTools() {
-  const { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, changeFrequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore } = useBackupState()
+  const { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore } = useBackupState()
 
   // Live audit log — paginated (10 per page), auto-refreshes every 60 seconds.
   const LOG_PAGE_SIZE = 10
@@ -281,7 +270,7 @@ export default function AdminTools() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th style={{ width: 90 }}>Time</th>
+                  <th style={{ width: 110 }}>Date</th>
                   <th style={{ width: 80 }}>Action</th>
                   <th style={{ width: 90 }}>Table</th>
                   <th>Record</th>
@@ -295,7 +284,7 @@ export default function AdminTools() {
                     <tr key={log.id}>
                       <td>
                         <span style={{ fontSize: 11, color: '#9A9488' }} title={new Date(log.changed_at).toLocaleString('en-PH')}>
-                          {timeAgo(log.changed_at)}
+                          {new Date(log.changed_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                       </td>
                       <td>
@@ -378,14 +367,10 @@ export default function AdminTools() {
           <div style={{ padding: '16px', background: '#F5F2EC', border: '1px solid #E8E4DA', borderRadius: 8, textAlign: 'center' }}>
             <div style={{ fontSize: 24, marginBottom: 4 }}>🗓️</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A2E' }}>Backup Schedule</div>
-            <select
-              value={frequency}
-              onChange={e => changeFrequency(Number(e.target.value))}
-              style={{ fontSize: 11, padding: '3px 6px', marginTop: 6, border: '1px solid #D4D0C8', borderRadius: 4, fontFamily: 'Inter,sans-serif', color: '#1A1A2E' }}
-            >
-              {BACKUP_SCHEDULES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-            <div style={{ fontSize: 10, color: '#9A9488', marginTop: 6, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 11, marginTop: 8, color: '#5A5A52', fontWeight: 600 }}>
+              Weekly
+            </div>
+            <div style={{ fontSize: 10, color: '#9A9488', marginTop: 8, lineHeight: 1.5 }}>
               {nextDue
                 ? (isOverdue
                     ? <span style={{ color: '#B83232', fontWeight: 600 }}>Due now</span>

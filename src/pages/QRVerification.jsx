@@ -21,6 +21,7 @@ const PURPOSES = [
   'Barangay Clearance',
   'Certificate of Indigency',
   'Certificate of Residency',
+  'Certificate of Good Moral Character',
   'Assistance Claim',
   'Business Permit',
   'ID Verification',
@@ -470,6 +471,8 @@ export default function QRVerification() {
 
       'Certificate of Residency': `This is to certify that <strong>${fullName}</strong>, ${age} years old, born on ${dob}, ${resident.sex || ''}, is a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines.<br/><br/>This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
 
+      'Certificate of Good Moral Character': `This is to certify that <strong>${fullName}</strong>, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is known in the community as a person of good moral character, upright conduct, and responsible citizenship.<br/><br/>This certification is issued upon the request of the above-named person for lawful and legitimate purposes.`,
+
       'Business Permit': `This is to certify that <strong>${fullName}</strong>, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has applied for a Barangay Business Clearance and has been found to have no violations or pending cases in this barangay.<br/><br/>This clearance is issued for business permit application purposes only.`,
     }
     let body = CERT_BODY[certPurpose] || CERT_BODY['Certificate of Residency']
@@ -481,34 +484,40 @@ export default function QRVerification() {
 <title>${title} — ${fullName}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Times New Roman',Times,serif;background:#fff;color:#1a1a1a;padding:20mm 25mm;font-size:12pt;line-height:1.6}
-  .header{text-align:center;margin-bottom:16pt;padding-bottom:12pt;border-bottom:3px double #1A3A5C}
-  .header .republic{font-size:9pt;letter-spacing:1.5pt;color:#555;text-transform:uppercase}
+  body{font-family:'Times New Roman',Times,serif;background:#fff;color:#1a1a1a;padding:18mm 22mm;font-size:12pt;line-height:1.6}
+  .paper{border:1.2px solid #d8d8d8;padding:8mm 10mm;border-radius:3mm;background:#fefefe}
+  .header{display:flex;align-items:center;justify-content:center;gap:12pt;margin-bottom:10pt;padding-bottom:10pt;border-bottom:2px solid #1A3A5C}
+  .logo-wrap{width:62px;height:62px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .logo-wrap img{width:100%;height:100%;object-fit:contain}
+  .header-center{text-align:center}
+  .header .republic{font-size:9pt;letter-spacing:1.2pt;color:#555;text-transform:uppercase}
   .header .province{font-size:9pt;color:#555}
-  .header .brgy{font-size:16pt;font-weight:700;color:#1A3A5C;margin:4pt 0 2pt;letter-spacing:1pt}
+  .header .brgy{font-size:15pt;font-weight:700;color:#1A3A5C;margin:3pt 0 1pt;letter-spacing:1pt}
   .header .addr{font-size:9pt;color:#777}
-  .seal{font-size:48pt;margin:6pt 0}
-  .cert-title{text-align:center;margin:20pt 0 16pt}
-  .cert-title h2{font-size:15pt;font-weight:700;letter-spacing:2pt;text-decoration:underline;color:#1A3A5C}
-  .doc-no{text-align:right;font-size:9pt;color:#777;margin-bottom:14pt}
-  .greeting{margin-bottom:10pt}
-  .body-text{text-align:justify;margin-bottom:14pt;font-size:11.5pt}
-  .closing{margin-bottom:28pt;font-size:11.5pt}
-  .sig-section{display:flex;justify-content:space-between;margin-top:16pt}
+  .cert-title{text-align:center;margin:14pt 0 10pt}
+  .cert-title h2{font-size:14.5pt;font-weight:700;letter-spacing:1.2pt;text-decoration:underline;color:#1A3A5C}
+  .doc-no{text-align:right;font-size:9pt;color:#777;margin-bottom:10pt}
+  .greeting{margin-bottom:8pt}
+  .body-text{text-align:justify;margin-bottom:12pt;font-size:11.5pt}
+  .closing{margin-bottom:24pt;font-size:11.5pt}
+  .sig-section{display:flex;justify-content:space-between;margin-top:12pt;align-items:flex-end}
   .sig-block{text-align:center;width:45%}
   .sig-line{border-top:1.5px solid #1a1a1a;margin-bottom:4pt;width:100%}
   .sig-name{font-weight:700;font-size:11pt}
   .sig-title{font-size:9pt;color:#555}
-  .footer{margin-top:28pt;padding-top:8pt;border-top:1px solid #ccc;text-align:center;font-size:8.5pt;color:#999}
+  .footer{margin-top:24pt;padding-top:8pt;border-top:1px solid #ccc;text-align:center;font-size:8.5pt;color:#999}
   .orbox{border:1px solid #ccc;padding:8pt 12pt;font-size:9pt;color:#777;margin-top:12pt;display:inline-block}
-  @media print{body{padding:15mm 20mm}}
+  @media print{body{padding:14mm 16mm}}
 </style></head><body>
+<div class="paper">
 <div class="header">
-  <div class="republic">Republic of the Philippines</div>
-  <div class="province">Province of Batanes &nbsp;·&nbsp; Municipality of Basco</div>
-  <div class="seal">🏛️</div>
-  <div class="brgy">BARANGAY SAN JOAQUIN</div>
-  <div class="addr">Basco, Batanes, Philippines</div>
+  <div class="logo-wrap"><img src="/brgy-logo.jpg" alt="Barangay Logo" /></div>
+  <div class="header-center">
+    <div class="republic">Republic of the Philippines</div>
+    <div class="province">Province of Batanes &nbsp;·&nbsp; Municipality of Basco</div>
+    <div class="brgy">BARANGAY SAN JOAQUIN</div>
+    <div class="addr">Basco, Batanes, Philippines</div>
+  </div>
 </div>
 
 <div class="cert-title"><h2>${title}</h2></div>
@@ -561,11 +570,12 @@ export default function QRVerification() {
     const sitio = resident.sitio || 'Barangay San Joaquin'
 
     const CERT_TITLE = {
-      'Barangay Clearance':       'BARANGAY CLEARANCE',
-      'Certificate of Indigency': 'CERTIFICATE OF INDIGENCY',
-      'Certificate of Residency': 'CERTIFICATE OF RESIDENCY',
-      'Assistance Claim':         'CERTIFICATE OF INDIGENCY',
-      'Business Permit':          'BARANGAY BUSINESS CLEARANCE',
+      'Barangay Clearance':               'BARANGAY CLEARANCE',
+      'Certificate of Indigency':         'CERTIFICATE OF INDIGENCY',
+      'Certificate of Residency':         'CERTIFICATE OF RESIDENCY',
+      'Certificate of Good Moral Character': 'CERTIFICATE OF GOOD MORAL CHARACTER',
+      'Assistance Claim':                 'CERTIFICATE OF INDIGENCY',
+      'Business Permit':                  'BARANGAY BUSINESS CLEARANCE',
     }
     const title = CERT_TITLE[certPurpose] || 'BARANGAY CERTIFICATION'
 
@@ -573,6 +583,7 @@ export default function QRVerification() {
       'Barangay Clearance': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has no derogatory record on file at this office as of the date of this certification, and is known to be of good moral character and a law-abiding citizen in the community.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
       'Certificate of Indigency': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is one of the identified indigent/low-income residents of this barangay and belongs to an underprivileged family whose income is insufficient to meet the family's basic needs.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
       'Certificate of Residency': `This is to certify that ${fullName}, ${age} years old, born on ${dob}, ${resident.sex || ''}, is a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
+      'Certificate of Good Moral Character': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is known in the community as a person of good moral character, upright conduct, and responsible citizenship.\n\nThis certification is issued upon the request of the above-named person for lawful and legitimate purposes.`,
       'Business Permit': `This is to certify that ${fullName}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has applied for a Barangay Business Clearance and has been found to have no violations or pending cases in this barangay.\n\nThis clearance is issued for business permit application purposes only.`,
     }
     let bodyText = CERT_BODY[certPurpose] || CERT_BODY['Certificate of Residency']
@@ -966,7 +977,7 @@ export default function QRVerification() {
           {scanned && (() => {
             const age = scannedAge ?? '—'
             // Document purposes show the Issue Document section; "Assistance Claim" shows Process Assistance
-            const showDoc = ['Barangay Clearance', 'Certificate of Indigency', 'Certificate of Residency', 'Business Permit'].includes(purpose)
+            const showDoc = ['Barangay Clearance', 'Certificate of Indigency', 'Certificate of Residency', 'Certificate of Good Moral Character', 'Business Permit'].includes(purpose)
             const isAssistance = purpose === 'Assistance Claim'
             const needsIncomeCheck = purpose === 'Certificate of Indigency'
             const income = scanned.monthly_income || 0

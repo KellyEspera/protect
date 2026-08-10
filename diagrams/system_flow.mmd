@@ -1,0 +1,81 @@
+flowchart LR
+  subgraph Browser[Browser / React SPA]
+    A[User opens PROTECT] --> B[main.jsx loads React app]
+    B --> C[App.jsx initializes routes + auth state]
+    C --> D{Route type}
+    D -- Public URL --> Pub[Public announcements / needs portal]
+    D -- Login required --> AuthGate[PrivateRoute checks auth session]
+    AuthGate --> E{Session valid?}
+    E -- No --> Login[Login page]
+    E -- Yes --> Layout[Layout (sidebar + topbar)]
+    Layout --> RoleFilter[RoleRoute checks permissions.js]
+    RoleFilter --> Dashboard[Dashboard]
+    RoleFilter --> Residents[Residents]
+    RoleFilter --> QR[QR Verification]
+    RoleFilter --> GIS[GIS Household Map]
+    RoleFilter --> Incident[Crime & Incident]
+    RoleFilter --> Hotspot[Crime Hotspot Map]
+    RoleFilter --> Disaster[Disaster Vulnerability]
+    RoleFilter --> Beneficiary[Beneficiary Tracking]
+    RoleFilter --> Analytics[Population / Poverty / Sector Analytics]
+    RoleFilter --> Predictive[Predictive Growth]
+    RoleFilter --> Reports[DILG Reports]
+    RoleFilter --> Users[User Management]
+    RoleFilter --> AdminTools[System & Audit]
+  end
+
+  subgraph Backend[Supabase Backend]
+    SA[Supabase Auth]
+    DB[(PostgreSQL database)]
+    ST[Storage for photos / images]
+    RLS[Row Level Security]
+    TR[Triggers / audit logs / profile sync]
+    subgraph Tables[Core tables]
+      T1[profiles]
+      T2[residents]
+      T3[beneficiaries]
+      T4[incidents]
+      T5[assistance_programs]
+      T6[announcements]
+      T7[audit_logs]
+      T8[survey_responses]
+    end
+  end
+
+  Login --> SA
+  AuthGate --> SA
+  RoleFilter --> T1
+  Dashboard --> DB
+  Residents --> DB
+  QR --> DB
+  GIS --> DB
+  Incident --> DB
+  Hotspot --> DB
+  Disaster --> DB
+  Beneficiary --> DB
+  Analytics --> DB
+  Predictive --> DB
+  Reports --> DB
+  Users --> DB
+  AdminTools --> DB
+  Pub --> DB
+
+  Incident --> ST
+  Beneficiary --> ST
+  Pub --> ST
+  DB --> RLS
+  DB --> TR
+  DB --> ST
+  T1 --> DB
+  T2 --> DB
+  T3 --> DB
+  T4 --> DB
+  T5 --> DB
+  T6 --> DB
+  T7 --> DB
+  T8 --> DB
+
+  DB --> Backend[Shared backend services]
+  Backend --> Session{Continue session?}
+  Session -- Yes --> Dashboard
+  Session -- No --> Logout([User logs out])

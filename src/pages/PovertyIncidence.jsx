@@ -7,6 +7,7 @@
 //  income is below the ₱10,000/month poverty line.
 // ============================================================================
 
+import { useState } from 'react'
 import { Bar, Doughnut } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
 import { SectionCard, StatCard } from '../components/ui/index'
@@ -16,9 +17,27 @@ import { Download } from 'lucide-react'
 
 Chart.register(...registerables)
 const noLeg = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+const SITIO_COLORS = {
+  'Sitio Hunan': '#0D9E8C',
+  'Sitio Hagu': '#F5A623',
+  'Sitio Tuva': '#3B82F6',
+}
 
 export default function PovertyIncidence() {
   const { data: residents = [] } = useResidents()
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [selectedExportSections, setSelectedExportSections] = useState(['summary','poverty','income','households'])
+
+  const exportSections = [
+    { key: 'summary', label: 'Summary metrics' },
+    { key: 'poverty', label: 'Poverty rate by sitio' },
+    { key: 'income', label: 'Income classification' },
+    { key: 'households', label: 'Households below poverty line' },
+  ]
+
+  const toggleExportSection = key => {
+    setSelectedExportSections(prev => prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key])
+  }
 
   const total = residents.length
   const poorThreshold = 10000
@@ -87,28 +106,64 @@ export default function PovertyIncidence() {
     .slice(0, 10)
 
   const handleExportPDF = () => {
-    exportToPDF({
-      title: 'Poverty Incidence Report',
-      rows: [
-        ['Poverty Incidence (Family Income)', `${povertyRate}%`],
-        ['Poor Households (< ₱10,000)', String(poorHH)],
-        ['Average Family Income', `₱${avgFamilyIncome.toLocaleString()}`],
-        ['Most Affected Sitio', mostAffectedSitio + (mostAffectedRate ? ` (${mostAffectedRate}%)` : '')],
-        ['People in Poverty', String(peopleInPoverty)],
-        ['Registered Household Heads', String(hhHeads)],
-        ['Average Individual Income', `₱${avgIncome.toLocaleString()}`],
-        ...sitioLabels.map((p, i) => [`Poverty Rate — ${p}`, `${sitioPoverty[i]}%`]),
-        ...incomeBrackets.map(b => [`${b.label} (${b.sub})`, String(b.count)]),
-      ],
-    })
+    const rows = []
+
+    if (selectedExportSections.includes('summary')) {
+      rows.push(['Poverty Incidence (Family Income)', `${povertyRate}%`])
+      rows.push(['Poor Households (< ₱10,000)', String(poorHH)])
+      rows.push(['Average Family Income', `₱${avgFamilyIncome.toLocaleString()}`])
+      rows.push(['Most Affected Sitio', mostAffectedSitio + (mostAffectedRate ? ` (${mostAffectedRate}%)` : '')])
+      rows.push(['People in Poverty', String(peopleInPoverty)])
+      rows.push(['Registered Household Heads', String(hhHeads)])
+      rows.push(['Average Individual Income', `₱${avgIncome.toLocaleString()}`])
+    }
+
+    if (selectedExportSections.includes('poverty')) {
+      rows.push(...sitioLabels.map((p, i) => [`Poverty Rate — ${p}`, `${sitioPoverty[i]}%`]))
+    }
+
+    if (selectedExportSections.includes('income')) {
+      rows.push(...incomeBrackets.map(b => [`${b.label} (${b.sub})`, String(b.count)]))
+    }
+
+    if (selectedExportSections.includes('households')) {
+      rows.push(...poorResidents.map(r => [`Below Poverty Line — ${r.first_name} ${r.last_name}`, `${r.sitio} · ₱${(r.family_income || 0).toLocaleString()}`]))
+    }
+
+    if (rows.length > 0) {
+      exportToPDF({ title: 'Poverty Incidence Report', requireConfirmation: true, rows })
+      setShowExportMenu(false)
+    }
   }
 
   return (
     <div>
-      <div className="flex justify-end mb-3">
-        <button className="btn btn-ghost flex items-center gap-1.5 text-xs" onClick={handleExportPDF} disabled={total === 0}>
+      <div className="flex justify-end mb-3 relative">
+        <button className="btn btn-ghost flex items-center gap-1.5 text-xs" onClick={() => setShowExportMenu(prev => !prev)} disabled={total === 0}>
           <Download size={13} /> Export PDF
         </button>
+
+        {showExportMenu && (
+          <div className="absolute right-0 top-full mt-2 w-72 rounded-lg border border-gray-200 bg-white p-3 shadow-lg z-20">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-2">Choose sections</div>
+            <div className="space-y-2">
+              {exportSections.map(section => (
+                <label key={section.key} className="flex items-center gap-2 text-sm text-navy">
+                  <input
+                    type="checkbox"
+                    checked={selectedExportSections.includes(section.key)}
+                    onChange={() => toggleExportSection(section.key)}
+                  />
+                  <span>{section.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <button className="text-xs text-teal font-medium" onClick={() => setSelectedExportSections(exportSections.map(section => section.key))}>Select all</button>
+              <button className="btn btn-ghost text-[11px] px-3 py-1.5" onClick={handleExportPDF}>Export selected</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
@@ -123,7 +178,7 @@ export default function PovertyIncidence() {
           <div className="h-52">
             {total > 0 ? (
               <Bar
-                data={{ labels: sitioLabels, datasets: [{ data: sitioPoverty, backgroundColor: sitioPoverty.map(v => v > 20 ? '#EF4444' : v > 10 ? '#F5A623' : '#0D9E8C'), borderRadius: 6 }] }}
+                data={{ labels: sitioLabels, datasets: [{ data: sitioPoverty, backgroundColor: sitioLabels.map(label => SITIO_COLORS[label] || '#0D9E8C'), borderRadius: 6 }] }}
                 options={{ ...noLeg, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v+'%' } } } }}
               />
             ) : <Empty />}

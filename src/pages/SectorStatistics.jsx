@@ -7,6 +7,7 @@
 //  is_pwd, etc.), so the stats are simple filters over the residents list.
 // ============================================================================
 
+import { useState } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
 import { SectionCard, StatCard } from '../components/ui/index'
@@ -16,9 +17,29 @@ import { Download } from 'lucide-react'
 
 Chart.register(...registerables)
 const noLeg = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+const SITIO_COLORS = {
+  'Sitio Hunan': '#0D9E8C',
+  'Sitio Hagu': '#F5A623',
+  'Sitio Tuva': '#3B82F6',
+}
 
 export default function SectorStatistics() {
   const { data: residents = [] } = useResidents()
+  const [showExportMenu, setShowExportMenu] = useState(false)
+  const [selectedExportSections, setSelectedExportSections] = useState(['summary','seniors','pwd','osy','working','registry'])
+
+  const exportSections = [
+    { key: 'summary', label: 'Summary stats' },
+    { key: 'seniors', label: 'Senior citizens by age group' },
+    { key: 'pwd', label: 'PWD by disability type' },
+    { key: 'osy', label: 'OSY by sitio' },
+    { key: 'working', label: 'Working residents by sitio' },
+    { key: 'registry', label: 'Sector registry' },
+  ]
+
+  const toggleExportSection = key => {
+    setSelectedExportSections(prev => prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key])
+  }
 
   const seniors = residents.filter(r => r.is_senior_citizen)
   const soloParents = residents.filter(r => r.is_solo_parent)
@@ -53,26 +74,70 @@ export default function SectorStatistics() {
   ]
 
   const handleExportPDF = () => {
-    exportToPDF({
-      title: 'Vulnerable Sector Report',
-      rows: [
-        ['Senior Citizens', `${seniors.length} (${pct(seniors.length)})`],
-        ['Solo Parents', `${soloParents.length} (${pct(soloParents.length)})`],
-        ['Persons with Disability', `${pwds.length} (${pct(pwds.length)})`],
-        ['Out-of-School Youth', `${osys.length} (${pct(osys.length)})`],
-        ['Working Residents', `${working.length} (${pct(working.length)})`],
-        ['Seniors 60-69 / 70-79 / 80+', `${scByGroup[0]} / ${scByGroup[1]} / ${scByGroup[2]}`],
-        ...pwdTypes.map((t, i) => [`PWD — ${t}`, String(pwdByType[i])]),
-      ],
-    })
+    const rows = []
+
+    if (selectedExportSections.includes('summary')) {
+      rows.push(['Senior Citizens', `${seniors.length} (${pct(seniors.length)})`])
+      rows.push(['Solo Parents', `${soloParents.length} (${pct(soloParents.length)})`])
+      rows.push(['Persons with Disability', `${pwds.length} (${pct(pwds.length)})`])
+      rows.push(['Out-of-School Youth', `${osys.length} (${pct(osys.length)})`])
+      rows.push(['Working Residents', `${working.length} (${pct(working.length)})`])
+    }
+
+    if (selectedExportSections.includes('seniors')) {
+      rows.push(['Seniors 60-69 / 70-79 / 80+', `${scByGroup[0]} / ${scByGroup[1]} / ${scByGroup[2]}`])
+    }
+
+    if (selectedExportSections.includes('pwd')) {
+      rows.push(...pwdTypes.map((t, i) => [`PWD — ${t}`, String(pwdByType[i])]))
+    }
+
+    if (selectedExportSections.includes('osy')) {
+      rows.push(...sitioLabels.map((p, i) => [`OSY — ${p}`, String(osyBySitio[i])]))
+    }
+
+    if (selectedExportSections.includes('working')) {
+      rows.push(...sitioLabels.map((p, i) => [`Working Residents — ${p}`, String(workingBySitio[i])]))
+    }
+
+    if (selectedExportSections.includes('registry')) {
+      rows.push(...sectorList.map(r => [`${r.cat} — ${r.first_name} ${r.last_name}`, `${r.sitio} · Age ${getAge(r.date_of_birth)}`]))
+    }
+
+    if (rows.length > 0) {
+      exportToPDF({ title: 'Vulnerable Sector Report', requireConfirmation: true, rows })
+      setShowExportMenu(false)
+    }
   }
 
   return (
     <div>
-      <div className="flex justify-end mb-3">
-        <button className="btn btn-ghost flex items-center gap-1.5 text-xs" onClick={handleExportPDF} disabled={residents.length === 0}>
+      <div className="flex justify-end mb-3 relative">
+        <button className="btn btn-ghost flex items-center gap-1.5 text-xs" onClick={() => setShowExportMenu(prev => !prev)} disabled={residents.length === 0}>
           <Download size={13} /> Export PDF
         </button>
+
+        {showExportMenu && (
+          <div className="absolute right-0 top-full mt-2 w-72 rounded-lg border border-gray-200 bg-white p-3 shadow-lg z-20">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 mb-2">Choose sections</div>
+            <div className="space-y-2">
+              {exportSections.map(section => (
+                <label key={section.key} className="flex items-center gap-2 text-sm text-navy">
+                  <input
+                    type="checkbox"
+                    checked={selectedExportSections.includes(section.key)}
+                    onChange={() => toggleExportSection(section.key)}
+                  />
+                  <span>{section.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <button className="text-xs text-teal font-medium" onClick={() => setSelectedExportSections(exportSections.map(section => section.key))}>Select all</button>
+              <button className="btn btn-ghost text-[11px] px-3 py-1.5" onClick={handleExportPDF}>Export selected</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
@@ -114,7 +179,7 @@ export default function SectorStatistics() {
           <div className="h-52">
             {osys.length > 0 ? (
               <Bar
-                data={{ labels: sitioLabels, datasets: [{ data: osyBySitio, backgroundColor: '#EF4444', borderRadius: 6 }] }}
+                data={{ labels: sitioLabels, datasets: [{ data: osyBySitio, backgroundColor: sitioLabels.map(label => SITIO_COLORS[label] || '#EF4444'), borderRadius: 6 }] }}
                 options={{ ...noLeg, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }}
               />
             ) : <Empty message="No out-of-school youth recorded" />}
@@ -125,7 +190,7 @@ export default function SectorStatistics() {
           <div className="h-52">
             {working.length > 0 ? (
               <Bar
-                data={{ labels: sitioLabels, datasets: [{ data: workingBySitio, backgroundColor: '#0D9E8C', borderRadius: 6 }] }}
+                data={{ labels: sitioLabels, datasets: [{ data: workingBySitio, backgroundColor: sitioLabels.map(label => SITIO_COLORS[label] || '#0D9E8C'), borderRadius: 6 }] }}
                 options={{ ...noLeg, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }}
               />
             ) : <Empty message="No working residents recorded" />}

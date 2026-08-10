@@ -10,6 +10,7 @@
 // ============================================================================
 
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { supabase } from '../lib/supabase'
@@ -63,10 +64,14 @@ async function generateHouseholdNo() {
 export default function Residents() {
   const { profile } = useAuthStore()
   const canWrite = canEdit(profile?.role)
+  const [searchParams] = useSearchParams()
+  const initialSector = ['Senior','PWD','Solo Parent','OSY','HH Head'].includes(searchParams.get('sector'))
+    ? searchParams.get('sector')
+    : 'All'
 
   const [search, setSearch] = useState('')
   const [sitioFilter, setSitioFilter]   = useState('All')
-  const [sectorFilter, setSectorFilter] = useState('All')
+  const [sectorFilter, setSectorFilter] = useState(initialSector)
   const [sortKey, setSortKey] = useState('resident_no')
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)   // residents table pagination (1-indexed)

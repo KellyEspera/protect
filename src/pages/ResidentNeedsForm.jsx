@@ -4,7 +4,7 @@ import NeedsForm from '../components/NeedsForm'
 // in a full-screen gradient background.
 export default function ResidentNeedsForm() {
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0D9E8C 0%, #1A3A5C 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+    <div className="public-announcements-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '28px 16px' }}>
       <NeedsForm />
     </div>
   )

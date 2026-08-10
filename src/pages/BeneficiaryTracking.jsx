@@ -9,7 +9,8 @@
 //  import from XLSX. Cards show active beneficiaries, total distributed, etc.
 // ============================================================================
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as XLSX from 'xlsx'
 import { Bar } from 'react-chartjs-2'
@@ -28,11 +29,24 @@ const emptyEnroll = { resident_id: '', program_id: '', status: 'Active', enrolle
 export default function BeneficiaryTracking() {
   const { profile } = useAuthStore()
   const canWrite = canEdit(profile?.role)
+  const [searchParams, setSearchParams] = useSearchParams()
   const qc = useQueryClient()
   const fileInputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const [uploadStats, setUploadStats] = useState(null)
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const status = searchParams.get('status')
+    return ['Active', 'Pending', 'Completed', 'Suspended'].includes(status) ? status : 'All'
+  })
   const [enrollOpen, setEnrollOpen] = useState(false)
+
+  useEffect(() => {
+    if (statusFilter === 'All') {
+      setSearchParams({})
+    } else {
+      setSearchParams({ status: statusFilter })
+    }
+  }, [statusFilter, setSearchParams])
   const [enrollForm, setEnrollForm] = useState(emptyEnroll)
   const [residentSearch, setResidentSearch] = useState('')
   const [residentFocused, setResidentFocused] = useState(false)  // show the full list on focus (browse without typing)
@@ -220,6 +234,10 @@ export default function BeneficiaryTracking() {
   const pending = beneficiaries.filter(b => b.status === 'Pending').length
   const totalReleased = beneficiaries.reduce((s, b) => s + (b.total_released || 0), 0)
 
+  const filteredBeneficiaries = beneficiaries.filter(b =>
+    statusFilter === 'All' || b.status === statusFilter
+  )
+
   const programCounts = programs.map(p => ({
     name: p.name,
     count: beneficiaries.filter(b => b.program_id === p.id).length,
@@ -280,10 +298,21 @@ export default function BeneficiaryTracking() {
       <SectionCard
         title="Beneficiary Registry"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <button className="btn btn-ghost text-xs" onClick={downloadTemplate} title="Download CSV template">
               ⬇️ Template
             </button>
+            <select
+              className="form-select w-auto"
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+            >
+              <option value="All">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Pending">Pending</option>
+              <option value="Completed">Completed</option>
+              <option value="Suspended">Suspended</option>
+            </select>
             {canWrite && (
               <>
                 <button className="btn btn-ghost text-xs" onClick={() => setProgramOpen(true)}>
@@ -304,16 +333,17 @@ export default function BeneficiaryTracking() {
         {isLoading ? (
           <p className="text-center text-gray-400 py-6 text-sm">Loading...</p>
         ) : beneficiaries.length > 0 ? (
-          <div className="overflow-x-auto"><table className="data-table">
-            <thead>
-              <tr>
-                <th>Name</th><th>Resident No.</th><th>Program</th>
-                <th>Sitio</th><th>Last Release</th><th>Amount</th><th>Status</th>
-                {canWrite && <th>Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {beneficiaries.map(b => (
+          filteredBeneficiaries.length > 0 ? (
+            <div className="overflow-x-auto"><table className="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th><th>Resident No.</th><th>Program</th>
+                  <th>Sitio</th><th>Last Release</th><th>Amount</th><th>Status</th>
+                  {canWrite && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBeneficiaries.map(b => (
                 <tr key={b.id}>
                   <td><strong>{b.residents?.first_name} {b.residents?.last_name}</strong></td>
                   <td><span className="font-mono text-[11px] text-teal">{b.residents?.resident_no}</span></td>
@@ -347,6 +377,11 @@ export default function BeneficiaryTracking() {
               ))}
             </tbody>
           </table></div>
+          ) : (
+            <p className="text-center text-gray-400 text-sm py-6">
+              No {statusFilter !== 'All' ? `${statusFilter.toLowerCase()} ` : ''}beneficiaries found.
+            </p>
+          )
         ) : (
           <p className="text-center text-gray-400 text-sm py-6">No beneficiaries enrolled yet.</p>
         )}

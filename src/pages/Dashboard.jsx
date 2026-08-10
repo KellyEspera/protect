@@ -8,6 +8,7 @@
 // ============================================================================
 
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { Bar, Line, Doughnut } from 'react-chartjs-2'
 import { Chart, registerables } from 'chart.js'
 import { supabase } from '../lib/supabase'
@@ -21,6 +22,8 @@ const chartDefaults = { responsive: true, maintainAspectRatio: false, plugins: {
 const TEAL = '#0D9E8C'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
+
   // Live resident stats
   const { data: residents = [] } = useQuery({
     queryKey: ['residents-dashboard'],
@@ -82,6 +85,7 @@ export default function Dashboard() {
   const adults   = residents.filter(r => { const a = getAge(r.date_of_birth); return a >= 31 && a <= 59 }).length
 
   // Sitio breakdown
+  const SITIO_COLORS = ['#0D9E8C', '#F5A623', '#3B82F6']
   const sitioCounts = ['Sitio Hunan','Sitio Hagu','Sitio Tuva'].map(p =>
     residents.filter(r => r.sitio === p).length
   )
@@ -91,6 +95,7 @@ export default function Dashboard() {
   const handleExportPDF = () => {
     exportToPDF({
       title: 'Community Dashboard Summary',
+      requireConfirmation: true,
       rows: [
         ['Total Residents', String(total)],
         ['Male', `${males} (${total ? ((males/total)*100).toFixed(1) : 0}%)`],
@@ -119,11 +124,12 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-        <StatCard icon="👥" value={total.toLocaleString()} label="Total Residents" color="teal" />
-        <StatCard icon="👴" value={seniors} label="Senior Citizens" color="blue" />
-        <StatCard icon="♿" value={pwds} label="Persons with Disability" color="gold" />
-        <StatCard icon="🎁" value={beneficiaryCount} label="Active Beneficiaries" color="red" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
+        <StatCard icon="👥" value={total.toLocaleString()} label="Total Residents" color="teal" onClick={() => navigate('/residents')} />
+        <StatCard icon="👴" value={seniors} label="Senior Citizens" change={total ? `${((seniors / total) * 100).toFixed(1)}% of population` : ''} color="blue" onClick={() => navigate('/residents?sector=Senior')} />
+        <StatCard icon="♿" value={pwds} label="Persons with Disability" change={total ? `${((pwds / total) * 100).toFixed(1)}% of population` : ''} color="gold" onClick={() => navigate('/residents?sector=PWD')} />
+        <StatCard icon="👩‍👧" value={soloParents} label="Solo Parents" change={total ? `${((soloParents / total) * 100).toFixed(1)}% of population` : ''} color="teal" onClick={() => navigate('/residents?sector=Solo%20Parent')} />
+        <StatCard icon="🎁" value={beneficiaryCount} label="Active Beneficiaries" color="red" onClick={() => navigate('/beneficiary?status=Active')} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -164,7 +170,7 @@ export default function Dashboard() {
               <Bar
                 data={{
                   labels: ['Sitio Hunan','Sitio Hagu','Sitio Tuva'],
-                  datasets: [{ data: sitioCounts, backgroundColor: TEAL, borderRadius: 6 }],
+                  datasets: [{ data: sitioCounts, backgroundColor: SITIO_COLORS, borderRadius: 6 }],
                 }}
                 options={{ ...chartDefaults, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' } } } }}
               />
@@ -214,13 +220,6 @@ export default function Dashboard() {
           <p className="text-center text-gray-400 text-sm py-6">No incidents recorded yet.</p>
         )}
       </SectionCard>
-
-      {/* Sector summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon="👴" value={seniors} label="Senior Citizens" change={total ? `${((seniors/total)*100).toFixed(1)}% of population` : ''} color="blue" />
-        <StatCard icon="♿" value={pwds} label="Persons with Disability" change={total ? `${((pwds/total)*100).toFixed(1)}% of population` : ''} color="gold" />
-        <StatCard icon="👩‍👧" value={soloParents} label="Solo Parents" change={total ? `${((soloParents/total)*100).toFixed(1)}% of population` : ''} color="teal" />
-      </div>
     </div>
   )
 }

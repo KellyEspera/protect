@@ -14,7 +14,11 @@ import 'jspdf-autotable'           // plugin that adds doc.autoTable() for table
 import * as XLSX from 'xlsx'        // SheetJS — builds .xlsx files in the browser
 
 // ── PDF Export ─────────────────────────────────────────────────
-export function exportToPDF({ title, subtitle = 'Barangay San Joaquin · CY 2026', rows }) {
+export function exportToPDF({ title, subtitle = 'Barangay San Joaquin · CY 2026', rows, requireConfirmation = false, securityLabel = 'CONFIDENTIAL · INTERNAL USE ONLY' }) {
+  if (requireConfirmation && typeof window !== 'undefined' && !window.confirm('This export contains sensitive barangay data. Continue?')) {
+    return
+  }
+
   const doc = new jsPDF()
 
   // Header
@@ -49,7 +53,7 @@ export function exportToPDF({ title, subtitle = 'Barangay San Joaquin · CY 2026
     margin: { left: 14, right: 14 },
   })
 
-  // Footer
+  // Footer and confidentiality watermark
   const pageCount = doc.internal.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
@@ -61,6 +65,14 @@ export function exportToPDF({ title, subtitle = 'Barangay San Joaquin · CY 2026
       doc.internal.pageSize.height - 10,
       { align: 'center' }
     )
+
+    doc.setFontSize(28)
+    doc.setFont(undefined, 'bold')
+    doc.setTextColor(220, 220, 220)
+    doc.text(securityLabel, doc.internal.pageSize.width / 2, doc.internal.pageSize.height / 2, {
+      align: 'center',
+      angle: 45,
+    })
   }
 
   doc.save(`${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`)

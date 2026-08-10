@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { toast } from 'react-toastify'
 import { sanitizeSurveyForm } from '../lib/sanitize'
+import { Camera, Check, ChevronDown, CircleCheck, ClipboardList, MapPin, Paperclip, Send, X } from 'lucide-react'
 
 // Reusable Community Needs form card.
 // Used by the standalone /resident-needs page AND embedded in the public
@@ -27,13 +28,13 @@ export default function NeedsForm({ onClose }) {
   const clearPhoto = () => { setPhotoFile(null); setPhotoPreview(null) }
 
   const needOptions = [
-    { need: 'Health Services', icon: '🏥' },
-    { need: 'Road / Infrastructure', icon: '🛣️' },
-    { need: 'Educational Support', icon: '🎓' },
-    { need: 'Livelihood Programs', icon: '💼' },
-    { need: 'Water Supply', icon: '💧' },
-    { need: 'Peace & Order', icon: '🚔' },
-    { need: 'Others', icon: '📌' },
+    { need: 'Health Services', icon: 'Health' },
+    { need: 'Road / Infrastructure', icon: 'Roads' },
+    { need: 'Educational Support', icon: 'Education' },
+    { need: 'Livelihood Programs', icon: 'Livelihood' },
+    { need: 'Water Supply', icon: 'Water' },
+    { need: 'Peace & Order', icon: 'Safety' },
+    { need: 'Others', icon: 'Other' },
   ]
 
   const submitMutation = useMutation({
@@ -69,143 +70,82 @@ export default function NeedsForm({ onClose }) {
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 500, background: '#fff', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
-      {/* Header */}
-      <div style={{ position: 'relative', background: 'linear-gradient(135deg, #0D9E8C 0%, #1A3A5C 100%)', color: '#fff', padding: '32px 28px', textAlign: 'center' }}>
-        {onClose && (
-          <button
-            onClick={onClose}
-            style={{ position: 'absolute', top: 14, right: 16, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}
-            aria-label="Close"
-          >
-            &times;
-          </button>
-        )}
-        <div style={{ fontSize: 40, marginBottom: 12 }}>🛡️</div>
-        <h1 style={{ fontSize: 24, fontWeight: 600, margin: 0, marginBottom: 8 }}>Community Needs</h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', margin: 0, marginBottom: 4 }}>Barangay San Joaquin</p>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: 0 }}>Share your priority needs with us</p>
+    <div className="needs-form-card">
+      <div className="needs-form-header">
+        {onClose && <button className="needs-form-close" onClick={onClose} aria-label="Close"><X size={18} /></button>}
+        <div className="needs-form-icon"><ClipboardList size={22} /></div>
+        <p className="needs-form-kicker">Barangay San Joaquin</p>
+        <h1>Share a community need</h1>
+        <p>Tell us what would make the biggest difference in your area.</p>
       </div>
 
-      {/* Content */}
-      <div style={{ padding: '32px 28px' }}>
+      <div className="needs-form-content">
         {submitted ? (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, color: '#1A3A5C', margin: 0, marginBottom: 8 }}>Thank You!</h2>
-            <p style={{ fontSize: 14, color: '#666', margin: 0, marginBottom: 12 }}>Your response has been recorded.</p>
-            <p style={{ fontSize: 12, color: '#999', margin: 0 }}>This form will reset in a moment...</p>
+          <div className="needs-form-success" role="status">
+            <div className="needs-form-success-icon"><CircleCheck size={30} /></div>
+            <h2>Thank you for speaking up.</h2>
+            <p>Your response has been recorded and will help guide barangay priorities.</p>
+            <small>This form will reset in a moment.</small>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Sitio Selection */}
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1A3A5C', marginBottom: 8 }}>📍 Your Sitio</label>
-              <select
-                value={form.sitio}
-                onChange={(e) => setForm({ ...form, sitio: e.target.value })}
-                style={{
-                  width: '100%', padding: '12px 14px', fontSize: 14,
-                  border: '1px solid #E2E8F0', borderRadius: '6px', fontFamily: 'inherit',
-                  cursor: 'pointer', transition: 'border-color 0.15s',
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#0D9E8C'}
-                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
-              >
-                <option value="Sitio Hunan">Sitio Hunan</option>
-                <option value="Sitio Hagu">Sitio Hagu</option>
-                <option value="Sitio Tuva">Sitio Tuva</option>
-              </select>
-            </div>
-
-            {/* Priority Need Selection */}
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1A3A5C', marginBottom: 8 }}>⭐ What's your top priority need?</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {needOptions.map((option) => (
-                  <button
-                    key={option.need}
-                    type="button"
-                    onClick={() => setForm({ ...form, priority_need: option.need })}
-                    style={{
-                      padding: '12px 14px',
-                      border: form.priority_need === option.need ? '2px solid #0D9E8C' : '1px solid #E2E8F0',
-                      background: form.priority_need === option.need ? '#0D9E8C15' : '#fff',
-                      borderRadius: '6px', cursor: 'pointer', fontSize: 13, fontWeight: 500,
-                      color: '#1A3A5C', transition: 'all 0.15s', textAlign: 'center',
-                    }}
-                    onMouseEnter={(e) => { if (form.priority_need !== option.need) e.target.style.borderColor = '#0D9E8C' }}
-                    onMouseLeave={(e) => { if (form.priority_need !== option.need) e.target.style.borderColor = '#E2E8F0' }}
-                  >
-                    <div style={{ fontSize: 18, marginBottom: 4 }}>{option.icon}</div>
-                    <div>{option.need}</div>
-                  </button>
-                ))}
+          <form onSubmit={handleSubmit} className="needs-form-fields">
+            <div className="needs-form-field">
+              <label htmlFor="needs-sitio"><MapPin size={15} /> Your sitio</label>
+              <div className="needs-form-select-wrap">
+                <select id="needs-sitio" value={form.sitio} onChange={(e) => setForm({ ...form, sitio: e.target.value })}>
+                  <option value="Sitio Hunan">Sitio Hunan</option>
+                  <option value="Sitio Hagu">Sitio Hagu</option>
+                  <option value="Sitio Tuva">Sitio Tuva</option>
+                </select>
+                <ChevronDown size={16} aria-hidden="true" />
               </div>
             </div>
 
-            {/* Comments */}
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1A3A5C', marginBottom: 8 }}>💬 Additional Comments (Optional)</label>
-              <textarea
-                value={form.comments}
-                onChange={(e) => setForm({ ...form, comments: e.target.value })}
-                placeholder="Tell us more about your community needs..."
-                style={{
-                  width: '100%', padding: '12px 14px', fontSize: 14,
-                  border: '1px solid #E2E8F0', borderRadius: '6px', fontFamily: 'inherit',
-                  resize: 'vertical', minHeight: '80px', boxSizing: 'border-box', transition: 'border-color 0.15s',
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#0D9E8C'}
-                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
-              />
+            <fieldset className="needs-form-field">
+              <legend>What is your top priority need?</legend>
+              <div className="needs-form-options">
+                {needOptions.map(option => {
+                  const selected = form.priority_need === option.need
+                  return (
+                    <button key={option.need} type="button" className={`needs-form-option${selected ? ' selected' : ''}`} onClick={() => setForm({ ...form, priority_need: option.need })} aria-pressed={selected}>
+                      <span>{option.icon}</span>
+                      {option.need}
+                      {selected && <Check size={14} aria-hidden="true" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </fieldset>
+
+            <div className="needs-form-field">
+              <label htmlFor="needs-comments">Additional comments <span>(optional)</span></label>
+              <textarea id="needs-comments" value={form.comments} onChange={(e) => setForm({ ...form, comments: e.target.value })} placeholder="Tell us more about this need..." />
             </div>
 
-            {/* Photo (optional) */}
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1A3A5C', marginBottom: 8 }}>📷 Add a Photo (Optional)</label>
-              <p style={{ fontSize: 12, color: '#888', margin: '0 0 8px' }}>e.g. a broken pipe, damaged road, or anything that shows the need.</p>
+            <div className="needs-form-field">
+              <label><Camera size={15} /> Add a photo <span>(optional)</span></label>
+              <p className="needs-form-help">A photo can help us understand the situation. Maximum 5MB.</p>
               {photoPreview ? (
-                <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <img src={photoPreview} alt="preview" style={{ maxWidth: '100%', maxHeight: 180, borderRadius: 6, border: '1px solid #E2E8F0' }} />
-                  <button
-                    type="button"
-                    onClick={clearPhoto}
-                    style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(184,50,50,0.92)', color: '#fff', border: 'none', width: 24, height: 24, borderRadius: '50%', cursor: 'pointer', fontSize: 14, lineHeight: 1 }}
-                    aria-label="Remove photo"
-                  >&times;</button>
+                <div className="needs-form-preview">
+                  <img src={photoPreview} alt="Selected need" />
+                  <button type="button" onClick={clearPhoto} aria-label="Remove photo"><X size={15} /></button>
                 </div>
               ) : (
-                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px', border: '1.5px dashed #CBD5E0', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#5A5A52' }}>
-                  📎 Choose a photo (max 5MB)
-                  <input type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+                <label className="needs-form-upload">
+                  <Paperclip size={16} /> Choose a photo
+                  <input type="file" accept="image/*" onChange={handlePhoto} />
                 </label>
               )}
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={submitMutation.isPending}
-              style={{
-                padding: '14px 20px', background: '#0D9E8C', color: '#fff', border: 'none',
-                borderRadius: '6px', fontSize: 14, fontWeight: 600,
-                cursor: submitMutation.isPending ? 'not-allowed' : 'pointer',
-                opacity: submitMutation.isPending ? 0.6 : 1, transition: 'all 0.15s',
-              }}
-              onMouseEnter={(e) => { if (!submitMutation.isPending) e.target.style.background = '#0a7a6a' }}
-              onMouseLeave={(e) => { e.target.style.background = '#0D9E8C' }}
-            >
-              {submitMutation.isPending ? '⏳ Submitting...' : '✓ Submit My Needs'}
+            <button className="needs-form-submit" type="submit" disabled={submitMutation.isPending}>
+              <Send size={16} /> {submitMutation.isPending ? 'Submitting...' : 'Submit my needs'}
             </button>
           </form>
         )}
       </div>
 
-      {/* Footer */}
-      <div style={{ background: '#F5F8FA', borderTop: '1px solid #E2E8F0', padding: '16px 28px', textAlign: 'center' }}>
-        <p style={{ fontSize: 11, color: '#999', margin: 0 }}>Your feedback helps us serve you better. Thank you!</p>
-      </div>
+      <div className="needs-form-footer">Your feedback helps us serve the community better.</div>
     </div>
   )
 }

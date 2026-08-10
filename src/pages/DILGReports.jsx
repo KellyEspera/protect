@@ -178,7 +178,7 @@ export default function DILGReports() {
             <div className="flex gap-2">
               <button
                 className="btn btn-ghost text-xs"
-                onClick={() => exportToPDF({ title: activeReport.title, rows: previewData[preview] || [] })}
+                onClick={() => exportToPDF({ title: activeReport.title, requireConfirmation: true, rows: previewData[preview] || [] })}
               >
                 📄 Export PDF
               </button>

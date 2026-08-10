@@ -9,7 +9,7 @@
 // ============================================================================
 
 // StatCard — the colored summary number cards at the top of most pages.
-export function StatCard({ icon, value, label, change, changeType = 'up', color = 'teal' }) {
+export function StatCard({ icon, value, label, change, changeType = 'up', color = 'teal', onClick }) {
   const iconColors = {
     navy:   'bg-blue-50 text-[#1A3A5C]',
     teal:   'bg-teal-light text-teal',
@@ -19,7 +19,7 @@ export function StatCard({ icon, value, label, change, changeType = 'up', color 
     purple: 'bg-purple-50 text-purple-700',
   }
   return (
-    <div className="stat-card">
+    <div className={`stat-card ${onClick ? 'cursor-pointer hover:border-teal/70 hover:shadow-sm transition' : ''}`} onClick={onClick}>
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-base mb-3 ${iconColors[color]}`}>
         {icon}
       </div>

@@ -2,34 +2,58 @@ flowchart TD
     Start([Start]) --> Open[User opens PROTECT]
     Open --> Access{Public link or staff login?}
 
-    %% Public (no login)
-    Access -- Public --> Pub[Public Announcements / Needs portal] --> J((J))
+    %% Public access
+    Access -- Public --> Public[Public Announcements / Needs portal]
+    Public --> PublicData[(Announcements + Needs submissions)]
 
-    %% Staff login with rate limiting
-    Access -- Staff login --> Fail{5+ failed attempts?}
-    Fail -- Yes --> Lock[Locked 15 mins]
-    Fail -- No --> Auth{Supabase Auth valid?}
-    Auth -- Invalid --> Fail
-    Auth -- Yes --> Dash[Community Dashboard]
+    %% Staff access
+    Access -- Staff login --> AuthCheck{Supabase Auth valid?}
+    AuthCheck -- No --> Login[Login page]
+    AuthCheck -- Yes --> Profile[Fetch user profile + role]
+    Profile --> RoleCheck{Role authorized for page?}
+    RoleCheck -- No --> Restricted[Access Restricted]
+    RoleCheck -- Yes --> Dashboard[Community Dashboard]
 
-    %% Module selection (filtered by role) -> off-page connectors
-    Dash --> Sel{Select module from dashboard<br/>menu filtered by role}
-    Sel --> M1[Resident Profiling] --> A((A))
-    Sel --> M2[QR Verification] --> B((B))
-    Sel --> M3[GIS Household Map] --> C((C))
-    Sel --> M4[Disaster Vulnerability] --> D((D))
-    Sel --> M5[Crime & Incident] --> E((E))
-    Sel --> M6[Crime Hotspot Map] --> F((F))
-    Sel --> M7[Beneficiary Tracking] --> G((G))
-    Sel --> M8[Analytics Dashboards] --> H((H))
-    Sel --> M9[Predictive Growth] --> I((I))
-    Sel --> M10[Announcements & Needs] --> J
-    Sel --> M11[DILG Reports] --> K((K))
-    Sel --> M12[User Management] --> L((L))
-    Sel --> M13[System & Audit] --> M((M))
+    %% Main modules
+    Dashboard --> Choose{Select module}
+    Choose --> Residents[Resident Profiling]
+    Choose --> QR[QR Verification]
+    Choose --> Analytics[Population / Poverty / Sector Analytics]
+    Choose --> GIS[GIS Household Map]
+    Choose --> Crime[Crime & Incident]
+    Choose --> Hotspot[Crime Hotspot Map]
+    Choose --> Disaster[Disaster Vulnerability]
+    Choose --> Beneficiary[Beneficiary Tracking]
+    Choose --> Predictive[Predictive Growth]
+    Choose --> AnnouncementsAdmin[Announcements Admin]
+    Choose --> Reports[DILG Reports]
+    Choose --> Users[User Management]
+    Choose --> AdminTools[System & Audit]
 
-    %% Shared return connector from every sub-flowchart
-    R((R)) --> Backend[Supabase Backend — PostgreSQL · Row Level Security · Auth · Real-time]
-    Backend --> Cont{Continue session?}
-    Cont -- Yes --> Dash
-    Cont -- No --> Out([User logs out])
+    %% Data operations for each module
+    Residents --> DB[(Residents + Households)]
+    QR --> DB
+    Analytics --> DB
+    GIS --> DB
+    Crime --> IncidentData[(Incidents)]
+    Hotspot --> IncidentData
+    Disaster --> DisasterData[(Risk Zones + Survey Data)]
+    Beneficiary --> BenefitData[(Beneficiaries + Programs)]
+    Predictive --> DB
+    AnnouncementsAdmin --> AnnData[(Announcements)]
+    Reports --> DB
+    Users --> ProfileData[(Profiles + Roles)]
+    AdminTools --> AuditData[(Audit Logs + Backup/Restore)]
+
+    %% Shared backend
+    DB --> Backend[Supabase Backend<br/>PostgreSQL · Auth · Storage · RLS]
+    IncidentData --> Backend
+    DisasterData --> Backend
+    BenefitData --> Backend
+    AnnData --> Backend
+    ProfileData --> Backend
+    AuditData --> Backend
+
+    Backend --> Session{Continue session?}
+    Session -- Yes --> Dashboard
+    Session -- No --> Logout([User logs out])

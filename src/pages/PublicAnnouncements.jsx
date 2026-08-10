@@ -1,45 +1,46 @@
-// ============================================================================
-//  PublicAnnouncements.jsx  —  the public bulletin board at /announcements
-// ----------------------------------------------------------------------------
-//  A PUBLIC page (no login) where residents read active announcements, styled
-//  as a corkboard of pinned notices, and can open the Community Needs form to
-//  submit their priority needs. Only reads announcements where is_active = true.
-// ============================================================================
-
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { CalendarDays, ClipboardList, Info, Megaphone, ArrowUpRight, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import NeedsForm from '../components/NeedsForm'
 
-const CAT_COLOR = {
-  General:  { bg: '#F0F7FF', color: '#3B82F6' },
-  Health:   { bg: '#E8F8F4', color: '#0D9E8C' },
-  Safety:   { bg: '#FFF0F0', color: '#B83232' },
-  Event:    { bg: '#FFF9EB', color: '#B8860B' },
-  Disaster: { bg: '#FFF0E8', color: '#C2522A' },
-  Others:   { bg: '#F5F2EC', color: '#5A5A52' },
+const CATEGORY_STYLES = {
+  General: 'public-announcement-category general',
+  Health: 'public-announcement-category health',
+  Safety: 'public-announcement-category safety',
+  Event: 'public-announcement-category event',
+  Disaster: 'public-announcement-category disaster',
+  Others: 'public-announcement-category others',
 }
 
-// Pushpin colours cycle per note, slight tilt for a real bulletin-board feel
-const PIN_COLORS = ['#D14545', '#3B82F6', '#0D9E8C', '#C9A84C', '#A855F7', '#EC4899']
-const TILTS = [-2.5, 1.5, -1, 2, -2, 1.2, -1.6]
-// Paper note tints
-const PAPER = ['#FFFEF7', '#FFFDF0', '#FEFCF5']
+const formatDate = (value, options = { month: 'short', day: 'numeric', year: 'numeric' }) =>
+  new Date(value).toLocaleDateString('en-PH', options)
 
-function Pin({ color }) {
+function Detail({ icon: Icon, label, children }) {
   return (
-    <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', zIndex: 3 }}>
-      <div style={{
-        width: 22, height: 22, borderRadius: '50%',
-        background: `radial-gradient(circle at 35% 30%, #fff 0%, ${color} 45%, ${color} 100%)`,
-        boxShadow: '0 3px 5px rgba(0,0,0,0.35)', border: '1px solid rgba(0,0,0,0.15)',
-      }} />
+    <div className="public-announcement-detail">
+      <Icon size={15} strokeWidth={2} aria-hidden="true" />
+      <div>
+        <span>{label}</span>
+        <p>{children}</p>
+      </div>
+    </div>
+  )
+}
+
+function AnnouncementImage({ item, featured = false }) {
+  if (!item.image_url) return null
+
+  return (
+    <div className={featured ? 'public-announcement-image featured' : 'public-announcement-image'}>
+      <img src={item.image_url} alt="" />
     </div>
   )
 }
 
 export default function PublicAnnouncements() {
   const [showNeedsForm, setShowNeedsForm] = useState(false)
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ['public-announcements'],
@@ -53,132 +54,147 @@ export default function PublicAnnouncements() {
     },
   })
 
+  const announcements = items
+
   return (
-    <div style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif', background: '#6B4E2E' }}>
-      {/* Header */}
-      <div style={{ background: '#1A3A5C', borderBottom: '4px solid #C9A84C', padding: '24px 0' }}>
-        <div style={{ maxWidth: 980, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 44, height: 44, background: '#C9A84C', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📢</div>
-            <div>
-              <h1 style={{ margin: 0, color: '#fff', fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700 }}>
-                Barangay Bulletin Board
-              </h1>
-              <p style={{ margin: '2px 0 0', color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>
-                Barangay San Joaquin · Basco, Batanes
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowNeedsForm(true)}
-            style={{ background: '#C9A84C', color: '#1A3A5C', border: 'none', borderRadius: 8, padding: '11px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', gap: 7, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
-          >
-            📝 Submit Your Needs
+    <div className="public-announcements-page">
+      <header className="public-announcements-header">
+        <div className="public-announcements-header-inner">
+          <a href="/" className="public-announcements-brand" aria-label="Return to PROTECT home">
+            <span className="public-announcements-brand-mark"><Megaphone size={19} aria-hidden="true" /></span>
+            <span>
+              <strong>Barangay San Joaquin</strong>
+              <small>Community bulletin</small>
+            </span>
+          </a>
+          <button className="public-announcements-needs-button" onClick={() => setShowNeedsForm(true)}>
+            <ClipboardList size={16} aria-hidden="true" />
+            Submit your needs
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Corkboard */}
-      <div style={{
-        // wooden frame around the cork
-        background: 'linear-gradient(145deg, #8a5a2b, #6b431f)',
-        padding: 'clamp(14px, 3vw, 28px)',
-      }}>
-        <div style={{
-          // cork surface — tan with a speckled texture
-          minHeight: 500,
-          borderRadius: 6,
-          padding: 'clamp(20px, 4vw, 40px) clamp(16px, 3vw, 32px)',
-          background: '#C9A66B',
-          backgroundImage: `
-            radial-gradient(circle at 50% 50%, rgba(120,80,40,0.35) 1px, transparent 1.4px),
-            radial-gradient(circle at 50% 50%, rgba(90,60,30,0.25) 1px, transparent 1.4px)`,
-          backgroundSize: '12px 12px, 19px 19px',
-          backgroundPosition: '0 0, 7px 9px',
-          boxShadow: 'inset 0 0 60px rgba(80,50,20,0.45)',
-        }}>
-          {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: '#5A3E22', fontSize: 14, fontWeight: 600 }}>
-              Loading announcements...
-            </div>
-          ) : items.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
-              <p style={{ color: '#5A3E22', fontSize: 15, fontWeight: 600 }}>No announcements posted yet.</p>
-              <p style={{ color: '#7A5A38', fontSize: 12 }}>Check back soon for updates from Barangay San Joaquin.</p>
-            </div>
-          ) : (
-            // Masonry-style columns so notes pin at varied heights
-            <div style={{ columnWidth: 300, columnGap: 'clamp(18px, 3vw, 30px)', maxWidth: 1100, margin: '0 auto' }}>
-              {items.map((item, i) => {
-                const cat = CAT_COLOR[item.category] || CAT_COLOR.Others
-                const pin = PIN_COLORS[i % PIN_COLORS.length]
-                const tilt = TILTS[i % TILTS.length]
-                const paper = PAPER[i % PAPER.length]
-                return (
-                  <div
+      <main className="public-announcements-main">
+        <section className="public-announcements-intro">
+          <div>
+            <p className="public-announcements-eyebrow">Stay informed</p>
+            <h1>Community announcements</h1>
+            <p className="public-announcements-intro-copy">
+              Official news, public advisories, and upcoming activities from your barangay.
+            </p>
+          </div>
+          <div className="public-announcements-status">
+            <span className="public-announcements-status-dot" />
+            <span>{items.length} {items.length === 1 ? 'active notice' : 'active notices'}</span>
+          </div>
+        </section>
+
+        {isLoading ? (
+          <div className="public-announcements-empty" role="status">Loading announcements...</div>
+        ) : announcements.length === 0 ? (
+          <div className="public-announcements-empty">
+            <Megaphone size={26} aria-hidden="true" />
+            <strong>No announcements posted yet.</strong>
+            <span>Check back soon for updates from Barangay San Joaquin.</span>
+          </div>
+        ) : (
+          <>
+            <section className="public-announcement-archive" aria-labelledby="archive-heading">
+              <div className="public-announcement-section-heading">
+                <div>
+                  <p className="public-announcements-eyebrow">Latest updates</p>
+                  <h2 id="archive-heading">Announcements</h2>
+                </div>
+                <span>Latest first</span>
+              </div>
+
+              <article className="public-announcement-featured" role="article" onClick={() => setSelectedAnnouncement(announcements[0])}>
+                <div className="public-announcement-featured-content">
+                  <div className="public-announcement-meta-row">
+                    <span className={CATEGORY_STYLES[announcements[0].category] || CATEGORY_STYLES.Others}>{announcements[0].category}</span>
+                    <span className="public-announcement-date"><CalendarDays size={14} aria-hidden="true" /> {formatDate(announcements[0].created_at)}</span>
+                  </div>
+                  <h2>{announcements[0].title}</h2>
+                  <p className="public-announcement-body">{announcements[0].body}</p>
+                  <div className="public-announcement-featured-footer">
+                    <span>Read the full announcement</span>
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                  </div>
+                </div>
+                <AnnouncementImage item={announcements[0]} featured />
+              </article>
+
+              <div className="public-announcement-list">
+                {announcements.slice(1).map(item => (
+                  <article
+                    className={`public-announcement-card${item.image_url ? '' : ' no-image'}`}
                     key={item.id}
-                    style={{ breakInside: 'avoid', display: 'inline-block', width: '100%', marginBottom: 'clamp(20px, 4vw, 34px)', paddingTop: 12 }}
+                    role="button"
+                    tabIndex="0"
+                    onClick={() => setSelectedAnnouncement(item)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelectedAnnouncement(item)
+                      }
+                    }}
                   >
-                    <div style={{
-                      position: 'relative',
-                      background: paper,
-                      borderRadius: 3,
-                      padding: 0,
-                      transform: `rotate(${tilt}deg)`,
-                      boxShadow: '0 6px 16px rgba(40,25,10,0.4)',
-                      border: '1px solid rgba(0,0,0,0.06)',
-                    }}>
-                      <Pin color={pin} />
-
-                      <div style={{ padding: '18px 18px 6px' }}>
-                        <span style={{ display: 'inline-block', padding: '2px 9px', borderRadius: 4, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: cat.bg, color: cat.color, marginBottom: 8 }}>
-                          {item.category}
-                        </span>
-                        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#1A1A2E', fontFamily: 'Georgia, serif', lineHeight: 1.3 }}>
-                          {item.title}
-                        </h2>
+                    <div className="public-announcement-card-main">
+                      <div className="public-announcement-meta-row">
+                        <span className={CATEGORY_STYLES[item.category] || CATEGORY_STYLES.Others}>{item.category}</span>
+                        <span className="public-announcement-date"><CalendarDays size={14} aria-hidden="true" /> {formatDate(item.created_at)}</span>
                       </div>
-
+                      <h3>{item.title}</h3>
+                      <div className="public-announcement-card-what">
+                        <span>What:</span>
+                        <p className="public-announcement-body">{item.body}</p>
+                      </div>
                       {item.image_url && (
-                        <div style={{ padding: '8px 14px 0' }}>
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 2, border: '1px solid rgba(0,0,0,0.08)' }}
-                          />
+                        <div className="public-announcement-card-image">
+                          <img src={item.image_url} alt="" />
                         </div>
                       )}
-
-                      <div style={{ padding: '10px 18px 14px', fontSize: 13, color: '#3A3A3A', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
-                        {item.body}
-                      </div>
-
-                      <div style={{ padding: '0 18px 14px', fontSize: 11, color: '#9A8C72', borderTop: '1px dashed #E2D9C5', paddingTop: 8, marginTop: 2 }}>
-                        📅 {new Date(item.created_at).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
-                      </div>
+                      <span className="public-announcement-card-footer">
+                        <span>View notice details</span>
+                        <ArrowUpRight size={15} aria-hidden="true" />
+                      </span>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+      </main>
 
-      <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.6)', padding: '18px 0', background: '#6B4E2E' }}>
-        Powered by PROTECT · Barangay San Joaquin Intelligence System
-      </p>
+      <footer className="public-announcements-footer">
+        <span>Powered by PROTECT</span>
+        <span>Barangay San Joaquin Intelligence System</span>
+      </footer>
 
-      {/* Needs form modal */}
       {showNeedsForm && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,39,64,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto' }}
-          onClick={() => setShowNeedsForm(false)}
-        >
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 500, margin: 'auto' }}>
+        <div className="public-announcements-modal" onClick={() => setShowNeedsForm(false)}>
+          <div onClick={event => event.stopPropagation()}>
             <NeedsForm onClose={() => setShowNeedsForm(false)} />
           </div>
+        </div>
+      )}
+
+      {selectedAnnouncement && (
+        <div className="public-announcement-detail-modal" onClick={() => setSelectedAnnouncement(null)}>
+          <article className="public-announcement-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="announcement-detail-title" onClick={event => event.stopPropagation()}>
+            <button className="public-announcement-detail-close" type="button" onClick={() => setSelectedAnnouncement(null)} aria-label="Close announcement details"><X size={18} /></button>
+            <div className="public-announcement-detail-dialog-body">
+              <div className="public-announcement-meta-row">
+                <span className={CATEGORY_STYLES[selectedAnnouncement.category] || CATEGORY_STYLES.Others}>{selectedAnnouncement.category}</span>
+                <span className="public-announcement-date"><CalendarDays size={14} aria-hidden="true" /> {formatDate(selectedAnnouncement.created_at)}</span>
+              </div>
+              <h2 id="announcement-detail-title">{selectedAnnouncement.title}</h2>
+              <p>{selectedAnnouncement.body}</p>
+              <span className="public-announcement-detail-source"><Info size={14} aria-hidden="true" /> Official barangay notice</span>
+            </div>
+            <AnnouncementImage item={selectedAnnouncement} featured />
+          </article>
         </div>
       )}
     </div>

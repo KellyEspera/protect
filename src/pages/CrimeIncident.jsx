@@ -36,6 +36,7 @@ export default function CrimeIncident() {
     incident_type: 'Public Intoxication / Disorderly Conduct',
     sitio: 'Sitio Hunan',
     complainant: '',
+    description: '',
     incident_date: '',
   })
   const [photoFile, setPhotoFile] = useState(null)
@@ -174,6 +175,10 @@ export default function CrimeIncident() {
     'Others',
   ]
   const typeCounts = typeLabels.map(t => incidents.filter(i => i.incident_type === t).length)
+  const TYPE_BG = [
+    '#EF4444','#F5A623','#8B5CF6','#3B82F6',
+    '#0D9E8C','#EC4899','#6B7280','#94A3B8',
+  ]
 
   // Month-prevalent data (current year)
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -199,22 +204,43 @@ export default function CrimeIncident() {
       </div>
 
       <SectionCard title="Incident Type Breakdown">
-        <div className="h-52">
+        <div className="h-auto">
           {incidents.length > 0 ? (
+            <>
+            <div className="h-44">
             <Bar
               data={{
                 labels: typeLabels,
                 datasets: [{
                   data: typeCounts,
-                  backgroundColor: [
-                    '#EF4444','#F5A623','#8B5CF6','#3B82F6',
-                    '#0D9E8C','#EC4899','#6B7280','#94A3B8',
-                  ],
+                  backgroundColor: TYPE_BG,
                   borderRadius: 6,
                 }],
               }}
-              options={{ ...opts, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }}
+              options={{
+                ...opts,
+                scales: {
+                  x: { ticks: { display: false }, grid: { display: false } },
+                  y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                },
+              }}
             />
+            </div>
+
+            <div className="mt-3" style={{ paddingBottom: 4 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${typeLabels.length}, minmax(0, 1fr))`, gap: 8 }}>
+                {typeLabels.map((t, idx) => (
+                  <div key={t} style={{ textAlign: 'center', fontSize: 11, color: '#1A1A2E', padding: '0 6px', wordBreak: 'break-word' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: TYPE_BG[idx], flexShrink: 0 }} />
+                      <div style={{ fontSize: 10, lineHeight: 1.1 }}>{t}</div>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#9A9488', marginTop: 6 }}>{typeCounts[idx]}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            </>
           ) : (
             <Empty message="No incidents recorded yet" />
           )}
@@ -312,33 +338,47 @@ export default function CrimeIncident() {
         {/* Photo evidence upload */}
         <div className="mt-3 pt-3 border-t border-gray-100">
           <label className="form-label mb-2 block">Photo Evidence <span style={{ color: '#C4BFB6', fontWeight: 400 }}>(Optional)</span></label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {photoPreview ? (
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <img
-                  src={photoPreview}
-                  alt="Preview"
-                  style={{ width: 90, height: 65, objectFit: 'cover', borderRadius: 6, border: '1px solid #E8E4DA', display: 'block' }}
-                />
+          <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, alignItems: 'start' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 96 }}>
+              {photoPreview ? (
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #E8E4DA', display: 'block' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
+                    style={{ position: 'absolute', top: -6, right: -6, background: '#B83232', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: 10, cursor: 'pointer', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >✕</button>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
-                  style={{ position: 'absolute', top: -6, right: -6, background: '#B83232', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: 10, cursor: 'pointer', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >✕</button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="btn btn-ghost text-xs flex items-center gap-1.5"
-                onClick={() => photoInputRef.current?.click()}
-              >
-                📷 Attach Photo
-              </button>
-            )}
-            <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
-            <p style={{ fontSize: 11, color: '#9A9488', margin: 0 }}>
-              {photoFile ? photoFile.name : 'JPG, PNG, or WEBP · Max 5 MB'}
-            </p>
+                  className="btn btn-ghost text-xs flex items-center gap-1.5"
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  📷 Attach Photo
+                </button>
+              )}
+              <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+            </div>
+
+            <div>
+              <label className="form-label mb-2 block">Notes / Comments</label>
+              <textarea
+                className="form-input"
+                rows={5}
+                placeholder="Add relevant notes, context, or follow-up details..."
+                value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                style={{ minHeight: 96, resize: 'vertical' }}
+              />
+              <p style={{ fontSize: 11, color: '#9A9488', marginTop: 8 }}>
+                Notes are stored with the incident and shown in the incident log.
+              </p>
+            </div>
           </div>
         </div>
       </SectionCard>
@@ -352,7 +392,7 @@ export default function CrimeIncident() {
             <thead>
               <tr>
                 <th>Case No.</th><th>Type</th><th>Sitio</th>
-                <th>Date</th><th>Complainant</th><th>Photo</th><th>Status</th><th>Update Status</th>
+                <th>Date</th><th>Complainant</th><th>Notes</th><th>Photo</th><th>Status</th><th>Update Status</th>
               </tr>
             </thead>
             <tbody>
@@ -365,6 +405,9 @@ export default function CrimeIncident() {
                     {new Date(inc.incident_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td>{inc.complainant || '—'}</td>
+                  <td style={{ maxWidth: 220, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 11, color: '#334155' }}>
+                    {inc.description ? inc.description : '—'}
+                  </td>
                   <td>
                     {inc.photo_url ? (
                       <a href={inc.photo_url} target="_blank" rel="noopener noreferrer" title="View full photo">
