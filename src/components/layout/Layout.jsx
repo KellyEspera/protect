@@ -15,7 +15,7 @@ import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Flame, Gift, Shield, BrainCircuit,
   ClipboardList, FileText, LogOut, Bell, Menu, X, UserCog, Megaphone, Database,
-  ChevronDown
+  ChevronDown, ScrollText
 } from 'lucide-react'
 
 const navGroups = [
@@ -51,6 +51,7 @@ const navGroups = [
       { to: '/predictive',  icon: BrainCircuit,  label: 'Predictive Growth' },
       { to: '/needs',       icon: ClipboardList, label: 'Needs Assessment' },
       { to: '/announcements-admin', icon: Megaphone, label: 'Announcements' },
+      { to: '/ordinances-admin', icon: ScrollText, label: 'Ordinance Archive' },
       { to: '/reports',     icon: FileText,      label: 'DILG Reports' },
     ],
   },
@@ -78,6 +79,7 @@ const pageTitles = {
   '/predictive': 'Predictive Population Growth',
   '/needs': 'Community Needs Assessment',
   '/announcements-admin': 'Community Announcements',
+  '/ordinances-admin': 'Barangay Ordinance Archive',
   '/reports': 'DILG Report Generation',
   '/users':   'User Management',
   '/admin-tools': 'System & Audit',

@@ -17,7 +17,7 @@ export const ROLE_LABELS = {
 }
 
 // Every route path that exists in the app. The full-access role gets all of these.
-const ALL_ROUTES = ['/', '/residents', '/qr', '/population', '/poverty', '/sectors', '/gis', '/crime-map', '/disaster', '/beneficiary', '/crime', '/predictive', '/needs', '/announcements-admin', '/reports', '/users', '/admin-tools']
+const ALL_ROUTES = ['/', '/residents', '/qr', '/population', '/poverty', '/sectors', '/gis', '/crime-map', '/disaster', '/beneficiary', '/crime', '/predictive', '/needs', '/announcements-admin', '/ordinances-admin', '/reports', '/users', '/admin-tools']
 
 // Which routes each role is allowed to open (exact path match).
 export const ROLE_ROUTES = {

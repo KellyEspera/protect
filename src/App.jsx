@@ -32,6 +32,8 @@ import NeedsAssessment from './pages/NeedsAssessment'
 import DILGReports from './pages/DILGReports'
 import PublicAnnouncements from './pages/PublicAnnouncements'
 import Announcements from './pages/Announcements'
+import PublicOrdinances from './pages/PublicOrdinances'
+import OrdinanceArchive from './pages/OrdinanceArchive'
 import UserManagement from './pages/UserManagement'
 import AdminTools from './pages/AdminTools'
 
@@ -102,6 +104,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/resident-needs/*" element={<ResidentNeedsForm />} />
       <Route path="/announcements" element={<PublicAnnouncements />} />
+      <Route path="/ordinances" element={<PublicOrdinances />} />
       <Route
         path="/"
         element={
@@ -124,6 +127,7 @@ export default function App() {
         <Route path="predictive" element={<RoleRoute path="/predictive"><PredictiveGrowth /></RoleRoute>} />
         <Route path="needs"      element={<RoleRoute path="/needs"><NeedsAssessment /></RoleRoute>} />
         <Route path="announcements-admin" element={<RoleRoute path="/announcements-admin"><Announcements /></RoleRoute>} />
+        <Route path="ordinances-admin" element={<RoleRoute path="/ordinances-admin"><OrdinanceArchive /></RoleRoute>} />
         <Route path="reports"    element={<RoleRoute path="/reports"><DILGReports /></RoleRoute>} />
         <Route path="users"      element={<RoleRoute path="/users"><UserManagement /></RoleRoute>} />
         <Route path="admin-tools" element={<RoleRoute path="/admin-tools"><AdminTools /></RoleRoute>} />

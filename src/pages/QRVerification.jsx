@@ -16,6 +16,7 @@ import { supabase } from '../lib/supabase'
 import { SectionCard, Badge } from '../components/ui/index'
 import { toast } from 'react-toastify'
 import jsPDF from 'jspdf'
+import { BARANGAY_SEAL, BAGONG_PILIPINAS_LOGO } from '../assets/certLogos'
 
 const PURPOSES = [
   'Barangay Clearance',
@@ -451,108 +452,131 @@ export default function QRVerification() {
       ? new Date(resident.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
       : '—'
     const issued = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
-    const docNo = `BRY-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
-    const fullName = `${resident.first_name} ${resident.last_name}`.toUpperCase()
+    const fullName = `${resident.first_name} ${resident.middle_name ? resident.middle_name + ' ' : ''}${resident.last_name}`.toUpperCase()
     const sitio = resident.sitio || 'Barangay San Joaquin'
+    const sex = resident.sex || ''
+    const civilStatus = resident.civil_status || ''
 
     const CERT_TITLE = {
-      'Barangay Clearance':       'BARANGAY CLEARANCE',
-      'Certificate of Indigency': 'CERTIFICATE OF INDIGENCY',
-      'Certificate of Residency': 'CERTIFICATE OF RESIDENCY',
-      'Assistance Claim':         'CERTIFICATE OF INDIGENCY',
-      'Business Permit':          'BARANGAY BUSINESS CLEARANCE',
+      'Barangay Clearance':                  'BARANGAY CLEARANCE',
+      'Certificate of Indigency':             'CERTIFICATE OF INDIGENCY',
+      'Certificate of Residency':             'CERTIFICATE OF RESIDENCY',
+      'Certificate of Good Moral Character':  'CERTIFICATE OF GOOD MORAL',
+      'Assistance Claim':                     'CERTIFICATE OF INDIGENCY',
+      'Business Permit':                      'BARANGAY BUSINESS CLEARANCE',
     }
     const title = CERT_TITLE[certPurpose] || 'BARANGAY CERTIFICATION'
 
+    // Wording follows the phrasing on Barangay San Joaquin's actual issued
+    // certificates (residency, good moral, indigency) as closely as possible.
     const CERT_BODY = {
-      'Barangay Clearance': `This is to certify that <strong>${fullName}</strong>, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has no derogatory record on file at this office as of the date of this certification, and is known to be of good moral character and law-abiding citizen in the community.<br/><br/>This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
-
-      'Certificate of Indigency': `This is to certify that <strong>${fullName}</strong>, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is one of the identified indigent/low-income residents of this barangay and belongs to an underprivileged family whose income is insufficient to meet the family's basic needs.<br/><br/>This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
-
-      'Certificate of Residency': `This is to certify that <strong>${fullName}</strong>, ${age} years old, born on ${dob}, ${resident.sex || ''}, is a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines.<br/><br/>This certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
-
-      'Certificate of Good Moral Character': `This is to certify that <strong>${fullName}</strong>, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is known in the community as a person of good moral character, upright conduct, and responsible citizenship.<br/><br/>This certification is issued upon the request of the above-named person for lawful and legitimate purposes.`,
-
-      'Business Permit': `This is to certify that <strong>${fullName}</strong>, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has applied for a Barangay Business Clearance and has been found to have no violations or pending cases in this barangay.<br/><br/>This clearance is issued for business permit application purposes only.`,
+      'Certificate of Residency': [
+        `This is to certify that <strong>${fullName}</strong>, ${age} years old, born on ${dob}, ${sex}, ${civilStatus}, is a bonafide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes.`,
+        `The undersigned has certified that after reasonable inquiry, I have verified the authenticity of barangay residency showing that the applicant has been residing in the Barangay for at least one (1) year.`,
+      ],
+      'Certificate of Good Moral Character': [
+        `This is to CERTIFY that <strong>${fullName}</strong>, ${age} years old, born ${dob}, ${sex}, ${civilStatus}, a Filipino Citizen and bona fide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes had never been charged for any kind of offense and no pending case before the Lupong Tagapamayapa either civil or criminal case as of this date.`,
+        `This is to certify further that the above named person has a Good Moral character and no derogatory record in this barangay.`,
+      ],
+      'Certificate of Indigency': [
+        `THIS IS TO CERTIFY that <strong>${fullName}</strong>, ${age} years old, born on ${dob}, ${sex}, ${civilStatus}, a Filipino Citizen and a bona fide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes and belongs to the indigent family of this Barangay.`,
+      ],
+      'Assistance Claim': [
+        `THIS IS TO CERTIFY that <strong>${fullName}</strong>, ${age} years old, born on ${dob}, ${sex}, ${civilStatus}, a Filipino Citizen and a bona fide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes and belongs to the indigent family of this Barangay.`,
+      ],
+      'Barangay Clearance': [
+        `This is to certify that <strong>${fullName}</strong>, ${age} years old, ${sex}, a bonafide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes, has no derogatory record on file at this office as of the date of this certification, and is known to be of good moral character and a law-abiding citizen in the community.`,
+      ],
+      'Business Permit': [
+        `This is to certify that <strong>${fullName}</strong>, a bonafide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes, has applied for a Barangay Business Clearance and has been found to have no violations or pending cases in this barangay.`,
+      ],
     }
-    let body = CERT_BODY[certPurpose] || CERT_BODY['Certificate of Residency']
-    if (requestPurpose && requestPurpose.trim()) {
-      body += `<br/><br/>This certification is issued specifically for the purpose of <strong>${requestPurpose.trim()}</strong>.`
+    const bodyParagraphs = CERT_BODY[certPurpose] || CERT_BODY['Certificate of Residency']
+    const purposeLine = requestPurpose && requestPurpose.trim()
+      ? `This Certification is issued upon the request of <strong>${fullName}</strong> as requirement for <strong>${requestPurpose.trim()}</strong> or whatever legal purpose it may serve.`
+      : `This Certification is issued upon the request of <strong>${fullName}</strong> for whatever legal purpose it may serve.`
+    const bodyHtml = [...bodyParagraphs, purposeLine].map(p => `<p class="para">${p}</p>`).join('')
+
+    const ordSuffix = (n) => {
+      const j = n % 10, k = n % 100
+      if (j === 1 && k !== 11) return 'st'
+      if (j === 2 && k !== 12) return 'nd'
+      if (j === 3 && k !== 13) return 'rd'
+      return 'th'
     }
+    const d = new Date().getDate()
 
     setDocPreview(`<!DOCTYPE html><html><head>
 <title>${title} — ${fullName}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Times New Roman',Times,serif;background:#fff;color:#1a1a1a;padding:18mm 22mm;font-size:12pt;line-height:1.6}
-  .paper{border:1.2px solid #d8d8d8;padding:8mm 10mm;border-radius:3mm;background:#fefefe}
-  .header{display:flex;align-items:center;justify-content:center;gap:12pt;margin-bottom:10pt;padding-bottom:10pt;border-bottom:2px solid #1A3A5C}
-  .logo-wrap{width:62px;height:62px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .paper{position:relative;padding:6mm 4mm}
+  .paper::before{content:'';position:absolute;top:48%;left:50%;width:75mm;height:75mm;transform:translate(-50%,-50%);background:url(${BARANGAY_SEAL}) center/contain no-repeat;opacity:0.07;pointer-events:none}
+  .header{display:flex;align-items:flex-start;justify-content:center;gap:14pt;margin-bottom:8pt}
+  .logo-wrap{width:60px;height:60px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
   .logo-wrap img{width:100%;height:100%;object-fit:contain}
   .header-center{text-align:center}
-  .header .republic{font-size:9pt;letter-spacing:1.2pt;color:#555;text-transform:uppercase}
-  .header .province{font-size:9pt;color:#555}
-  .header .brgy{font-size:15pt;font-weight:700;color:#1A3A5C;margin:3pt 0 1pt;letter-spacing:1pt}
-  .header .addr{font-size:9pt;color:#777}
-  .cert-title{text-align:center;margin:14pt 0 10pt}
-  .cert-title h2{font-size:14.5pt;font-weight:700;letter-spacing:1.2pt;text-decoration:underline;color:#1A3A5C}
-  .doc-no{text-align:right;font-size:9pt;color:#777;margin-bottom:10pt}
-  .greeting{margin-bottom:8pt}
-  .body-text{text-align:justify;margin-bottom:12pt;font-size:11.5pt}
-  .closing{margin-bottom:24pt;font-size:11.5pt}
-  .sig-section{display:flex;justify-content:space-between;margin-top:12pt;align-items:flex-end}
-  .sig-block{text-align:center;width:45%}
-  .sig-line{border-top:1.5px solid #1a1a1a;margin-bottom:4pt;width:100%}
-  .sig-name{font-weight:700;font-size:11pt}
-  .sig-title{font-size:9pt;color:#555}
-  .footer{margin-top:24pt;padding-top:8pt;border-top:1px solid #ccc;text-align:center;font-size:8.5pt;color:#999}
-  .orbox{border:1px solid #ccc;padding:8pt 12pt;font-size:9pt;color:#777;margin-top:12pt;display:inline-block}
+  .header .republic{font-size:10.5pt}
+  .header .province{font-size:10.5pt;font-weight:700}
+  .header .municipality{font-size:11.5pt;font-style:italic}
+  .header .brgy{font-size:14pt;font-weight:700;letter-spacing:0.5pt;margin-top:2pt}
+  .rule{border-top:1.5px solid #1a1a1a;margin:8pt 0 6pt}
+  .office-line{text-align:center;font-weight:700;font-size:11.5pt;letter-spacing:0.3pt;margin-bottom:16pt}
+  .cert-title{text-align:center;margin:6pt 0 14pt}
+  .cert-title h2{font-size:24pt;font-weight:700;letter-spacing:0.5pt;text-shadow:1.5px 1.5px 0 rgba(0,0,0,0.25)}
+  .date-line{text-align:right;font-size:10.5pt;margin-bottom:14pt}
+  .greeting{margin-bottom:10pt;font-weight:700;font-size:11.5pt}
+  .para{text-align:justify;margin-bottom:10pt;font-size:11.5pt;text-indent:14mm}
+  .closing{margin-bottom:30pt;font-size:11.5pt}
+  .sig-block{text-align:center;width:70mm;margin-left:auto}
+  .sig-name{font-weight:700;font-size:12pt;border-top:1.2px solid #1a1a1a;padding-top:3pt;display:inline-block}
+  .sig-title{font-size:10pt;font-style:italic;margin-top:2pt}
+  .or-fields{margin-top:22pt;font-size:9.5pt;color:#3c3c3c;line-height:2}
   @media print{body{padding:14mm 16mm}}
 </style></head><body>
 <div class="paper">
 <div class="header">
-  <div class="logo-wrap"><img src="/brgy-logo.jpg" alt="Barangay Logo" /></div>
+  <div class="logo-wrap"><img src="${BARANGAY_SEAL}" alt="Barangay Seal" /></div>
   <div class="header-center">
     <div class="republic">Republic of the Philippines</div>
-    <div class="province">Province of Batanes &nbsp;·&nbsp; Municipality of Basco</div>
+    <div class="province">Province of Batanes</div>
+    <div class="municipality">Municipality of Basco</div>
     <div class="brgy">BARANGAY SAN JOAQUIN</div>
-    <div class="addr">Basco, Batanes, Philippines</div>
   </div>
+  <div class="logo-wrap"><img src="${BAGONG_PILIPINAS_LOGO}" alt="Bagong Pilipinas" /></div>
 </div>
+
+<div class="rule"></div>
+<div class="office-line">OFFICE OF THE PUNONG BARANGAY</div>
 
 <div class="cert-title"><h2>${title}</h2></div>
 
-<div class="doc-no">Doc. No.: ${docNo} &nbsp;|&nbsp; Date: ${issued}</div>
+<div class="date-line">${issued}</div>
 
-<div class="greeting">To Whom It May Concern:</div>
+<div class="greeting">TO WHOM IT MAY CONCERN:</div>
 
-<div class="body-text">${body}</div>
+${bodyHtml}
 
 <div class="closing">
-  Given this <strong>${new Date().getDate()}${['th','st','nd','rd'][Math.min(new Date().getDate()%10,3)]||'th'} day of ${new Date().toLocaleDateString('en-PH',{month:'long'})}, ${new Date().getFullYear()}</strong> at Barangay San Joaquin, Basco, Batanes, Philippines.
+  Issued this ${d}${ordSuffix(d)} day of ${new Date().toLocaleDateString('en-PH',{month:'long'})}, ${new Date().getFullYear()} at Barangay San Joaquin, Basco, Batanes.
 </div>
 
-<div class="sig-section">
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div class="sig-name">PUNONG BARANGAY</div>
-    <div class="sig-title">Barangay San Joaquin</div>
-  </div>
-  <div style="text-align:right;font-size:9pt;color:#777">
-    <div class="orbox">
-      O.R. No.: ____________<br/>
-      Amount: ₱ ____________<br/>
-      Date Paid: ____________
-    </div>
-  </div>
+<div class="sig-block">
+  <div class="sig-name">RONALD C. VILLEGAS</div>
+  <div class="sig-title">Punong Barangay</div>
 </div>
 
-<div class="footer">
-  This document is electronically generated by the PROTECT Barangay Analytics System &nbsp;·&nbsp; Resident ID: ${resident.resident_no}
+<div class="or-fields">
+  O.R. No. ________________<br/>
+  Date ________________<br/>
+  Amount: ₱ ________________
 </div>
 
+</div>
 </body></html>`)
   }
+
 
   // Build the certificate PDF (shared by save & print).
   const buildCertificateDoc = async () => {
@@ -565,108 +589,146 @@ export default function QRVerification() {
       ? new Date(resident.date_of_birth).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
       : '—'
     const issued = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
-    const docNo = `BRY-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`
-    const fullName = `${resident.first_name} ${resident.last_name}`.toUpperCase()
+    const fullName = `${resident.first_name} ${resident.middle_name ? resident.middle_name + ' ' : ''}${resident.last_name}`.toUpperCase()
     const sitio = resident.sitio || 'Barangay San Joaquin'
+    const sex = resident.sex || ''
+    const civilStatus = resident.civil_status || ''
 
     const CERT_TITLE = {
-      'Barangay Clearance':               'BARANGAY CLEARANCE',
-      'Certificate of Indigency':         'CERTIFICATE OF INDIGENCY',
-      'Certificate of Residency':         'CERTIFICATE OF RESIDENCY',
-      'Certificate of Good Moral Character': 'CERTIFICATE OF GOOD MORAL CHARACTER',
-      'Assistance Claim':                 'CERTIFICATE OF INDIGENCY',
-      'Business Permit':                  'BARANGAY BUSINESS CLEARANCE',
+      'Barangay Clearance':                  'BARANGAY CLEARANCE',
+      'Certificate of Indigency':             'CERTIFICATE OF INDIGENCY',
+      'Certificate of Residency':             'CERTIFICATE OF RESIDENCY',
+      'Certificate of Good Moral Character':  'CERTIFICATE OF GOOD MORAL',
+      'Assistance Claim':                     'CERTIFICATE OF INDIGENCY',
+      'Business Permit':                      'BARANGAY BUSINESS CLEARANCE',
     }
     const title = CERT_TITLE[certPurpose] || 'BARANGAY CERTIFICATION'
 
+    // Wording follows the phrasing on Barangay San Joaquin's actual issued
+    // certificates (residency, good moral, indigency) as closely as possible.
     const CERT_BODY = {
-      'Barangay Clearance': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has no derogatory record on file at this office as of the date of this certification, and is known to be of good moral character and a law-abiding citizen in the community.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
-      'Certificate of Indigency': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is one of the identified indigent/low-income residents of this barangay and belongs to an underprivileged family whose income is insufficient to meet the family's basic needs.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
-      'Certificate of Residency': `This is to certify that ${fullName}, ${age} years old, born on ${dob}, ${resident.sex || ''}, is a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines.\n\nThis certification is issued upon the request of the above-named person for whatever legal purpose it may serve.`,
-      'Certificate of Good Moral Character': `This is to certify that ${fullName}, ${age} years old, ${resident.sex || ''}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, is known in the community as a person of good moral character, upright conduct, and responsible citizenship.\n\nThis certification is issued upon the request of the above-named person for lawful and legitimate purposes.`,
-      'Business Permit': `This is to certify that ${fullName}, a bonafide resident of ${sitio}, Barangay San Joaquin, Municipality of Basco, Province of Batanes, Philippines, has applied for a Barangay Business Clearance and has been found to have no violations or pending cases in this barangay.\n\nThis clearance is issued for business permit application purposes only.`,
+      'Certificate of Residency': [
+        `This is to certify that ${fullName}, ${age} years old, born on ${dob}, ${sex}, ${civilStatus}, is a bonafide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes.`,
+        `The undersigned has certified that after reasonable inquiry, I have verified the authenticity of barangay residency showing that the applicant has been residing in the Barangay for at least one (1) year.`,
+      ],
+      'Certificate of Good Moral Character': [
+        `This is to CERTIFY that ${fullName}, ${age} years old, born ${dob}, ${sex}, ${civilStatus}, a Filipino Citizen and bona fide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes had never been charged for any kind of offense and no pending case before the Lupong Tagapamayapa either civil or criminal case as of this date.`,
+        `This is to certify further that the above named person has a Good Moral character and no derogatory record in this barangay.`,
+      ],
+      'Certificate of Indigency': [
+        `THIS IS TO CERTIFY that ${fullName}, ${age} years old, born on ${dob}, ${sex}, ${civilStatus}, a Filipino Citizen and a bona fide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes and belongs to the indigent family of this Barangay.`,
+      ],
+      'Assistance Claim': [
+        `THIS IS TO CERTIFY that ${fullName}, ${age} years old, born on ${dob}, ${sex}, ${civilStatus}, a Filipino Citizen and a bona fide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes and belongs to the indigent family of this Barangay.`,
+      ],
+      'Barangay Clearance': [
+        `This is to certify that ${fullName}, ${age} years old, ${sex}, a bonafide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes, has no derogatory record on file at this office as of the date of this certification, and is known to be of good moral character and a law-abiding citizen in the community.`,
+      ],
+      'Business Permit': [
+        `This is to certify that ${fullName}, a bonafide resident of ${sitio}, Barangay San Joaquin, Basco, Batanes, has applied for a Barangay Business Clearance and has been found to have no violations or pending cases in this barangay.`,
+      ],
     }
-    let bodyText = CERT_BODY[certPurpose] || CERT_BODY['Certificate of Residency']
-    if (requestPurpose && requestPurpose.trim()) {
-      bodyText += `\n\nThis certification is issued specifically for the purpose of ${requestPurpose.trim()}.`
+    const bodyParagraphs = CERT_BODY[certPurpose] || CERT_BODY['Certificate of Residency']
+
+    const purposeLine = requestPurpose && requestPurpose.trim()
+      ? `This Certification is issued upon the request of ${fullName} as requirement for ${requestPurpose.trim()} or whatever legal purpose it may serve.`
+      : `This Certification is issued upon the request of ${fullName} for whatever legal purpose it may serve.`
+
+    const ordSuffix = (n) => {
+      const j = n % 10, k = n % 100
+      if (j === 1 && k !== 11) return 'st'
+      if (j === 2 && k !== 12) return 'nd'
+      if (j === 3 && k !== 13) return 'rd'
+      return 'th'
     }
+    const d = new Date().getDate()
+    const ord = ordSuffix(d)
+    const closing = `Issued this ${d}${ord} day of ${new Date().toLocaleDateString('en-PH', { month: 'long' })}, ${new Date().getFullYear()} at Barangay San Joaquin, Basco, Batanes.`
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4' })
     const pageW = doc.internal.pageSize.getWidth()
-    const marginX = 25
+    const marginX = 22
     const contentW = pageW - marginX * 2
     const cx = pageW / 2
-    let y = 24
+    let y = 20
 
     const centerText = (txt, size, style, color) => {
       doc.setFont('times', style); doc.setFontSize(size); doc.setTextColor(color[0], color[1], color[2])
       doc.text(txt, cx, y, { align: 'center' })
     }
 
-    // ── Header (with barangay logo as a letterhead seal on the left) ──
-    const logo = await loadLogo()
-    if (logo) doc.addImage(logo, 'JPEG', marginX, 16, 24, 24)
-    centerText('Republic of the Philippines', 10, 'normal', [85, 85, 85]); y += 5
-    centerText('Province of Batanes  ·  Municipality of Basco', 10, 'normal', [85, 85, 85]); y += 7
-    centerText('BARANGAY SAN JOAQUIN', 16, 'bold', [26, 58, 92]); y += 5
-    centerText('Basco, Batanes, Philippines', 9, 'normal', [120, 120, 120]); y += 5
-    doc.setDrawColor(26, 58, 92); doc.setLineWidth(0.8); doc.line(marginX, y, pageW - marginX, y)
-    y += 1; doc.setLineWidth(0.3); doc.line(marginX, y, pageW - marginX, y)
-    y += 15
+    // ── Header: Barangay seal (left) · Republic/Province/Municipality/Barangay text (center) · Bagong Pilipinas logo (right) ──
+    doc.addImage(BARANGAY_SEAL, 'PNG', marginX, 14, 22, 22)
+    doc.addImage(BAGONG_PILIPINAS_LOGO, 'PNG', pageW - marginX - 20, 14, 20, 18.6)
 
-    // ── Title (underlined) ──
-    doc.setFont('times', 'bold'); doc.setFontSize(15); doc.setTextColor(26, 58, 92)
+    centerText('Republic of the Philippines', 10, 'normal', [26, 26, 26]); y += 5
+    centerText('Province of Batanes', 10, 'bold', [26, 26, 26]); y += 5
+    doc.setFont('times', 'italic'); doc.setFontSize(11.5); doc.setTextColor(26, 26, 26)
+    doc.text('Municipality of Basco', cx, y, { align: 'center' }); y += 6
+    centerText('BARANGAY SAN JOAQUIN', 13, 'bold', [26, 26, 26]); y += 7
+
+    doc.setDrawColor(26, 26, 26); doc.setLineWidth(0.6); doc.line(marginX, y, pageW - marginX, y)
+    y += 6
+    centerText('OFFICE OF THE PUNONG BARANGAY', 11.5, 'bold', [26, 26, 26])
+    y += 14
+
+    // ── Title, with a simple drop-shadow effect (offset gray copy behind black text) ──
+    doc.setFont('times', 'bold'); doc.setFontSize(22)
+    doc.setTextColor(190, 190, 190)
+    doc.text(title, cx + 0.6, y + 0.6, { align: 'center' })
+    doc.setTextColor(26, 26, 26)
     doc.text(title, cx, y, { align: 'center' })
-    const tw = doc.getTextWidth(title)
-    doc.setLineWidth(0.4); doc.line(cx - tw / 2, y + 1.6, cx + tw / 2, y + 1.6)
-    y += 13
+    y += 14
 
-    // ── Doc no / date ──
-    doc.setFont('times', 'normal'); doc.setFontSize(9); doc.setTextColor(120, 120, 120)
-    doc.text(`Doc. No.: ${docNo}    Date: ${issued}`, pageW - marginX, y, { align: 'right' })
+    // ── Date (right-aligned, no doc number — matches the real certificates) ──
+    doc.setFont('times', 'normal'); doc.setFontSize(10.5); doc.setTextColor(26, 26, 26)
+    doc.text(issued, pageW - marginX, y, { align: 'right' })
     y += 11
 
-    // ── Greeting ──
-    doc.setFontSize(12); doc.setTextColor(26, 26, 26)
-    doc.text('To Whom It May Concern:', marginX, y); y += 9
+    // ── Faint watermark seal behind the body ──
+    const wmSize = 90
+    if (doc.setGState && doc.GState) {
+      doc.saveGraphicsState()
+      doc.setGState(new doc.GState({ opacity: 0.08 }))
+      doc.addImage(BARANGAY_SEAL, 'PNG', cx - wmSize / 2, y + 10, wmSize, wmSize)
+      doc.restoreGraphicsState()
+    }
 
-    // ── Body (justified paragraphs) ──
-    doc.setFontSize(11.5); doc.setLineHeightFactor(1.5)
-    bodyText.split('\n\n').forEach(par => {
-      const lines = doc.splitTextToSize(par.trim(), contentW)
+    // ── Greeting ──
+    doc.setFont('times', 'bold'); doc.setFontSize(11.5); doc.setTextColor(26, 26, 26)
+    doc.text('TO WHOM IT MAY CONCERN:', marginX, y); y += 9
+
+    // ── Body paragraphs (justified, first line indented like the source templates) ──
+    doc.setFont('times', 'normal'); doc.setFontSize(11.5); doc.setLineHeightFactor(1.55)
+    const allParagraphs = [...bodyParagraphs, purposeLine]
+    allParagraphs.forEach(par => {
+      const indented = '        ' + par.trim()
+      const lines = doc.splitTextToSize(indented, contentW)
       doc.text(lines, marginX, y, { align: 'justify', maxWidth: contentW })
-      y += lines.length * 6.2 + 5
+      y += lines.length * 6.3 + 4
     })
     doc.setLineHeightFactor(1.15)
-    y += 3
+    y += 4
 
-    // ── Closing ──
-    const d = new Date().getDate()
-    const ord = ['th', 'st', 'nd', 'rd'][Math.min(d % 10, 3)] || 'th'
-    const closing = `Given this ${d}${ord} day of ${new Date().toLocaleDateString('en-PH', { month: 'long' })}, ${new Date().getFullYear()} at Barangay San Joaquin, Basco, Batanes, Philippines.`
+    // ── Closing line ──
     const cl = doc.splitTextToSize(closing, contentW)
-    doc.text(cl, marginX, y); y += cl.length * 6.2 + 20
+    doc.text(cl, marginX, y); y += cl.length * 6.3 + 22
 
-    // ── Signature ──
-    doc.setDrawColor(26, 26, 26); doc.setLineWidth(0.4); doc.line(marginX, y, marginX + 65, y)
-    doc.setFont('times', 'bold'); doc.setFontSize(11); doc.setTextColor(26, 26, 26)
-    doc.text('PUNONG BARANGAY', marginX + 32.5, y + 5, { align: 'center' })
-    doc.setFont('times', 'normal'); doc.setFontSize(9); doc.setTextColor(85, 85, 85)
-    doc.text('Barangay San Joaquin', marginX + 32.5, y + 10, { align: 'center' })
+    // ── Signature block (right-aligned, matching the real certificates) ──
+    const sigX = pageW - marginX - 70
+    doc.setFont('times', 'bold'); doc.setFontSize(12); doc.setTextColor(26, 26, 26)
+    doc.text('RONALD C. VILLEGAS', sigX + 35, y, { align: 'center' })
+    const sigW = doc.getTextWidth('RONALD C. VILLEGAS')
+    doc.setLineWidth(0.4); doc.line(sigX + 35 - sigW / 2, y + 1.2, sigX + 35 + sigW / 2, y + 1.2)
+    doc.setFont('times', 'italic'); doc.setFontSize(10); doc.setTextColor(26, 26, 26)
+    doc.text('Punong Barangay', sigX + 35, y + 6, { align: 'center' })
+    y += 20
 
-    // ── O.R. box (right) ──
-    const boxX = pageW - marginX - 55, boxY = y - 4
-    doc.setDrawColor(180, 180, 180); doc.setLineWidth(0.3); doc.rect(boxX, boxY, 55, 20)
-    doc.setFontSize(9); doc.setTextColor(120, 120, 120)
-    doc.text('O.R. No.: ____________', boxX + 4, boxY + 6)
-    doc.text('Amount (PHP): _________', boxX + 4, boxY + 12)
-    doc.text('Date Paid: ___________', boxX + 4, boxY + 18)
-
-    // ── Footer ──
-    const footY = 285
-    doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.2); doc.line(marginX, footY, pageW - marginX, footY)
-    doc.setFontSize(8); doc.setTextColor(150, 150, 150)
-    doc.text(`Generated by the PROTECT Barangay Analytics System  ·  Resident ID: ${resident.resident_no}`, cx, footY + 5, { align: 'center' })
+    // ── O.R. No. / Date / Amount — inline blanks, bottom-left (matches the real templates) ──
+    doc.setFont('times', 'normal'); doc.setFontSize(9.5); doc.setTextColor(60, 60, 60)
+    doc.text('O.R. No. ________________', marginX, y)
+    doc.text('Date ________________', marginX, y + 5.5)
+    doc.text('Amount: PHP ________________', marginX, y + 11)
 
     return { doc, title, resident }
   }
