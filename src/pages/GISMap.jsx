@@ -75,6 +75,10 @@ export default function GISMap() {
   const [filterSitio, setFilterSitio]   = useState('All')
   const [hhHeadSearch, setHhHeadSearch] = useState('')
   const [showHHDropdown, setShowHHDropdown] = useState(false)
+  const [placeSearch, setPlaceSearch] = useState('')
+  const [placeResults, setPlaceResults] = useState([])
+  const [placeSearchLoading, setPlaceSearchLoading] = useState(false)
+  const [placeSearchError, setPlaceSearchError] = useState('')
 
   // Offline state
   const [online, setOnline]             = useState(() => navigator.onLine)
@@ -125,6 +129,61 @@ export default function GISMap() {
       return data || []
     },
   })
+
+  // Search real-world addresses, landmarks, and businesses, then use the
+  // selected result as the exact map location for a household pin.
+  const searchPlaces = async (event) => {
+    event?.preventDefault()
+    const query = placeSearch.trim()
+    if (!query) return
+
+    setPlaceSearchLoading(true)
+    setPlaceSearchError('')
+    setPlaceResults([])
+    try {
+      const params = new URLSearchParams({
+        q: `${query}, Basco, Batanes, Philippines`,
+        format: 'jsonv2',
+        addressdetails: '1',
+        limit: '5',
+        countrycodes: 'ph',
+        viewbox: '121.93,20.49,122.01,20.41',
+        bounded: '0',
+      })
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+        headers: { Accept: 'application/json' },
+      })
+      if (!response.ok) throw new Error('Search service unavailable')
+      const results = await response.json()
+      setPlaceResults(results)
+      if (!results.length) setPlaceSearchError('No matching places found. Try a fuller address or landmark name.')
+    } catch {
+      setPlaceSearchError('Place search is unavailable right now. You can still click the map to place a pin.')
+    } finally {
+      setPlaceSearchLoading(false)
+    }
+  }
+
+  const selectPlaceResult = async (result) => {
+    const lat = Number(result.lat)
+    const lng = Number(result.lon)
+    if (!mapInstance.current || !Number.isFinite(lat) || !Number.isFinite(lng)) return
+
+    mapInstance.current.flyTo([lat, lng], 18, { duration: 1.2 })
+    const L = (await import('leaflet')).default
+    if (tempMarker.current) mapInstance.current.removeLayer(tempMarker.current)
+    const tempIcon = L.divIcon({
+      html: `<div style="width:18px;height:18px;border-radius:50%;background:#C9A84C;border:3px solid #fff;box-shadow:0 0 0 3px rgba(201,168,76,0.4);animation:pulse 1s infinite"></div>
+        <style>@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(201,168,76,0.4)}50%{box-shadow:0 0 0 8px rgba(201,168,76,0.1)}}</style>`,
+      className: '',
+      iconAnchor: [9, 9],
+    })
+    tempMarker.current = L.marker([lat, lng], { icon: tempIcon }).addTo(mapInstance.current)
+    setPendingPin({ lat, lng })
+    setForm(prev => ({ ...prev, address: result.display_name || prev.address }))
+    setPlaceResults([])
+    setPlaceSearch(result.display_name || placeSearch)
+  }
 
   // ── Save household pin ──
   // If the head already has a household (created in Resident Profiling), we UPDATE
@@ -546,6 +605,35 @@ export default function GISMap() {
         >
           {/* Sitio filter + legend */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+            <form onSubmit={searchPlaces} style={{ position: 'relative', display: 'flex', gap: 6, flex: '1 1 320px', minWidth: 240 }}>
+              <input
+                className="form-input"
+                value={placeSearch}
+                onChange={e => { setPlaceSearch(e.target.value); setPlaceSearchError('') }}
+                placeholder="Search address, landmark, or business..."
+                aria-label="Search address, landmark, or business"
+                style={{ flex: 1, minWidth: 0, fontSize: 11 }}
+              />
+              <button className="btn btn-primary" type="submit" disabled={placeSearchLoading || !placeSearch.trim()} style={{ fontSize: 11, padding: '5px 10px', whiteSpace: 'nowrap' }}>
+                {placeSearchLoading ? 'Searching...' : 'Search'}
+              </button>
+              {(placeResults.length > 0 || placeSearchError) && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 62, zIndex: 500, background: '#fff', border: '1px solid #D4D0C8', borderRadius: 4, boxShadow: '0 5px 16px rgba(0,0,0,.15)', overflow: 'hidden' }}>
+                  {placeResults.map(result => (
+                    <button
+                      key={result.place_id}
+                      type="button"
+                      onClick={() => selectPlaceResult(result)}
+                      style={{ display: 'block', width: '100%', padding: '9px 10px', border: 0, borderBottom: '1px solid #F5F2EC', background: '#fff', textAlign: 'left', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#1A1A2E' }}>{result.name || result.display_name.split(',')[0]}</div>
+                      <div style={{ fontSize: 10, color: '#777', marginTop: 2, lineHeight: 1.35 }}>{result.display_name}</div>
+                    </button>
+                  ))}
+                  {placeSearchError && <div style={{ padding: '9px 10px', fontSize: 10, color: '#B83232' }}>{placeSearchError}</div>}
+                </div>
+              )}
+            </form>
             <select
               value={filterSitio}
               onChange={e => setFilterSitio(e.target.value)}
@@ -565,7 +653,7 @@ export default function GISMap() {
           </div>
           <div ref={mapRef} className="map-canvas" />
           <p style={{ fontSize: 11, color: '#9A9488', marginTop: 8, textAlign: 'center' }}>
-            💡 Click on the map to drop a pin · Click an existing pin to view details, edit, or remove
+            💡 Search a place for a precise location, or click the map to drop a pin · Click an existing pin to view details
           </p>
         </SectionCard>
 
