@@ -3,8 +3,11 @@ flowchart TD
     Open --> Access{Public link or staff login?}
 
     %% Public access
-    Access -- Public --> Public[Public Announcements / Needs portal]
-    Public --> PublicData[(Announcements + Needs submissions)]
+    Access -- Public --> Public{Public service}
+    Public --> Announcements[Public Announcements<br/>/announcements]
+    Public --> Needs[Needs Submission Portal<br/>/resident-needs]
+    Announcements --> PublicData[(Announcements)]
+    Needs --> NeedsData[(Survey responses + needs photos)]
 
     %% Staff access
     Access -- Staff login --> AuthCheck{Supabase Auth valid?}
@@ -15,7 +18,7 @@ flowchart TD
     RoleCheck -- Yes --> Dashboard[Community Dashboard]
 
     %% Main modules
-    Dashboard --> Choose{Select module}
+    Dashboard --> Choose{Select module or dashboard deep link}
     Choose --> Residents[Resident Profiling]
     Choose --> QR[QR Verification]
     Choose --> Analytics[Population / Poverty / Sector Analytics]
@@ -26,6 +29,7 @@ flowchart TD
     Choose --> Beneficiary[Beneficiary Tracking]
     Choose --> Predictive[Predictive Growth]
     Choose --> AnnouncementsAdmin[Announcements Admin]
+    Choose --> OrdinanceAdmin[Ordinance Archive Admin]
     Choose --> Reports[DILG Reports]
     Choose --> Users[User Management]
     Choose --> AdminTools[System & Audit]
@@ -41,9 +45,19 @@ flowchart TD
     Beneficiary --> BenefitData[(Beneficiaries + Programs)]
     Predictive --> DB
     AnnouncementsAdmin --> AnnData[(Announcements)]
+    OrdinanceAdmin --> OrdinanceData
     Reports --> DB
     Users --> ProfileData[(Profiles + Roles)]
     AdminTools --> AuditData[(Audit Logs + Backup/Restore)]
+
+    GIS --> Geocoder[Nominatim / OpenStreetMap geocoder]
+    GIS --> MapTiles[OpenStreetMap tiles + offline cache]
+    Crime --> MapTiles
+    Hotspot --> MapTiles
+    Disaster --> MapTiles
+    Crime --> IncidentMedia[(Incident photos)]
+    AnnouncementsAdmin --> AnnouncementMedia[(Announcement photos)]
+    QR --> Document[Browser-generated ID cards<br/>certificates + hashed QR payloads]
 
     %% Shared backend
     DB --> Backend[Supabase Backend<br/>PostgreSQL · Auth · Storage · RLS]

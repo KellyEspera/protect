@@ -20,6 +20,7 @@ import { toast } from 'react-toastify'
 // ── DATA BACKUP HELPERS ───────────────────────────────────────
 const BACKUP_KEY = 'protect_last_backup'
 const BACKUP_LOG_KEY = 'protect_backup_log'
+const BACKUP_BUCKET = 'system-backups'
 
 const DEFAULT_BACKUP_FREQUENCY_DAYS = 7
 
@@ -102,6 +103,21 @@ async function runRestore(file) {
   return results
 }
 
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+async function downloadCloudBackup(filename) {
+  const { data, error } = await supabase.storage.from(BACKUP_BUCKET).download(filename)
+  if (error) throw error
+  saveBlob(data, filename)
+}
+
 // Small hook holding all the backup UI state (last backup, schedule, etc.).
 function useBackupState() {
   const [lastBackup, setLastBackup] = useState(() => {
@@ -110,7 +126,30 @@ function useBackupState() {
   })
   const [backupLog, setBackupLog] = useState(() => JSON.parse(localStorage.getItem(BACKUP_LOG_KEY) || '[]'))
   const [backing, setBacking] = useState(false)
+  const [cloudDownloading, setCloudDownloading] = useState(null)
+  const [cloudRestoring, setCloudRestoring] = useState(null)
   const frequency = DEFAULT_BACKUP_FREQUENCY_DAYS
+  const { data: cloudBackups = [], isLoading: cloudBackupsLoading, refetch: refetchCloudBackups } = useQuery({
+    queryKey: ['system-backups'],
+    queryFn: async () => {
+      const { data, error } = await supabase.storage.from(BACKUP_BUCKET).list('', {
+        limit: 50,
+        sortBy: { column: 'name', order: 'desc' },
+      })
+      if (error) throw error
+      return (data || []).filter(file => file.name.endsWith('.json'))
+    },
+  })
+
+  useEffect(() => {
+    const latestCloudBackup = cloudBackups[0]?.created_at
+    if (!latestCloudBackup) return
+    const latestDate = new Date(latestCloudBackup)
+    if (!lastBackup || latestDate > lastBackup) {
+      setLastBackup(latestDate)
+      localStorage.setItem(BACKUP_KEY, latestDate.getTime().toString())
+    }
+  }, [cloudBackups, lastBackup])
 
   // Next backup is due weekly after the last one
   const nextDue = lastBackup ? new Date(lastBackup.getTime() + frequency * 86400000) : null
@@ -137,6 +176,18 @@ function useBackupState() {
       toast.error('Backup failed: ' + err.message)
     } finally {
       setBacking(false)
+    }
+  }
+
+  const downloadCloud = async (filename) => {
+    setCloudDownloading(filename)
+    try {
+      await downloadCloudBackup(filename)
+      toast.success('Cloud backup downloaded.')
+    } catch (err) {
+      toast.error('Cloud backup download failed: ' + err.message)
+    } finally {
+      setCloudDownloading(null)
     }
   }
 
@@ -167,7 +218,20 @@ function useBackupState() {
     }
   }
 
-  return { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore }
+  const restoreCloud = async (filename) => {
+    setCloudRestoring(filename)
+    try {
+      const { data, error } = await supabase.storage.from(BACKUP_BUCKET).download(filename)
+      if (error) throw error
+      await doRestore(new File([data], filename, { type: 'application/json' }))
+    } catch (err) {
+      toast.error('Cloud backup restore failed: ' + err.message)
+    } finally {
+      setCloudRestoring(null)
+    }
+  }
+
+  return { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore, cloudBackups, cloudBackupsLoading, refetchCloudBackups, cloudDownloading, cloudRestoring, downloadCloud, restoreCloud }
 }
 
 // ── AUDIT LOG HELPERS ─────────────────────────────────────────
@@ -206,7 +270,7 @@ const ACTION_STYLE = {
 const TABLE_LABEL = { residents: 'Resident', households: 'Household', incidents: 'Incident' }
 
 export default function AdminTools() {
-  const { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore } = useBackupState()
+  const { lastBackup, backupLog, backing, isOverdue, daysSince, doBackup, frequency, nextDue, daysUntilDue, restoring, restoreSummary, doRestore, cloudBackups, cloudBackupsLoading, refetchCloudBackups, cloudDownloading, cloudRestoring, downloadCloud, restoreCloud } = useBackupState()
 
   // Live audit log — paginated (10 per page), auto-refreshes every 60 seconds.
   const LOG_PAGE_SIZE = 10
@@ -334,7 +398,7 @@ export default function AdminTools() {
       {/* ── DATABASE BACKUP ─────────────────────────────── */}
       <SectionCard
         title="Database Backup & Restore"
-        subtitle="Download a full JSON backup of all barangay data — or restore the system from one"
+        subtitle="Manage automatic cloud backups and restore the system from an authorized backup"
         action={
           isOverdue ? (
             <span className="badge badge-red">
@@ -380,38 +444,46 @@ export default function AdminTools() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
-          <button
-            className="btn btn-primary"
-            onClick={doBackup}
-            disabled={backing}
-            style={{ minWidth: 160 }}
-          >
-            {backing ? '⏳ Backing up...' : '⬇️ Download Backup'}
-          </button>
-          <p style={{ fontSize: 11, color: '#9A9488', margin: 0 }}>
-            Downloads a <code>.json</code> file with all data. Store it in a safe location.
-          </p>
-        </div>
-
-        {/* ── RESTORE ── upload a backup file to re-insert its data ── */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-          <label
-            className="btn btn-ghost"
-            style={{ minWidth: 160, textAlign: 'center', cursor: restoring ? 'not-allowed' : 'pointer', opacity: restoring ? 0.6 : 1 }}
-          >
-            {restoring ? '⏳ Restoring...' : '⬆️ Restore from Backup'}
-            <input
-              type="file"
-              accept="application/json,.json"
-              disabled={restoring}
-              style={{ display: 'none' }}
-              onChange={e => { doRestore(e.target.files?.[0]); e.target.value = '' }}
-            />
-          </label>
-          <p style={{ fontSize: 11, color: '#9A9488', margin: 0 }}>
-            Upload a <code>.json</code> backup to re-insert its data. Records with the same ID are overwritten — this cannot be undone.
-          </p>
+        <div style={{ background: '#F5F8FC', border: '1px solid #D9E5F1', borderRadius: 8, padding: 14, marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#1A1A2E' }}>Cloud Backups</div>
+              <div style={{ fontSize: 11, color: '#7A8490', marginTop: 2 }}>Automatic weekly files from Supabase Storage</div>
+            </div>
+            <button className="btn btn-ghost text-xs" onClick={() => refetchCloudBackups()} disabled={cloudBackupsLoading}>
+              {cloudBackupsLoading ? 'Refreshing...' : 'Refresh Cloud Files'}
+            </button>
+          </div>
+          {cloudBackups.length === 0 ? (
+            <div style={{ fontSize: 11, color: '#9A9488', padding: '8px 0' }}>
+              {cloudBackupsLoading ? 'Loading cloud backups...' : 'No cloud backups found. The weekly job will create one automatically.'}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead><tr><th>File</th><th>Created</th><th>Size</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {cloudBackups.map(file => (
+                    <tr key={file.name}>
+                      <td style={{ fontSize: 12, fontWeight: 600 }}>{file.name}</td>
+                      <td style={{ fontSize: 11, color: '#7A8490' }}>{file.created_at ? new Date(file.created_at).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '—'}</td>
+                      <td style={{ fontSize: 11, color: '#7A8490' }}>{file.metadata?.size ? `${Math.ceil(file.metadata.size / 1024)} KB` : '—'}</td>
+                      <td>
+                        <div className="flex gap-1">
+                          <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => downloadCloud(file.name)} disabled={cloudDownloading === file.name}>
+                            {cloudDownloading === file.name ? 'Downloading...' : 'Download'}
+                          </button>
+                          <button className="btn btn-ghost px-2 py-1 text-xs" onClick={() => restoreCloud(file.name)} disabled={cloudRestoring === file.name || restoring}>
+                            {cloudRestoring === file.name ? 'Restoring...' : 'Restore'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {restoreSummary && (
@@ -434,23 +506,6 @@ export default function AdminTools() {
           </div>
         )}
 
-        {backupLog.length > 0 && (
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9A9488', marginBottom: 8 }}>Recent Backups</div>
-            <div className="overflow-x-auto"><table className="data-table">
-              <thead><tr><th>#</th><th>Date &amp; Time</th><th>Records</th></tr></thead>
-              <tbody>
-                {backupLog.map((b, i) => (
-                  <tr key={i}>
-                    <td>{backupLog.length - i}</td>
-                    <td>{new Date(b.date).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                    <td>{(b.rows || 0).toLocaleString()} records</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
-          </div>
-        )}
       </SectionCard>
     </div>
   )

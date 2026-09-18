@@ -32,7 +32,6 @@ import NeedsAssessment from './pages/NeedsAssessment'
 import DILGReports from './pages/DILGReports'
 import PublicAnnouncements from './pages/PublicAnnouncements'
 import Announcements from './pages/Announcements'
-import PublicOrdinances from './pages/PublicOrdinances'
 import OrdinanceArchive from './pages/OrdinanceArchive'
 import UserManagement from './pages/UserManagement'
 import AdminTools from './pages/AdminTools'
@@ -104,7 +103,6 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/resident-needs/*" element={<ResidentNeedsForm />} />
       <Route path="/announcements" element={<PublicAnnouncements />} />
-      <Route path="/ordinances" element={<PublicOrdinances />} />
       <Route
         path="/"
         element={

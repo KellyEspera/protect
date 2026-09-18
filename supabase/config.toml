@@ -1,0 +1,4 @@
+project_id = "qhrwvwelriatrhuvmnmw"
+
+[functions.backup-export]
+verify_jwt = false

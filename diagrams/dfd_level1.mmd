@@ -10,8 +10,9 @@ flowchart TD
     P3([3.0 Log Incidents<br/>& Map Crime])
     P4([4.0 Manage Beneficiaries<br/>& Assistance])
     P5([5.0 QR Verification<br/>& Documents])
-    P6([6.0 Announcements<br/>& Needs Survey])
-    P7([7.0 Analytics<br/>& DILG Reports])
+    P6([6.0 Public Content<br/>Announcements & Ordinances])
+    P7([7.0 Needs Intake])
+    P8([8.0 Analytics<br/>& DILG Reports])
 
     %% ---- Data stores ----
     D1[(D1 profiles)]
@@ -19,8 +20,10 @@ flowchart TD
     D3[(D3 incidents · disaster_risk_zones)]
     D4[(D4 beneficiaries · assistance_programs)]
     D5[(D5 qr_verifications)]
-    D6[(D6 announcements · survey_responses)]
-    D7[(D7 population_history · audit_logs)]
+    D6[(D6 announcements · ordinances)]
+    D7[(D7 survey_responses)]
+    D8[(D8 population_history · audit_logs)]
+    S1[(Storage: photos · PDFs)]
 
     %% ---- Auth ----
     Staff --> P1
@@ -47,17 +50,25 @@ flowchart TD
     P5 --> D5
     P5 --> D4
 
-    %% ---- Announcements / survey ----
+    %% ---- Public content ----
     Staff --> P6
-    Public --> P6
     P6 --> D6
     D6 --> P6
-    D6 --> Public
+    P6 --> Public
+    P6 --> S1
+
+    %% ---- Needs intake ----
+    Public --> P7
+    Staff --> P7
+    P7 --> D7
+    P7 --> S1
+    D7 --> P7
 
     %% ---- Analytics / reports ----
-    Staff --> P7
-    D2 --> P7
-    D3 --> P7
-    D4 --> P7
-    D7 --> P7
-    P7 --> DILG
+    Staff --> P8
+    D2 --> P8
+    D3 --> P8
+    D4 --> P8
+    D7 --> P8
+    D8 --> P8
+    P8 --> DILG
