@@ -1,8 +1,13 @@
 flowchart TD
     M((M)) --> Tool{System &amp; Audit}
     Tool -- Activity Log --> Audit[View audit trail - paginated<br/>add / edit / delete on<br/>residents · households · incidents]
-    Tool -- Download Backup --> Backup[Download full JSON backup<br/>of core data]
-    Tool -- Restore --> Restore[Upload JSON backup →<br/>re-insert in FK-safe order<br/>overwrite by id + per-table summary]
+    Tool -- Audit scope --> Scope[Trigger-based audit coverage<br/>residents · households · incidents]
+    Tool -- Cloud backups --> Cloud[List files in system-backups<br/>download selected JSON backup]
+    Tool -- Restore --> Restore[Upload or select JSON backup →<br/>re-insert in FK-safe order<br/>overwrite by id + per-table summary]
+    Cron[pg_cron protect-weekly-backup<br/>Saturday 02:00 UTC] --> Export[backup-export Edge Function]
+    Export --> Auto[Export core tables to<br/>system-backups as JSON]
+    Scope --> R((R))
+    Cloud --> R((R))
+    Auto --> R((R))
     Audit --> R((R))
-    Backup --> R((R))
     Restore --> R((R))

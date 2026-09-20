@@ -23,7 +23,6 @@ flowchart LR
     Res["🧑 Resident /<br/>Public"]:::actor
     RUC1(["Submit Needs<br/>Assessment"]):::needs
     RUC2(["View Public<br/>Announcements"]):::needs
-    RUC3(["Search Public<br/>Ordinances"]):::needs
 
     %% ===== Secretary — full access =====
     Sec --- UC1 & UC2 & UC3 & UC4 & UC5 & UC6 & UC7 & UC8 & UC9 & UC10
@@ -34,7 +33,6 @@ flowchart LR
     %% ===== Resident / Public — no login (separate, public use cases) =====
     RUC1 --- Res
     RUC2 --- Res
-    RUC3 --- Res
 
     %% ===== Styling =====
     classDef actor fill:#1A3A5C,stroke:#10243a,color:#fff,font-weight:bold;

@@ -9,7 +9,7 @@ flowchart TD
     Scan --> Found[Identify resident<br/>show Head / Member + sector badges]
     Found --> Purpose{Purpose of verification?}
 
-    Purpose -- "Document request" --> Doc[Generate barangay document as PDF jsPDF<br/>Clearance · Indigency · Residency · Permit]
+    Purpose -- "Document request" --> Doc[Generate branded PDF with barangay logo<br/>Clearance · Indigency · Residency · Good Moral<br/>Business Permit · ID Verification · Assistance Claim · Others]
     Doc --> DocPrint[Print autoPrint or download<br/>for Punong Barangay signature]
     DocPrint --> Log
 

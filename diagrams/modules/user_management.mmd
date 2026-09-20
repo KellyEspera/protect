@@ -5,3 +5,7 @@ flowchart TD
     Edit --> Save[Save to profiles<br/>role enforced by Row-Level Security]
     Save --> R((R))
     Act -- View only --> R((R))
+
+    Role[Access model] --> Secretary[brgy_sec: full system access]
+    Role --> Tanod[tanod: dashboard, crime, hotspot only]
+    Role --> None[Unassigned user: gated access]

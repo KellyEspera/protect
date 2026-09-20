@@ -1,0 +1,27 @@
+flowchart TD
+    O((O)) --> Access{Secretary authorized?}
+    Access -- No --> Denied[Access Restricted]
+    Access -- Yes --> Archive[Open private Ordinance Archive]
+    Archive --> Filter[Search and filter by title, category, status, year]
+    Filter --> Action{Choose action}
+
+    Action -- Create or edit --> Metadata[Enter ordinance number, title, category,
+    enacted date, summary, sponsor, status]
+    Metadata --> File{Signed PDF available?}
+    File -- Yes --> Upload[Upload signed PDF to ordinance-pdfs]
+    File -- No --> Generated[Generate official preview document]
+    Upload --> Save[Save ordinance metadata]
+    Generated --> Save
+
+    Action -- Preview --> Preview[Open generated or uploaded document preview]
+    Action -- Print --> Print[Print document]
+    Action -- Download --> Download[Download PDF]
+    Action -- Hide or show --> Toggle[Update is_active]
+    Action -- Delete --> Delete[Remove ordinance and file]
+
+    Save --> R((R))
+    Preview --> R
+    Print --> R
+    Download --> R
+    Toggle --> R
+    Delete --> R

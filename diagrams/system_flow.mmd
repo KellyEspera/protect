@@ -22,7 +22,7 @@ flowchart TD
   Module --> Residents[Resident Profiling<br/>URL filters + household links]
   Module --> QR[QR Verification<br/>SHA-256 QR + scan log + ID/certificates<br/>+ assistance release]
   Module --> GIS[GIS Household Map<br/>Leaflet pins + Nominatim place search<br/>+ offline tile cache]
-  Module --> Crime[Crime & Incident<br/>exact location + photo + notes<br/>status workflow]
+  Module --> Crime[Crime & Incident<br/>exact location + photo + description<br/>status workflow]
   Module --> Hotspot[Crime Hotspot Map<br/>heatmap / pins from incident locations]
   Module --> Disaster[Disaster Vulnerability<br/>editable risk circles + exposed households]
   Module --> Beneficiary[Beneficiary Tracking<br/>status deep links + releases]
@@ -33,7 +33,7 @@ flowchart TD
   Module --> OrdinanceAdmin[Ordinance Archive Admin<br/>metadata + signed PDF upload]
   Module --> Reports[DILG Reports<br/>PDF/Excel output]
   Module --> Users[User Management + roles]
-  Module --> AdminTools[System & Audit<br/>audit viewer + JSON backup/restore<br/>weekly reminder]
+  Module --> AdminTools[System & Audit<br/>audit viewer + cloud backup<br/>download and restore]
 
   subgraph External[External services]
     Geo[Nominatim / OpenStreetMap geocoder<br/>address, landmark, business search]
@@ -48,8 +48,13 @@ flowchart TD
   subgraph Supabase[Supabase backend]
     Auth[Supabase Auth]
     DB[(PostgreSQL + RLS)]
-    Storage[(Storage buckets<br/>incident photos · announcement photos<br/>needs photos · ordinance PDFs)]
+    Storage[(Storage buckets<br/>incident-photos · announcement-photos<br/>needs-photos · ordinance-pdfs · system-backups)]
     Audit[DB triggers -> audit_logs]
+  end
+
+  subgraph Automation[Scheduled backup service]
+    Cron[pg_cron<br/>protect-weekly-backup<br/>Saturday 02:00 UTC]
+    Export[backup-export Edge Function<br/>exports core tables to JSON]
   end
 
   Login --> Auth
@@ -76,6 +81,10 @@ flowchart TD
   AnnounceAdmin --> Storage
   NeedsWrite --> Storage
   OrdinanceAdmin --> Storage
+  AdminTools --> Storage
+  Cron --> Export
+  Export --> DB
+  Export --> Storage
   DB --> Audit
   Audit --> DB
 

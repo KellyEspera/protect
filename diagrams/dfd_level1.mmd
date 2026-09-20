@@ -10,9 +10,11 @@ flowchart TD
     P3([3.0 Log Incidents<br/>& Map Crime])
     P4([4.0 Manage Beneficiaries<br/>& Assistance])
     P5([5.0 QR Verification<br/>& Documents])
-    P6([6.0 Public Content<br/>Announcements & Ordinances])
-    P7([7.0 Needs Intake])
-    P8([8.0 Analytics<br/>& DILG Reports])
+    P6([6.0 Manage Public<br/>Announcements])
+    P7([7.0 Secretary Ordinance<br/>Archive])
+    P8([8.0 Needs Intake])
+    P9([9.0 Analytics<br/>& DILG Reports])
+    P10([10.0 Audit, Cloud Backup<br/>& Restore])
 
     %% ---- Data stores ----
     D1[(D1 profiles)]
@@ -20,10 +22,13 @@ flowchart TD
     D3[(D3 incidents · disaster_risk_zones)]
     D4[(D4 beneficiaries · assistance_programs)]
     D5[(D5 qr_verifications)]
-    D6[(D6 announcements · ordinances)]
-    D7[(D7 survey_responses)]
-    D8[(D8 population_history · audit_logs)]
-    S1[(Storage: photos · PDFs)]
+    D6[(D6 announcements)]
+    D7[(D7 ordinances)]
+    D8[(D8 survey_responses)]
+    D9[(D9 population_history · audit_logs)]
+    S1[(S1 incident photos · announcement photos<br/>needs photos · ordinance PDFs)]
+    S2[(S2 system-backups JSON files)]
+    F1[[backup-export Edge Function<br/>pg_cron weekly trigger]]
 
     %% ---- Auth ----
     Staff --> P1
@@ -50,25 +55,42 @@ flowchart TD
     P5 --> D5
     P5 --> D4
 
-    %% ---- Public content ----
+    %% ---- Public announcements ----
     Staff --> P6
     P6 --> D6
     D6 --> P6
     P6 --> Public
     P6 --> S1
 
-    %% ---- Needs intake ----
-    Public --> P7
+    %% ---- Secretary ordinance archive ----
     Staff --> P7
     P7 --> D7
-    P7 --> S1
     D7 --> P7
+    P7 --> S1
+
+    %% ---- Needs intake ----
+    Public --> P8
+    Staff --> P8
+    P8 --> D8
+    P8 --> S1
+    D8 --> P8
 
     %% ---- Analytics / reports ----
-    Staff --> P8
-    D2 --> P8
-    D3 --> P8
-    D4 --> P8
-    D7 --> P8
-    D8 --> P8
-    P8 --> DILG
+    Staff --> P9
+    D2 --> P9
+    D3 --> P9
+    D4 --> P9
+    D8 --> P9
+    D9 --> P9
+    P9 --> DILG
+
+    %% ---- Audit and cloud backup ----
+    Staff --> P10
+    P10 --> D9
+    P10 --> S2
+    S2 --> P10
+    F1 --> S2
+    F1 --> D2
+    F1 --> D3
+    F1 --> D4
+    F1 --> D8

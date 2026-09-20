@@ -13,7 +13,10 @@ flowchart TD
     Who -- "Public (no login)" --> PAct{Action?}
     PAct -- Read --> Read[View bulletin board<br/>active announcements]
     PAct -- Submit needs --> NForm[Fill Community Needs form]
-    NForm --> SaveN[Save to survey_responses]
+    NForm --> Photo{Optional photo?}
+    Photo -- Yes --> NeedPhoto[Upload to needs-photos]
+    Photo -- No --> SaveN[Save to survey_responses]
+    NeedPhoto --> SaveN
 
     Who -- "Staff (Needs Assessment)" --> Agg[View aggregated survey stats<br/>priority ranking · sitios covered]
 

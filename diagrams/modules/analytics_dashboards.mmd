@@ -9,6 +9,7 @@ flowchart TD
     P1 --> Render[Render bar / doughnut / pie charts<br/>+ summary cards]
     P2 --> Render
     P3 --> Render
-    Render --> Export{Export PDF?}
-    Export -- Yes --> PDF[Generate PDF report] --> R((R))
-    Export -- No --> R
+    Export{Choose export?}
+    Export -- PDF --> PDF[Generate PDF report] --> R((R))
+    Export -- Excel --> Excel[Generate XLSX workbook] --> R((R))
+    Export -- None --> R

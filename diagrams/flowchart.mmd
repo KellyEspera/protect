@@ -29,10 +29,10 @@ flowchart TD
     Choose --> Beneficiary[Beneficiary Tracking]
     Choose --> Predictive[Predictive Growth]
     Choose --> AnnouncementsAdmin[Announcements Admin]
-    Choose --> OrdinanceAdmin[Ordinance Archive Admin]
+    Choose --> OrdinanceAdmin[Ordinance Archive<br/>Secretary-only search, preview, print, download]
     Choose --> Reports[DILG Reports]
     Choose --> Users[User Management]
-    Choose --> AdminTools[System & Audit]
+    Choose --> AdminTools[System & Audit<br/>audit viewer + cloud backup download/restore]
 
     %% Data operations for each module
     Residents --> DB[(Residents + Households)]
@@ -45,10 +45,10 @@ flowchart TD
     Beneficiary --> BenefitData[(Beneficiaries + Programs)]
     Predictive --> DB
     AnnouncementsAdmin --> AnnData[(Announcements)]
-    OrdinanceAdmin --> OrdinanceData
+    OrdinanceAdmin --> OrdinanceData[(Ordinances + signed PDFs)]
     Reports --> DB
     Users --> ProfileData[(Profiles + Roles)]
-    AdminTools --> AuditData[(Audit Logs + Backup/Restore)]
+    AdminTools --> AuditData[(Audit Logs)]
 
     GIS --> Geocoder[Nominatim / OpenStreetMap geocoder]
     GIS --> MapTiles[OpenStreetMap tiles + offline cache]
@@ -57,7 +57,20 @@ flowchart TD
     Disaster --> MapTiles
     Crime --> IncidentMedia[(Incident photos)]
     AnnouncementsAdmin --> AnnouncementMedia[(Announcement photos)]
+        Needs --> NeedsMedia[(Needs photos)]
+        OrdinanceAdmin --> OrdinanceMedia[(Ordinance PDFs)]
     QR --> Document[Browser-generated ID cards<br/>certificates + hashed QR payloads]
+
+        subgraph BackupAutomation[Scheduled cloud backup]
+            Cron[pg_cron<br/>protect-weekly-backup<br/>Saturday 02:00 UTC]
+            Export[backup-export Edge Function<br/>JSON export of core tables]
+            BackupStore[(system-backups bucket)]
+        end
+
+        AdminTools --> BackupStore
+        BackupStore --> AdminTools
+        Cron --> Export
+        Export --> BackupStore
 
     %% Shared backend
     DB --> Backend[Supabase Backend<br/>PostgreSQL · Auth · Storage · RLS]
