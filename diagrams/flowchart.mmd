@@ -1,85 +1,115 @@
-flowchart TD
+flowchart TB
     Start([Start]) --> Open[User opens PROTECT]
-    Open --> Access{Public link or staff login?}
+    Open --> Access{Public or staff?}
 
-    %% Public access
-    Access -- Public --> Public{Public service}
-    Public --> Announcements[Public Announcements<br/>/announcements]
-    Public --> Needs[Needs Submission Portal<br/>/resident-needs]
+    subgraph PublicFlow[Public access]
+        direction TB
+        Announcements[Public announcements]
+        Needs[Needs submission]
+    end
+
+    Access -- Public --> Announcements
+    Access -- Public --> Needs
     Announcements --> PublicData[(Announcements)]
     Needs --> NeedsData[(Survey responses + needs photos)]
 
-    %% Staff access
-    Access -- Staff login --> AuthCheck{Supabase Auth valid?}
+    subgraph StaffFlow[Staff access]
+        direction TB
+        AuthCheck{Valid Supabase Auth?}
+        Profile[Fetch profile and role]
+        RoleCheck{Role authorized?}
+        Dashboard[Community dashboard]
+        Choose{Choose module}
+    end
+
+    Access -- Staff --> AuthCheck
     AuthCheck -- No --> Login[Login page]
-    AuthCheck -- Yes --> Profile[Fetch user profile + role]
-    Profile --> RoleCheck{Role authorized for page?}
-    RoleCheck -- No --> Restricted[Access Restricted]
-    RoleCheck -- Yes --> Dashboard[Community Dashboard]
+    AuthCheck -- Yes --> Profile
+    Profile --> RoleCheck
+    RoleCheck -- No --> Restricted[Access restricted]
+    RoleCheck -- Yes --> Dashboard
+    Dashboard --> Choose
 
-    %% Main modules
-    Dashboard --> Choose{Select module or dashboard deep link}
-    Choose --> Residents[Resident Profiling]
-    Choose --> QR[QR Verification]
-    Choose --> Analytics[Population / Poverty / Sector Analytics]
-    Choose --> GIS[GIS Household Map]
-    Choose --> Crime[Crime & Incident]
-    Choose --> Hotspot[Crime Hotspot Map]
-    Choose --> Disaster[Disaster Vulnerability]
-    Choose --> Beneficiary[Beneficiary Tracking]
-    Choose --> Predictive[Predictive Growth]
-    Choose --> AnnouncementsAdmin[Announcements Admin]
-    Choose --> OrdinanceAdmin[Ordinance Archive<br/>Secretary-only search, preview, print, download]
-    Choose --> Reports[DILG Reports]
-    Choose --> Users[User Management]
-    Choose --> AdminTools[System & Audit<br/>audit viewer + cloud backup download/restore]
+    subgraph Modules[Barangay modules]
+        direction TB
+        Residents[Resident Profiling]
+        QR[QR Verification]
+        GIS[GIS Household Map]
+        Crime[Crime & Incident]
+        Hotspot[Crime Hotspot Map]
+        Disaster[Disaster Vulnerability]
+        Beneficiary[Beneficiary Tracking]
+        Analytics[Analytics]
+        Reports[DILG Reports]
+        Ordinance[Ordinance Archive]
+        AnnouncementsAdmin[Announcements Admin]
+        Users[User Management]
+        AdminTools[System & Audit]
+    end
 
-    %% Data operations for each module
-    Residents --> DB[(Residents + Households)]
-    QR --> DB
-    Analytics --> DB
-    GIS --> DB
-    Crime --> IncidentData[(Incidents)]
-    Hotspot --> IncidentData
-    Disaster --> DisasterData[(Risk Zones + Survey Data)]
-    Beneficiary --> BenefitData[(Beneficiaries + Programs)]
-    Predictive --> DB
-    AnnouncementsAdmin --> AnnData[(Announcements)]
-    OrdinanceAdmin --> OrdinanceData[(Ordinances + signed PDFs)]
-    Reports --> DB
-    Users --> ProfileData[(Profiles + Roles)]
-    AdminTools --> AuditData[(Audit Logs)]
+    Choose --> Residents
+    Choose --> QR
+    Choose --> GIS
+    Choose --> Crime
+    Choose --> Hotspot
+    Choose --> Disaster
+    Choose --> Beneficiary
+    Choose --> Analytics
+    Choose --> Reports
+    Choose --> Ordinance
+    Choose --> AnnouncementsAdmin
+    Choose --> Users
+    Choose --> AdminTools
 
-    GIS --> Geocoder[Nominatim / OpenStreetMap geocoder]
-    GIS --> MapTiles[OpenStreetMap tiles + offline cache]
-    Crime --> MapTiles
-    Hotspot --> MapTiles
-    Disaster --> MapTiles
-    Crime --> IncidentMedia[(Incident photos)]
-    AnnouncementsAdmin --> AnnouncementMedia[(Announcement photos)]
-        Needs --> NeedsMedia[(Needs photos)]
-        OrdinanceAdmin --> OrdinanceMedia[(Ordinance PDFs)]
-    QR --> Document[Browser-generated ID cards<br/>certificates + hashed QR payloads]
+    subgraph Data[App data stores]
+        direction TB
+        ResidentsDB[(Residents + households)]
+        IncidentsDB[(Incidents)]
+        BenefitsDB[(Beneficiaries + programs)]
+        AnnDB[(Announcements)]
+        OrdinanceDB[(Ordinances + PDFs)]
+        BackupDB[(system-backups)]
+        AuditDB[(Audit logs)]
+    end
 
-        subgraph BackupAutomation[Scheduled cloud backup]
-            Cron[pg_cron<br/>protect-weekly-backup<br/>Saturday 02:00 UTC]
-            Export[backup-export Edge Function<br/>JSON export of core tables]
-            BackupStore[(system-backups bucket)]
-        end
+    Residents --> ResidentsDB
+    QR --> ResidentsDB
+    GIS --> ResidentsDB
+    Crime --> IncidentsDB
+    Hotspot --> IncidentsDB
+    Disaster --> IncidentsDB
+    Beneficiary --> BenefitsDB
+    AnnouncementsAdmin --> AnnDB
+    Ordinance --> OrdinanceDB
+    AdminTools --> AuditDB
+    AdminTools --> BackupDB
 
-        AdminTools --> BackupStore
-        BackupStore --> AdminTools
-        Cron --> Export
-        Export --> BackupStore
+    GIS --> Geo[Nominatim search]
+    GIS --> Tiles[OpenStreetMap tiles]
+    Crime --> Tiles
+    Hotspot --> Tiles
+    Disaster --> Tiles
 
-    %% Shared backend
-    DB --> Backend[Supabase Backend<br/>PostgreSQL · Auth · Storage · RLS]
-    IncidentData --> Backend
-    DisasterData --> Backend
-    BenefitData --> Backend
-    AnnData --> Backend
-    ProfileData --> Backend
-    AuditData --> Backend
+    QR --> Document[Generated certificates + QR payloads]
+
+    subgraph BackupAutomation[Backup automation]
+        direction TB
+        Cron[pg_cron weekly trigger]
+        Export[backup-export function]
+        Store[(system-backups bucket)]
+    end
+
+    Cron --> Export
+    Export --> Store
+    AdminTools --> Store
+
+    ResidentsDB --> Backend[Supabase backend]
+    IncidentsDB --> Backend
+    BenefitsDB --> Backend
+    AnnDB --> Backend
+    OrdinanceDB --> Backend
+    AuditDB --> Backend
+    Store --> Backend
 
     Backend --> Session{Continue session?}
     Session -- Yes --> Dashboard

@@ -1,81 +1,74 @@
-flowchart TD
-    %% ---- External entities ----
+flowchart LR
     Staff[Barangay Staff]
-    DILG[DILG / Government]
     Public[Resident / Public]
+    DILG[DILG / Government]
 
-    %% ---- Processes ----
-    P1([1.0 Authenticate<br/>& Authorize])
-    P2([2.0 Manage Residents<br/>& Households / GIS])
-    P3([3.0 Log Incidents<br/>& Map Crime])
-    P4([4.0 Manage Beneficiaries<br/>& Assistance])
-    P5([5.0 QR Verification<br/>& Documents])
-    P6([6.0 Manage Public<br/>Announcements])
-    P7([7.0 Secretary Ordinance<br/>Archive])
-    P8([8.0 Needs Intake])
-    P9([9.0 Analytics<br/>& DILG Reports])
-    P10([10.0 Audit, Cloud Backup<br/>& Restore])
+    subgraph Processes[Core processes]
+        direction TB
+        P1([1.0 Authenticate])
+        P2([2.0 Residents + households])
+        P3([3.0 Incidents + hotspot])
+        P4([4.0 Beneficiaries])
+        P5([5.0 QR + certificate issuance])
+        P6([6.0 Public announcements])
+        P7([7.0 Ordinance archive])
+        P8([8.0 Needs intake])
+        P9([9.0 Analytics + reports])
+        P10([10.0 Audit + backup])
+    end
 
-    %% ---- Data stores ----
-    D1[(D1 profiles)]
-    D2[(D2 residents · households)]
-    D3[(D3 incidents · disaster_risk_zones)]
-    D4[(D4 beneficiaries · assistance_programs)]
-    D5[(D5 qr_verifications)]
-    D6[(D6 announcements)]
-    D7[(D7 ordinances)]
-    D8[(D8 survey_responses)]
-    D9[(D9 population_history · audit_logs)]
-    S1[(S1 incident photos · announcement photos<br/>needs photos · ordinance PDFs)]
-    S2[(S2 system-backups JSON files)]
-    F1[[backup-export Edge Function<br/>pg_cron weekly trigger]]
+    subgraph Stores[Data stores]
+        direction TB
+        D1[(Profiles)]
+        D2[(Residents + households)]
+        D3[(Incidents + risk zones)]
+        D4[(Beneficiaries + programs)]
+        D5[(QR verifications)]
+        D6[(Announcements)]
+        D7[(Ordinances)]
+        D8[(Survey responses)]
+        D9[(Population history + audit logs)]
+        S1[(Photos + PDFs)]
+        S2[(system-backups JSON)]
+    end
 
-    %% ---- Auth ----
     Staff --> P1
     P1 --> D1
 
-    %% ---- Residents / households ----
     Staff --> P2
     P2 --> D2
     D2 --> P2
 
-    %% ---- Incidents ----
     Staff --> P3
     P3 --> D3
     D3 --> P3
 
-    %% ---- Beneficiaries ----
     Staff --> P4
     P4 --> D4
     D4 --> P4
 
-    %% ---- QR / documents ----
     Staff --> P5
     D2 --> P5
     P5 --> D5
     P5 --> D4
 
-    %% ---- Public announcements ----
     Staff --> P6
     P6 --> D6
     D6 --> P6
-    P6 --> Public
     P6 --> S1
+    P6 --> Public
 
-    %% ---- Secretary ordinance archive ----
     Staff --> P7
     P7 --> D7
     D7 --> P7
     P7 --> S1
 
-    %% ---- Needs intake ----
     Public --> P8
     Staff --> P8
     P8 --> D8
     P8 --> S1
     D8 --> P8
 
-    %% ---- Analytics / reports ----
     Staff --> P9
     D2 --> P9
     D3 --> P9
@@ -84,11 +77,12 @@ flowchart TD
     D9 --> P9
     P9 --> DILG
 
-    %% ---- Audit and cloud backup ----
     Staff --> P10
     P10 --> D9
     P10 --> S2
     S2 --> P10
+
+    P10 -. scheduled export .-> F1[[backup-export]]
     F1 --> S2
     F1 --> D2
     F1 --> D3

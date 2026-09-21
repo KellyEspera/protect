@@ -1,60 +1,89 @@
-flowchart TD
-  Start([Open PROTECT]) --> App[main.jsx boots React SPA]
-  App --> Router[App.jsx routes + auth bootstrap]
-  Router --> Access{Public route or staff route?}
+flowchart TB
+  Start([Open PROTECT]) --> App[React app loads]
+  App --> Router[App.jsx route + auth bootstrap]
+  Router --> Access{Public or staff?}
 
-  Access -- Public --> PublicRoute{Public path}
-  PublicRoute --> Announce[Community announcements<br/>/announcements]
-  PublicRoute --> Needs[Resident needs form<br/>/resident-needs]
-  Announce --> PublicRead[Read active public records]
-  Needs --> NeedsWrite[Submit sitio, need, comments,<br/>optional photo]
-
-  Access -- Staff --> Session{Supabase session valid?}
-  Session -- No --> Login[Login + rate-limited authentication]
-  Login --> Session
-  Session -- Yes --> Profile[Load profile and role]
-  Profile --> Permission{Role authorized?}
-  Permission -- No --> Restricted[Access Restricted]
-  Permission -- Yes --> Shell[SPA shell: sidebar + topbar]
-  Shell --> Dashboard[Community Dashboard<br/>clickable summary cards + deep links]
-  Dashboard --> Module{Select permitted module}
-
-  Module --> Residents[Resident Profiling<br/>URL filters + household links]
-  Module --> QR[QR Verification<br/>SHA-256 QR + scan log + ID/certificates<br/>+ assistance release]
-  Module --> GIS[GIS Household Map<br/>Leaflet pins + Nominatim place search<br/>+ offline tile cache]
-  Module --> Crime[Crime & Incident<br/>exact location + photo + description<br/>status workflow]
-  Module --> Hotspot[Crime Hotspot Map<br/>heatmap / pins from incident locations]
-  Module --> Disaster[Disaster Vulnerability<br/>editable risk circles + exposed households]
-  Module --> Beneficiary[Beneficiary Tracking<br/>status deep links + releases]
-  Module --> Analytics[Population / Poverty / Sector<br/>sitio colors + selectable exports]
-  Module --> Predictive[Predictive Growth]
-  Module --> NeedsAdmin[Needs Assessment]
-  Module --> AnnounceAdmin[Announcements Admin<br/>image upload + publish/hide]
-  Module --> OrdinanceAdmin[Ordinance Archive Admin<br/>metadata + signed PDF upload]
-  Module --> Reports[DILG Reports<br/>PDF/Excel output]
-  Module --> Users[User Management + roles]
-  Module --> AdminTools[System & Audit<br/>audit viewer + cloud backup<br/>download and restore]
-
-  subgraph External[External services]
-    Geo[Nominatim / OpenStreetMap geocoder<br/>address, landmark, business search]
-    Tiles[OpenStreetMap tiles]
+  subgraph PublicFlow[Public access]
+    direction TB
+    PublicRoute[Public portal]
+    PublicAnnounce[View public announcements]
+    NeedsForm[Submit community need]
   end
-  GIS --> Geo
-  GIS --> Tiles
-  Crime --> Tiles
-  Hotspot --> Tiles
-  Disaster --> Tiles
 
-  subgraph Supabase[Supabase backend]
+  Access -- Public --> PublicRoute
+  PublicRoute --> PublicAnnounce
+  PublicRoute --> NeedsForm
+  PublicAnnounce --> PublicData[(Public announcements)]
+  NeedsForm --> NeedsData[(Survey responses + needs photos)]
+
+  subgraph StaffFlow[Staff access]
+    direction TB
+    Login[Login]
+    Session{Valid Supabase session?}
+    Profile[Load profile and role]
+    Permission{Role allowed?}
+    Dashboard[Community dashboard]
+    Module{Choose module}
+  end
+
+  Access -- Staff --> Login
+  Login --> Session
+  Session -- No --> Login
+  Session -- Yes --> Profile
+  Profile --> Permission
+  Permission -- No --> Restricted[Access restricted]
+  Permission -- Yes --> Dashboard
+  Dashboard --> Module
+
+  subgraph Modules[Permitted modules]
+    direction LR
+
+    subgraph CoreModules[Core service modules]
+      direction TB
+      Residents[Resident Profiling]
+      QR[QR Verification]
+      GIS[GIS Household Map]
+      Crime[Crime & Incident]
+      Hotspot[Crime Hotspot Map]
+      Disaster[Disaster Vulnerability]
+      Beneficiary[Beneficiary Tracking]
+    end
+
+    subgraph PlanningModules[Planning and reporting]
+      direction TB
+      Analytics[Analytics & reports]
+      Reports[DILG Reports]
+      Ordinance[Ordinance Archive]
+      AnnounceAdmin[Announcements Admin]
+    end
+
+    subgraph AdminModules[Admin and system]
+      direction TB
+      AdminTools[System & Audit]
+    end
+  end
+
+  Module --> Residents
+  Module --> QR
+  Module --> GIS
+  Module --> Crime
+  Module --> Hotspot
+  Module --> Disaster
+  Module --> Beneficiary
+  Module --> Analytics
+  Module --> Reports
+  Module --> Ordinance
+  Module --> AnnounceAdmin
+  Module --> AdminTools
+
+  subgraph Backend[Supabase backend]
+    direction TB
     Auth[Supabase Auth]
     DB[(PostgreSQL + RLS)]
-    Storage[(Storage buckets<br/>incident-photos · announcement-photos<br/>needs-photos · ordinance-pdfs · system-backups)]
-    Audit[DB triggers -> audit_logs]
-  end
-
-  subgraph Automation[Scheduled backup service]
-    Cron[pg_cron<br/>protect-weekly-backup<br/>Saturday 02:00 UTC]
-    Export[backup-export Edge Function<br/>exports core tables to JSON]
+    Storage[(Storage buckets)]
+    Audit[(Audit logs)]
+    Cron[pg_cron weekly backup]
+    Export[backup-export Edge Function]
   end
 
   Login --> Auth
@@ -68,25 +97,28 @@ flowchart TD
   Disaster --> DB
   Beneficiary --> DB
   Analytics --> DB
-  Predictive --> DB
-  NeedsAdmin --> DB
-  AnnounceAdmin --> DB
-  OrdinanceAdmin --> DB
   Reports --> DB
-  Users --> DB
   AdminTools --> DB
-  PublicRead --> DB
-  NeedsWrite --> DB
-  Crime --> Storage
-  AnnounceAdmin --> Storage
-  NeedsWrite --> Storage
-  OrdinanceAdmin --> Storage
-  AdminTools --> Storage
-  Cron --> Export
-  Export --> DB
-  Export --> Storage
+  Ordinance --> DB
+  AnnounceAdmin --> DB
   DB --> Audit
-  Audit --> DB
+
+  GIS --> Geo[Nominatim / OSM geocoder]
+  GIS --> Tiles[OpenStreetMap tiles]
+  Crime --> Tiles
+  Hotspot --> Tiles
+  Disaster --> Tiles
+
+  Crime --> IncidentPhoto[(Incident photos)]
+  AnnounceAdmin --> AnnPhoto[(Announcement photos)]
+  NeedsForm --> NeedsPhoto[(Needs photos)]
+  Ordinance --> OrdinancePDF[(Ordinance PDFs)]
+  AdminTools --> BackupStore[(system-backups bucket)]
+  Cron --> Export
+  Export --> BackupStore
+  Export --> DB
+  DB --> Storage
+  Storage --> BackupStore
 
   DB --> Continue{Continue session?}
   Continue -- Yes --> Dashboard
