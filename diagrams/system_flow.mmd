@@ -25,33 +25,26 @@ flowchart LR
     Staff --> Auth[Supabase Auth]
     Login --> Auth
 
-    Residents --> DB[(PostgreSQL + RLS)]
-    GIS --> DB
-    Incident --> DB
-    Benefits --> DB
-    QR --> DB
-    Analytics --> DB
-    Reports --> DB
-    Ordinance --> DB
-    Audit --> DB
-    Announcements --> DB
-    Needs --> DB
+    Residents --> Records[Record updates]
+    GIS --> Records
+    Incident --> Records
+    Benefits --> Records
+    QR --> Records
+    Analytics --> Records
+    Reports --> Records
+    Ordinance --> Records
+    Audit --> Records
+    Announcements --> Records
+    Needs --> Records
 
-    DB --> Storage[(Storage buckets)]
-    DB --> AuditLogs[(Audit logs)]
-    DB --> Backup[(system-backups bucket)]
-
-    Cron[pg_cron weekly backup] --> Export[backup-export Edge Function]
-    Export --> Backup
-    Export --> DB
-
-    DB --> Continue{Continue session?}
+    Records --> Output[System output & reports]
+    Output --> Continue{Continue session?}
     Continue -->|Yes| Dashboard
     Continue -->|No| Logout([Logout])
 
     classDef decision fill:#ffffff,stroke:#475569,stroke-width:1.5px,color:#0f172a;
     classDef node fill:#f8fafc,stroke:#334155,stroke-width:1.2px,color:#0f172a;
-    class Start,App,Public,Staff,Login,Dashboard,Module,Announcements,Needs,Residents,GIS,Incident,Benefits,QR,Analytics,Reports,Ordinance,Audit,Auth,DB,Storage,AuditLogs,Backup,Cron,Export,Logout node;
+    class Start,App,Public,Staff,Login,Dashboard,Module,Announcements,Needs,Residents,GIS,Incident,Benefits,QR,Analytics,Reports,Ordinance,Audit,Auth,Records,Output,Logout node;
     class Access,Continue decision;
     linkStyle default stroke:#475569,stroke-width:1.5px;
 
