@@ -1,125 +1,57 @@
-flowchart TB
-  Start([Open PROTECT]) --> App[React app loads]
-  App --> Router[App.jsx route + auth bootstrap]
-  Router --> Access{Public or staff?}
+%%{init: {'theme':'base','themeVariables': {'primaryColor':'#f8fafc','primaryTextColor':'#0f172a','primaryBorderColor':'#475569','lineColor':'#475569','secondaryColor':'#ffffff','tertiaryColor':'#ffffff'}} }%%
+flowchart LR
+    Start([Open PROTECT]) --> App[React app loads]
+    App --> Access{Public or staff?}
 
-  subgraph PublicFlow[Public access]
-    direction TB
-    PublicRoute[Public portal]
-    PublicAnnounce[View public announcements]
-    NeedsForm[Submit community need]
-  end
+    Access -->|Public| Public[Public user]
+    Public --> Announcements[Announcements]
+    Public --> Needs[Community needs form]
 
-  Access -- Public --> PublicRoute
-  PublicRoute --> PublicAnnounce
-  PublicRoute --> NeedsForm
-  PublicAnnounce --> PublicData[(Public announcements)]
-  NeedsForm --> NeedsData[(Survey responses + needs photos)]
+    Access -->|Staff| Staff[Barangay staff]
+    Staff --> Login[Login / auth check]
+    Login --> Dashboard[Dashboard]
+    Dashboard --> Module{Choose module}
 
-  subgraph StaffFlow[Staff access]
-    direction TB
-    Login[Login]
-    Session{Valid Supabase session?}
-    Profile[Load profile and role]
-    Permission{Role allowed?}
-    Dashboard[Community dashboard]
-    Module{Choose module}
-  end
+    Module --> Residents[Resident Profiling]
+    Module --> GIS[GIS Household Map]
+    Module --> Incident[Crime & Incident]
+    Module --> Benefits[Beneficiary Tracking]
+    Module --> QR[QR Verification]
+    Module --> Analytics[Analytics]
+    Module --> Reports[DILG Reports]
+    Module --> Ordinance[Ordinance Archive]
+    Module --> Audit[System & Audit]
 
-  Access -- Staff --> Login
-  Login --> Session
-  Session -- No --> Login
-  Session -- Yes --> Profile
-  Profile --> Permission
-  Permission -- No --> Restricted[Access restricted]
-  Permission -- Yes --> Dashboard
-  Dashboard --> Module
+    Staff --> Auth[Supabase Auth]
+    Login --> Auth
 
-  subgraph Modules[Permitted modules]
-    direction LR
+    Residents --> DB[(PostgreSQL + RLS)]
+    GIS --> DB
+    Incident --> DB
+    Benefits --> DB
+    QR --> DB
+    Analytics --> DB
+    Reports --> DB
+    Ordinance --> DB
+    Audit --> DB
+    Announcements --> DB
+    Needs --> DB
 
-    subgraph CoreModules[Core service modules]
-      direction TB
-      Residents[Resident Profiling]
-      QR[QR Verification]
-      GIS[GIS Household Map]
-      Crime[Crime & Incident]
-      Hotspot[Crime Hotspot Map]
-      Disaster[Disaster Vulnerability]
-      Beneficiary[Beneficiary Tracking]
-    end
+    DB --> Storage[(Storage buckets)]
+    DB --> AuditLogs[(Audit logs)]
+    DB --> Backup[(system-backups bucket)]
 
-    subgraph PlanningModules[Planning and reporting]
-      direction TB
-      Analytics[Analytics & reports]
-      Reports[DILG Reports]
-      Ordinance[Ordinance Archive]
-      AnnounceAdmin[Announcements Admin]
-    end
+    Cron[pg_cron weekly backup] --> Export[backup-export Edge Function]
+    Export --> Backup
+    Export --> DB
 
-    subgraph AdminModules[Admin and system]
-      direction TB
-      AdminTools[System & Audit]
-    end
-  end
+    DB --> Continue{Continue session?}
+    Continue -->|Yes| Dashboard
+    Continue -->|No| Logout([Logout])
 
-  Module --> Residents
-  Module --> QR
-  Module --> GIS
-  Module --> Crime
-  Module --> Hotspot
-  Module --> Disaster
-  Module --> Beneficiary
-  Module --> Analytics
-  Module --> Reports
-  Module --> Ordinance
-  Module --> AnnounceAdmin
-  Module --> AdminTools
+    classDef decision fill:#ffffff,stroke:#475569,stroke-width:1.5px,color:#0f172a;
+    classDef node fill:#f8fafc,stroke:#334155,stroke-width:1.2px,color:#0f172a;
+    class Start,App,Public,Staff,Login,Dashboard,Module,Announcements,Needs,Residents,GIS,Incident,Benefits,QR,Analytics,Reports,Ordinance,Audit,Auth,DB,Storage,AuditLogs,Backup,Cron,Export,Logout node;
+    class Access,Continue decision;
+    linkStyle default stroke:#475569,stroke-width:1.5px;
 
-  subgraph Backend[Supabase backend]
-    direction TB
-    Auth[Supabase Auth]
-    DB[(PostgreSQL + RLS)]
-    Storage[(Storage buckets)]
-    Audit[(Audit logs)]
-    Cron[pg_cron weekly backup]
-    Export[backup-export Edge Function]
-  end
-
-  Login --> Auth
-  Session --> Auth
-  Profile --> DB
-  Residents --> DB
-  QR --> DB
-  GIS --> DB
-  Crime --> DB
-  Hotspot --> DB
-  Disaster --> DB
-  Beneficiary --> DB
-  Analytics --> DB
-  Reports --> DB
-  AdminTools --> DB
-  Ordinance --> DB
-  AnnounceAdmin --> DB
-  DB --> Audit
-
-  GIS --> Geo[Nominatim / OSM geocoder]
-  GIS --> Tiles[OpenStreetMap tiles]
-  Crime --> Tiles
-  Hotspot --> Tiles
-  Disaster --> Tiles
-
-  Crime --> IncidentPhoto[(Incident photos)]
-  AnnounceAdmin --> AnnPhoto[(Announcement photos)]
-  NeedsForm --> NeedsPhoto[(Needs photos)]
-  Ordinance --> OrdinancePDF[(Ordinance PDFs)]
-  AdminTools --> BackupStore[(system-backups bucket)]
-  Cron --> Export
-  Export --> BackupStore
-  Export --> DB
-  DB --> Storage
-  Storage --> BackupStore
-
-  DB --> Continue{Continue session?}
-  Continue -- Yes --> Dashboard
-  Continue -- No --> Logout([Logout])
