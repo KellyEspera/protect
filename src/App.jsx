@@ -35,6 +35,7 @@ import Announcements from './pages/Announcements'
 import OrdinanceArchive from './pages/OrdinanceArchive'
 import UserManagement from './pages/UserManagement'
 import AdminTools from './pages/AdminTools'
+import protectLogo from './assets/protect-logo.svg'
 
 // Gate 1: authentication. Shows a loading splash while the session is being
 // checked, then either renders the children (logged in) or redirects to /login.
@@ -43,7 +44,7 @@ function PrivateRoute({ children }) {
   if (loading) return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
       <div className="text-center">
-        <div className="w-12 h-12 bg-teal rounded-xl flex items-center justify-center mx-auto mb-3 text-2xl">🛡️</div>
+        <img src={protectLogo} alt="PROTECT" className="w-12 h-12 mx-auto mb-3" />
         <p className="text-gray-500 text-sm">Loading PROTECT...</p>
       </div>
     </div>
