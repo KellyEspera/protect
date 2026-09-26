@@ -6,8 +6,8 @@ flowchart TD
     Tool -- Restore --> Restore[Upload or select JSON backup →<br/>re-insert in FK-safe order<br/>overwrite by id + per-table summary]
     Cron[pg_cron protect-weekly-backup<br/>Saturday 02:00 UTC] --> Export[backup-export Edge Function]
     Export --> Auto[Export core tables to<br/>system-backups as JSON]
-    Scope --> R((R))
-    Cloud --> R((R))
-    Auto --> R((R))
-    Audit --> R((R))
-    Restore --> R((R))
+    Scope --> R((R: Dashboard))
+    Cloud --> R
+    Auto --> JobDone([Scheduled backup complete])
+    Audit --> R
+    Restore --> R

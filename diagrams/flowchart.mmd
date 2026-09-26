@@ -1,116 +1,49 @@
+%% The user-flow master is maintained in system_flow.mmd.
+%% Keep this familiar filename aligned for documents and older links.
 flowchart TB
-    Start([Start]) --> Open[User opens PROTECT]
+    Start([Start]) --> Open[Open PROTECT]
     Open --> Access{Public or staff?}
 
-    subgraph PublicFlow[Public access]
-        direction TB
-        Announcements[Public announcements]
-        Needs[Needs submission]
-    end
+    Access -->|Public| PublicPortal[Public announcements portal]
+    PublicPortal --> ReadNotices[Read active announcements]
+    PublicPortal --> SubmitNeeds[Submit community needs]
+    ReadNotices --> PublicDone([Public flow complete])
+    SubmitNeeds --> PublicDone
 
-    Access -- Public --> Announcements
-    Access -- Public --> Needs
-    Announcements --> PublicData[(Announcements)]
-    Needs --> NeedsData[(Survey responses + needs photos)]
+    Access -->|Staff| Login[Staff login]
+    Login --> Auth{Credentials accepted?}
+    Auth -->|No| Login
+    Auth -->|Yes| Role{Role assigned?}
+    Role -->|No| Restricted[Access restricted]
+    Role -->|Yes| Dashboard[Community Dashboard]
+    Dashboard --> Choose{Choose feature}
 
-    subgraph StaffFlow[Staff access]
-        direction TB
-        AuthCheck{Valid Supabase Auth?}
-        Profile[Fetch profile and role]
-        RoleCheck{Role authorized?}
-        Dashboard[Community dashboard]
-        Choose{Choose module}
-    end
+    Choose --> Resident[Resident Profiling] --> A((A))
+    Choose --> QR[QR Verification] --> B((B))
+    Choose --> GIS[GIS Household Map] --> C((C))
+    Choose --> Disaster[Disaster Vulnerability] --> D((D))
+    Choose --> Crime[Crime & Incident] --> E((E))
+    Choose --> Hotspot[Crime Hotspot Map] --> F((F))
+    Choose --> Beneficiary[Beneficiary Tracking] --> G((G))
+    Choose --> Analytics[Analytics: Population, Poverty, Sectors] --> H((H))
+    Choose --> Predictive[Predictive Growth] --> I((I))
+    Choose --> AnnNeeds[Announcements & Needs Assessment] --> J((J))
+    Choose --> Reports[DILG Reports] --> K((K))
+    Choose --> Users[User Management] --> L((L))
+    Choose --> Audit[System Audit & Backup/Restore] --> M((M))
+    Choose --> Ordinance[Ordinance Archive] --> O((O))
 
-    Access -- Staff --> AuthCheck
-    AuthCheck -- No --> Login[Login page]
-    AuthCheck -- Yes --> Profile
-    Profile --> RoleCheck
-    RoleCheck -- No --> Restricted[Access restricted]
-    RoleCheck -- Yes --> Dashboard
-    Dashboard --> Choose
+    R((R: Dashboard)) -->|Return after module task| Dashboard
+    P((P: Public portal)) -->|Public flow returns| PublicPortal
+    ConnectorGuide[ A–M and O enter their matching module flowcharts.<br/>Staff modules exit through R to Dashboard.<br/>Public announcement and needs flows exit through P. ]
+    ConnectorGuide -.-> R
 
-    subgraph Modules[Barangay modules]
-        direction TB
-        Residents[Resident Profiling]
-        QR[QR Verification]
-        GIS[GIS Household Map]
-        Crime[Crime & Incident]
-        Hotspot[Crime Hotspot Map]
-        Disaster[Disaster Vulnerability]
-        Beneficiary[Beneficiary Tracking]
-        Analytics[Analytics]
-        Reports[DILG Reports]
-        Ordinance[Ordinance Archive]
-        AnnouncementsAdmin[Announcements Admin]
-        Users[User Management]
-        AdminTools[System & Audit]
-    end
+    Logout([Staff logs out])
+    Dashboard -. Logout option .-> Logout
 
-    Choose --> Residents
-    Choose --> QR
-    Choose --> GIS
-    Choose --> Crime
-    Choose --> Hotspot
-    Choose --> Disaster
-    Choose --> Beneficiary
-    Choose --> Analytics
-    Choose --> Reports
-    Choose --> Ordinance
-    Choose --> AnnouncementsAdmin
-    Choose --> Users
-    Choose --> AdminTools
-
-    subgraph Data[App data stores]
-        direction TB
-        ResidentsDB[(Residents + households)]
-        IncidentsDB[(Incidents)]
-        BenefitsDB[(Beneficiaries + programs)]
-        AnnDB[(Announcements)]
-        OrdinanceDB[(Ordinances + PDFs)]
-        BackupDB[(system-backups)]
-        AuditDB[(Audit logs)]
-    end
-
-    Residents --> ResidentsDB
-    QR --> ResidentsDB
-    GIS --> ResidentsDB
-    Crime --> IncidentsDB
-    Hotspot --> IncidentsDB
-    Disaster --> IncidentsDB
-    Beneficiary --> BenefitsDB
-    AnnouncementsAdmin --> AnnDB
-    Ordinance --> OrdinanceDB
-    AdminTools --> AuditDB
-    AdminTools --> BackupDB
-
-    GIS --> Geo[Nominatim search]
-    GIS --> Tiles[OpenStreetMap tiles]
-    Crime --> Tiles
-    Hotspot --> Tiles
-    Disaster --> Tiles
-
-    QR --> Document[Generated certificates + QR payloads]
-
-    subgraph BackupAutomation[Backup automation]
-        direction TB
-        Cron[pg_cron weekly trigger]
-        Export[backup-export function]
-        Store[(system-backups bucket)]
-    end
-
-    Cron --> Export
-    Export --> Store
-    AdminTools --> Store
-
-    ResidentsDB --> Backend[Supabase backend]
-    IncidentsDB --> Backend
-    BenefitsDB --> Backend
-    AnnDB --> Backend
-    OrdinanceDB --> Backend
-    AuditDB --> Backend
-    Store --> Backend
-
-    Backend --> Session{Continue session?}
-    Session -- Yes --> Dashboard
-    Session -- No --> Logout([User logs out])
+    classDef decision fill:#ffffff,stroke:#475569,stroke-width:1.5px,color:#0f172a;
+    classDef node fill:#f8fafc,stroke:#334155,stroke-width:1.2px,color:#0f172a;
+    class Start,Open,PublicPortal,ReadNotices,SubmitNeeds,PublicDone,Login,Restricted,Dashboard,Resident,QR,GIS,Disaster,Crime,Hotspot,Beneficiary,Analytics,Predictive,AnnNeeds,Reports,Users,Audit,Ordinance,ConnectorGuide,Logout node;
+    class Access,Auth,Role,Choose decision;
+    classDef connector fill:#ffffff,stroke:#0f766e,stroke-width:2px,color:#0f172a;
+    class A,B,C,D,E,F,G,H,I,J,K,L,M,O,P,R connector;

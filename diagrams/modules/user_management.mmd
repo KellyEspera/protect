@@ -3,8 +3,8 @@ flowchart TD
     List --> Act{Action?}
     Act -- Edit user --> Edit[Change name / assign role<br/>Barangay Secretary or Tanod]
     Edit --> Save[Save to profiles<br/>role enforced by Row-Level Security]
-    Save --> R((R))
-    Act -- View only --> R((R))
+    Save --> R((R: Dashboard))
+    Act -- View only --> R
 
     Role[Access model] --> Secretary[brgy_sec: full system access]
     Role --> Tanod[tanod: dashboard, crime, hotspot only]

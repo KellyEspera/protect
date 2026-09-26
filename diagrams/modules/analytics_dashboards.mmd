@@ -10,6 +10,6 @@ flowchart TD
     P2 --> Render
     P3 --> Render
     Export{Choose export?}
-    Export -- PDF --> PDF[Generate PDF report] --> R((R))
-    Export -- Excel --> Excel[Generate XLSX workbook] --> R((R))
+    Export -- PDF --> PDF[Generate PDF report] --> R((R: Dashboard))
+    Export -- Excel --> Excel[Generate XLSX workbook] --> R((R: Dashboard))
     Export -- None --> R
