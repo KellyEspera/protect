@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { canAccess, ROLE_LABELS } from '../../lib/permissions'
+import protectLogo from '../../assets/protect-logo.svg'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Flame, Gift, Shield, BrainCircuit,
@@ -132,7 +133,7 @@ export default function Layout() {
         {/* Brand */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-teal rounded-lg flex items-center justify-center text-base">🛡️</div>
+            <img src={protectLogo} alt="PROTECT" className="w-8 h-8" />
             <div>
               <div className="font-display text-[15px] font-bold text-white tracking-wide">PROTECT</div>
               <div className="text-[10px] text-white/40 uppercase tracking-widest">Basco · Batanes</div>

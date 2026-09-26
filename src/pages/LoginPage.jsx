@@ -12,6 +12,7 @@ import { useAuthStore } from '../store/authStore'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { toast } from 'react-toastify'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, formatLockoutTime } from '../lib/rateLimiter'
+import protectLogo from '../assets/protect-logo.svg'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -66,7 +67,7 @@ export default function LoginPage() {
 
         {/* Header seal */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #C9A84C 0%, #E8C96A 50%, #C9A84C 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34, margin: '0 auto 14px', boxShadow: '0 0 0 4px rgba(201,168,76,0.2), 0 0 0 8px rgba(201,168,76,0.08)' }}>🛡️</div>
+          <img src={protectLogo} alt="PROTECT system logo" style={{ width: 84, height: 84, display: 'block', margin: '0 auto 14px', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.22))' }} />
           <div style={{ fontFamily: 'Georgia, serif', fontSize: 26, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>PROTECT</div>
           <div style={{ fontSize: 11, color: 'rgba(201,168,76,0.8)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 4 }}>Barangay Intelligence System</div>
         </div>

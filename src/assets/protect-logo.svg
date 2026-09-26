@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">PROTECT system logo</title>
+  <desc id="desc">A navy shield with teal connected community intelligence nodes and a gold civic star.</desc>
+  <defs>
+    <linearGradient id="shield" x1="48" y1="24" x2="190" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1A3A5C"/>
+      <stop offset="1" stop-color="#0F2740"/>
+    </linearGradient>
+  </defs>
+  <path d="M120 14 202 43v62c0 54-32 96-82 121-50-25-82-67-82-121V43l82-29Z" fill="url(#shield)" stroke="#C9A84C" stroke-width="6"/>
+  <path d="M120 34 181 55v50c0 40-22 73-61 96-39-23-61-56-61-96V55l61-21Z" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="2"/>
+  <path d="m120 72 29 18-29 18-29-18 29-18Zm0 36v43m-29-61-27 17m56-17 27 17m-56-17v43m56-43v43m-56 0-27 16m83-16 27 16" fill="none" stroke="#56D4C3" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="120" cy="72" r="8" fill="#C9A84C"/>
+  <circle cx="91" cy="90" r="7" fill="#56D4C3"/>
+  <circle cx="149" cy="90" r="7" fill="#56D4C3"/>
+  <circle cx="91" cy="151" r="7" fill="#56D4C3"/>
+  <circle cx="149" cy="151" r="7" fill="#56D4C3"/>
+  <circle cx="64" cy="107" r="6" fill="#C9A84C"/>
+  <circle cx="176" cy="107" r="6" fill="#C9A84C"/>
+  <circle cx="64" cy="167" r="6" fill="#C9A84C"/>
+  <circle cx="176" cy="167" r="6" fill="#C9A84C"/>
+  <path d="m120 42 3.5 8.5 9.2.7-7 5.9 2.2 9-7.9-4.8-7.9 4.8 2.2-9-7-5.9 9.2-.7L120 42Z" fill="#C9A84C"/>
+</svg>
