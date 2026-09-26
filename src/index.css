@@ -99,14 +99,11 @@
 }
 
 .public-announcements-brand-mark {
+  display: block;
   width: 36px;
   height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #0b1f3a;
-  background: #f5a623;
-  border-radius: 9px;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .public-announcements-brand strong,

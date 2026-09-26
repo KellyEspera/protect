@@ -35,7 +35,7 @@ import Announcements from './pages/Announcements'
 import OrdinanceArchive from './pages/OrdinanceArchive'
 import UserManagement from './pages/UserManagement'
 import AdminTools from './pages/AdminTools'
-import protectLogo from './assets/protect-logo.svg'
+import protectLogo from './assets/protect-logo1-cropped.png'
 
 // Gate 1: authentication. Shows a loading splash while the session is being
 // checked, then either renders the children (logged in) or redirects to /login.

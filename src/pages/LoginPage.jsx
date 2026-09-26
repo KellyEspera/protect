@@ -12,7 +12,7 @@ import { useAuthStore } from '../store/authStore'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { toast } from 'react-toastify'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, formatLockoutTime } from '../lib/rateLimiter'
-import protectLogo from '../assets/protect-logo.svg'
+import protectLogo from '../assets/protect-logo1-cropped.png'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')

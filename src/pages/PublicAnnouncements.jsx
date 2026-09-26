@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarDays, ClipboardList, Info, Megaphone, ArrowUpRight, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import NeedsForm from '../components/NeedsForm'
+import protectLogo from '../assets/protect-logo1-cropped.png'
 
 const CATEGORY_STYLES = {
   General: 'public-announcement-category general',
@@ -61,7 +62,7 @@ export default function PublicAnnouncements() {
       <header className="public-announcements-header">
         <div className="public-announcements-header-inner">
           <a href="/" className="public-announcements-brand" aria-label="Return to PROTECT home">
-            <span className="public-announcements-brand-mark"><Megaphone size={19} aria-hidden="true" /></span>
+            <img className="public-announcements-brand-mark" src={protectLogo} alt="PROTECT" />
             <span>
               <strong>Barangay San Joaquin</strong>
               <small>Community bulletin</small>

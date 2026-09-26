@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { canAccess, ROLE_LABELS } from '../../lib/permissions'
-import protectLogo from '../../assets/protect-logo.svg'
+import protectLogo from '../../assets/protect-logo1-cropped.png'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Flame, Gift, Shield, BrainCircuit,
