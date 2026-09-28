@@ -7,7 +7,7 @@
 //  so a Tanod literally never sees the Resident Profiling or Reports links.
 // ============================================================================
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { canAccess, ROLE_LABELS } from '../../lib/permissions'
@@ -92,7 +92,69 @@ export default function Layout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState({})   // which sidebar groups are collapsed
+  const [connectionStatus, setConnectionStatus] = useState(() => navigator.onLine ? 'checking' : 'offline')
   const toggleGroup = (label) => setCollapsed(c => ({ ...c, [label]: !c[label] }))
+
+  useEffect(() => {
+    let disposed = false
+    let checking = false
+    let activeController = null
+
+    const checkConnection = async () => {
+      if (!navigator.onLine) {
+        setConnectionStatus('offline')
+        return
+      }
+      if (checking) return
+
+      checking = true
+      const controller = new AbortController()
+      activeController = controller
+      const timeout = setTimeout(() => controller.abort(), 5000)
+
+      try {
+        const response = await fetch(`${window.location.origin}/?connectivity=${Date.now()}`, {
+          method: 'HEAD',
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        if (!disposed) setConnectionStatus(response.status > 0 ? 'online' : 'offline')
+      } catch {
+        if (!disposed) setConnectionStatus('offline')
+      } finally {
+        clearTimeout(timeout)
+        if (activeController === controller) activeController = null
+        checking = false
+      }
+    }
+
+    const handleOffline = () => {
+      activeController?.abort()
+      setConnectionStatus('offline')
+    }
+    const handleOnline = () => {
+      setConnectionStatus('checking')
+      checkConnection()
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') checkConnection()
+    }
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    checkConnection()
+    const interval = setInterval(checkConnection, 5000)
+
+    return () => {
+      disposed = true
+      clearInterval(interval)
+      activeController?.abort()
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
 
   const role = profile?.role || 'unassigned'
   // Build the sidebar for THIS role: keep only the links the role can access,
@@ -222,9 +284,9 @@ export default function Layout() {
           </div>
 
           <div className="ml-auto flex items-center gap-2 md:gap-3 flex-shrink-0">
-            <span className="badge badge-teal text-[10px] hidden sm:flex items-center">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-600 mr-1"></span>
-              Online
+            <span className={`badge ${connectionStatus === 'online' ? 'badge-teal' : connectionStatus === 'offline' ? 'badge-red' : 'badge-gold'} text-[10px] hidden sm:flex items-center`}>
+              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${connectionStatus === 'online' ? 'bg-teal-600' : connectionStatus === 'offline' ? 'bg-red-600' : 'bg-amber-500'}`}></span>
+              {connectionStatus === 'online' ? 'Online' : connectionStatus === 'offline' ? 'Offline' : 'Checking'}
             </span>
             <button className="btn btn-ghost px-2 py-2 text-gray-400">
               <Bell size={15} />

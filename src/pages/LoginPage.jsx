@@ -125,7 +125,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 20 }}>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-            PROTECT v1.0 · Batanes State College · Capstone 2026
+            PROTECT v1.9 · Batanes State College · Capstone 2026
           </div>
           <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', marginTop: 4 }}>
             RA 10173 Data Privacy Act Compliant
