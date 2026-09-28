@@ -67,12 +67,19 @@ Deno.serve(async (_req) => {
 
     if (uploadErr) throw new Error(`Upload failed: ${uploadErr.message}`)
 
+    const { error: reminderError } = await supabase.rpc('clear_backup_due_notifications')
+    if (reminderError) console.error(`Could not clear backup due notification: ${reminderError.message}`)
+
     return new Response(JSON.stringify({ ok: true, bucket: BUCKET, file: filename, exportedAt }), {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
-    return new Response(JSON.stringify({ ok: false, error: error instanceof Error ? error.message : String(error) }), {
+    const message = error instanceof Error ? error.message : String(error)
+    const { error: notificationError } = await supabase.rpc('notify_backup_failed', { p_message: message })
+    if (notificationError) console.error(`Could not notify about backup failure: ${notificationError.message}`)
+
+    return new Response(JSON.stringify({ ok: false, error: message }), {
       headers: { 'Content-Type': 'application/json' },
       status: 500,
     })

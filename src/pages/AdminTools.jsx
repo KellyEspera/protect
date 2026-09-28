@@ -26,14 +26,7 @@ const DEFAULT_BACKUP_FREQUENCY_DAYS = 7
 
 // Pulls every table, bundles it into one JSON file, and triggers a download.
 async function runBackup() {
-  const [
-    { data: residents },
-    { data: households },
-    { data: incidents },
-    { data: beneficiaries },
-    { data: programs },
-    { data: surveys },
-  ] = await Promise.all([
+  const results = await Promise.all([
     supabase.from('residents').select('*'),
     supabase.from('households').select('*'),
     supabase.from('incidents').select('*'),
@@ -41,6 +34,15 @@ async function runBackup() {
     supabase.from('assistance_programs').select('*'),
     supabase.from('survey_responses').select('*'),
   ])
+  const failedQuery = results.find(result => result.error)
+  if (failedQuery?.error) throw failedQuery.error
+  const [residentsResult, householdsResult, incidentsResult, beneficiariesResult, programsResult, surveysResult] = results
+  const residents = residentsResult.data || []
+  const households = householdsResult.data || []
+  const incidents = incidentsResult.data || []
+  const beneficiaries = beneficiariesResult.data || []
+  const programs = programsResult.data || []
+  const surveys = surveysResult.data || []
 
   const exportedAt = new Date().toISOString()
   const blob = new Blob([JSON.stringify({
@@ -129,7 +131,7 @@ function useBackupState() {
   const [cloudDownloading, setCloudDownloading] = useState(null)
   const [cloudRestoring, setCloudRestoring] = useState(null)
   const frequency = DEFAULT_BACKUP_FREQUENCY_DAYS
-  const { data: cloudBackups = [], isLoading: cloudBackupsLoading, refetch: refetchCloudBackups } = useQuery({
+  const { data: cloudBackups = [], isLoading: cloudBackupsLoading, isError: cloudBackupsError, refetch: refetchCloudBackups } = useQuery({
     queryKey: ['system-backups'],
     queryFn: async () => {
       const { data, error } = await supabase.storage.from(BACKUP_BUCKET).list('', {
@@ -157,13 +159,20 @@ function useBackupState() {
   const daysSince = lastBackup ? Math.floor((Date.now() - lastBackup.getTime()) / 86400000) : null
   const daysUntilDue = nextDue ? Math.ceil((nextDue.getTime() - Date.now()) / 86400000) : null
 
-  // On load, remind the user once if a scheduled backup is overdue
+  // Create one unread reminder while a weekly backup remains due.
   useEffect(() => {
-    if (isOverdue && lastBackup) {
-      toast.warn('⏰ Scheduled backup is due — please download a backup.', { toastId: 'backup-due' })
+    if (cloudBackupsLoading || cloudBackupsError) return
+    if (!isOverdue) {
+      supabase.rpc('clear_backup_due_notifications').then(({ error }) => {
+        if (error) console.warn('Could not clear backup due notification:', error.message)
+      })
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    supabase.rpc('notify_backup_due').then(({ error }) => {
+      if (error) console.warn('Could not create backup due notification:', error.message)
+    })
+    if (lastBackup) toast.warn('⏰ Scheduled backup is due — please download a backup.', { toastId: 'backup-due' })
+  }, [isOverdue, lastBackup, cloudBackupsLoading, cloudBackupsError])
 
   const doBackup = async () => {
     setBacking(true)
@@ -171,9 +180,13 @@ function useBackupState() {
       const entry = await runBackup()
       setLastBackup(new Date(entry.date))
       setBackupLog(JSON.parse(localStorage.getItem(BACKUP_LOG_KEY) || '[]'))
+      const { error: reminderError } = await supabase.rpc('clear_backup_due_notifications')
+      if (reminderError) console.warn('Could not clear backup due notification:', reminderError.message)
       toast.success('Backup downloaded successfully!')
     } catch (err) {
       toast.error('Backup failed: ' + err.message)
+      const { error: notificationError } = await supabase.rpc('notify_backup_failed', { p_message: err.message })
+      if (notificationError) console.warn('Could not create backup failure notification:', notificationError.message)
     } finally {
       setBacking(false)
     }

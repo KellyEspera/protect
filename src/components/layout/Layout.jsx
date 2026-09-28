@@ -9,9 +9,12 @@
 
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
 import { canAccess, ROLE_LABELS } from '../../lib/permissions'
+import { supabase } from '../../lib/supabase'
 import protectLogo from '../../assets/protect-logo1-cropped.png'
+import { toast } from 'react-toastify'
 import {
   LayoutDashboard, Users, QrCode, TrendingUp, HeartHandshake,
   Accessibility, Map, AlertTriangle, Flame, Gift, Shield, BrainCircuit,
@@ -92,7 +95,9 @@ export default function Layout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState({})   // which sidebar groups are collapsed
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState(() => navigator.onLine ? 'checking' : 'offline')
+  const queryClient = useQueryClient()
   const toggleGroup = (label) => setCollapsed(c => ({ ...c, [label]: !c[label] }))
 
   useEffect(() => {
@@ -157,6 +162,50 @@ export default function Layout() {
   }, [])
 
   const role = profile?.role || 'unassigned'
+  const notificationQueryKey = ['notifications', user?.id, role]
+  const { data: notificationData, isError: notificationsUnavailable } = useQuery({
+    queryKey: notificationQueryKey,
+    enabled: Boolean(user && ['brgy_sec', 'tanod'].includes(role)),
+    queryFn: async () => {
+      const [latestResult, unreadResult] = await Promise.all([
+        supabase.from('notifications')
+          .select('id, notification_type, title, message, href, created_at, read_at')
+          .order('created_at', { ascending: false })
+          .limit(12),
+        supabase.from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .is('read_at', null),
+      ])
+      if (latestResult.error) throw latestResult.error
+      if (unreadResult.error) throw unreadResult.error
+      return { items: latestResult.data || [], unreadCount: unreadResult.count || 0 }
+    },
+    refetchInterval: 15000,
+  })
+  const notifications = notificationData?.items || []
+  const unreadCount = notificationData?.unreadCount || 0
+  const markNotificationRead = useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.rpc('mark_notification_read', { p_notification_id: id })
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationQueryKey }),
+    onError: () => toast.error('Could not update notification. Check the notifications SQL migration.'),
+  })
+  const markAllNotificationsRead = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc('mark_all_notifications_read')
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: notificationQueryKey }),
+    onError: () => toast.error('Could not update notifications. Check the notifications SQL migration.'),
+  })
+  const openNotification = (notification) => {
+    setNotificationsOpen(false)
+    if (!notification.read_at) markNotificationRead.mutate(notification.id)
+    if (notification.href) navigate(notification.href)
+  }
+
   // Build the sidebar for THIS role: keep only the links the role can access,
   // then drop any group (e.g. "Admin") that ends up with zero visible links.
   const filteredGroups = navGroups
@@ -283,14 +332,69 @@ export default function Layout() {
             </p>
           </div>
 
-          <div className="ml-auto flex items-center gap-2 md:gap-3 flex-shrink-0">
+          <div className="ml-auto relative flex items-center gap-2 md:gap-3 flex-shrink-0">
             <span className={`badge ${connectionStatus === 'online' ? 'badge-teal' : connectionStatus === 'offline' ? 'badge-red' : 'badge-gold'} text-[10px] hidden sm:flex items-center`}>
               <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${connectionStatus === 'online' ? 'bg-teal-600' : connectionStatus === 'offline' ? 'bg-red-600' : 'bg-amber-500'}`}></span>
               {connectionStatus === 'online' ? 'Online' : connectionStatus === 'offline' ? 'Offline' : 'Checking'}
             </span>
-            <button className="btn btn-ghost px-2 py-2 text-gray-400">
+            <button
+              type="button"
+              className="btn btn-ghost px-2 py-2 text-gray-500 relative"
+              aria-label={unreadCount ? `${unreadCount} unread notifications` : 'Notifications'}
+              aria-expanded={notificationsOpen}
+              title="Notifications"
+              onClick={() => setNotificationsOpen(open => !open)}
+            >
               <Bell size={15} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-4 h-4 px-1 text-[9px] font-bold text-white bg-red-500 rounded-full">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
+            {notificationsOpen && (
+              <section className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl" aria-label="Notifications">
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-navy">Notifications</h2>
+                    <p className="text-[11px] text-gray-500">{unreadCount} unread</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-[11px] font-medium text-teal disabled:text-gray-300"
+                    disabled={!unreadCount || markAllNotificationsRead.isPending}
+                    onClick={() => markAllNotificationsRead.mutate()}
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                <div className="max-h-[min(24rem,65vh)] overflow-y-auto">
+                  {notificationsUnavailable ? (
+                    <p className="px-4 py-6 text-center text-xs text-gray-500">Notifications need the Supabase migration to be installed.</p>
+                  ) : notifications.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-xs text-gray-500">You’re all caught up.</p>
+                  ) : notifications.map(notification => (
+                    <button
+                      type="button"
+                      key={notification.id}
+                      className={`block w-full border-b border-gray-100 px-4 py-3 text-left last:border-0 hover:bg-gray-50 ${notification.read_at ? '' : 'bg-teal-50/60'}`}
+                      onClick={() => openNotification(notification)}
+                    >
+                      <span className="flex items-start gap-2">
+                        {!notification.read_at && <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-teal" />}
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-semibold text-navy">{notification.title}</span>
+                          <span className="mt-0.5 block text-xs text-gray-600">{notification.message}</span>
+                          <span className="mt-1 block text-[10px] text-gray-400">
+                            {new Date(notification.created_at).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })}
+                          </span>
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </header>
 
