@@ -1,5 +1,5 @@
 flowchart TD
-    O((O)) --> Access{Secretary authorized?}
+    N((N)) --> Access{Secretary authorized?}
     Access -- No --> Denied[Access Restricted]
     Access -- Yes --> Archive[Open private Ordinance Archive]
     Archive --> Filter[Search and filter by title, category, status, year]

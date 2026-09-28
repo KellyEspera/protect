@@ -1,50 +1,53 @@
 %%{init: {'theme':'base','themeVariables': {'primaryColor':'#f8fafc','primaryTextColor':'#0f172a','primaryBorderColor':'#475569','lineColor':'#475569','secondaryColor':'#ffffff','tertiaryColor':'#ffffff'}} }%%
-flowchart TB
-    Start([Start]) --> Open[Open PROTECT]
-    Open --> Access{Public or staff?}
-
-    Access -->|Public| PublicPortal[Public announcements portal]
-    PublicPortal --> ReadNotices[Read active announcements]
-    PublicPortal --> SubmitNeeds[Submit community needs]
-    ReadNotices --> PublicDone([Public flow complete])
-    SubmitNeeds --> PublicDone
-
-    Access -->|Staff| Login[Staff login]
+flowchart LR
+    Staff[Staff opens protected PROTECT] --> Login[Secretary / Tanod login]
     Login --> Auth{Credentials accepted?}
     Auth -->|No| Login
-    Auth -->|Yes| Role{Role assigned?}
-    Role -->|No| Restricted[Access restricted]
-    Role -->|Yes| Dashboard[Community Dashboard]
-    Dashboard --> Choose{Choose feature}
+    Auth -->|Yes| Dashboard[Community Dashboard]
+    Dashboard --> Choose{Choose feature from sidebar}
 
-    Choose --> Resident[Resident Profiling] --> A((A))
-    Choose --> QR[QR Verification] --> B((B))
-    Choose --> GIS[GIS Household Map] --> C((C))
-    Choose --> Disaster[Disaster Vulnerability] --> D((D))
-    Choose --> Crime[Crime & Incident] --> E((E))
-    Choose --> Hotspot[Crime Hotspot Map] --> F((F))
-    Choose --> Beneficiary[Beneficiary Tracking] --> G((G))
-    Choose --> Analytics[Analytics: Population, Poverty, Sectors] --> H((H))
-    Choose --> Predictive[Predictive Growth] --> I((I))
-    Choose --> AnnNeeds[Announcements & Needs Assessment] --> J((J))
-    Choose --> Reports[DILG Reports] --> K((K))
-    Choose --> Users[User Management] --> L((L))
-    Choose --> Audit[System Audit & Backup/Restore] --> M((M))
-    Choose --> Ordinance[Ordinance Archive] --> O((O))
+    Choose --> Rail0(( ))
+    Rail0 --- RailA(( )) --- RailB(( )) --- RailC(( )) --- RailD(( )) --- RailE(( )) --- RailF(( )) --- RailG(( )) --- RailH(( )) --- RailI(( )) --- RailJ(( )) --- RailK(( )) --- RailL(( )) --- RailM(( )) --- RailN(( ))
+    RailA --> Resident[Resident Profiling] --> A((A))
+    RailB --> QR[QR Verification] --> B((B))
+    RailC --> GIS[GIS Household Map] --> C((C))
+    RailD --> Disaster[Disaster Vulnerability] --> D((D))
+    RailE --> Crime[Crime & Incident] --> E((E))
+    RailF --> Hotspot[Crime Hotspot Map] --> F((F))
+    RailG --> Beneficiary[Beneficiary Tracking] --> G((G))
+    RailH --> Analytics[Analytics] --> H((H))
+    RailI --> Predictive[Predictive Growth] --> I((I))
+    RailJ --> AnnNeeds[Announcements & Needs] --> J((J))
+    RailK --> Reports[DILG Reports] --> K((K))
+    RailL --> Users[User Management] --> L((L))
+    RailM --> Audit[System & Audit] --> M((M))
+    RailN --> Ordinance[Ordinance Archive] --> N((N))
 
-    R((R: Dashboard)) -->|Return after module task| Dashboard
-    P((P: Public portal)) -->|Public flow returns| PublicPortal
-    ConnectorGuide[ A–M and O enter their matching module flowcharts.<br/>Staff modules exit through R to Dashboard.<br/>Public announcement and needs flows exit through P. ]
-    ConnectorGuide -.-> R
+    A -. feature flow .-> R((R: Return to Dashboard))
+    B -. feature flow .-> R
+    C -. feature flow .-> R
+    D -. feature flow .-> R
+    E -. feature flow .-> R
+    F -. feature flow .-> R
+    G -. feature flow .-> R
+    H -. feature flow .-> R
+    I -. feature flow .-> R
+    K -. feature flow .-> R
+    L -. feature flow .-> R
+    M -. feature flow .-> R
+    N -. feature flow .-> R
+    R -.-> Dashboard
+    Dashboard -. Logout .-> Logout([Log out])
 
-    Logout([Staff logs out])
-    Dashboard -. Logout option .-> Logout
+    Public[Resident uses barangay-provided public link] --> J
 
     classDef decision fill:#ffffff,stroke:#475569,stroke-width:1.5px,color:#0f172a;
     classDef node fill:#f8fafc,stroke:#334155,stroke-width:1.2px,color:#0f172a;
-    class Start,Open,PublicPortal,ReadNotices,SubmitNeeds,PublicDone,Login,Restricted,Dashboard,Resident,QR,GIS,Disaster,Crime,Hotspot,Beneficiary,Analytics,Predictive,AnnNeeds,Reports,Users,Audit,Ordinance,ConnectorGuide,Logout node;
-    class Access,Auth,Role,Choose decision;
+    class Staff,Login,Dashboard,Resident,QR,GIS,Disaster,Crime,Hotspot,Beneficiary,Analytics,Predictive,AnnNeeds,Reports,Users,Audit,Ordinance,Public,Logout node;
+    class Auth,Choose decision;
     classDef connector fill:#ffffff,stroke:#0f766e,stroke-width:2px,color:#0f172a;
-    class A,B,C,D,E,F,G,H,I,J,K,L,M,O,P,R connector;
+    class A,B,C,D,E,F,G,H,I,J,K,L,M,N,R connector;
+    classDef rail fill:#475569,stroke:#475569,color:#475569;
+    class Rail0,RailA,RailB,RailC,RailD,RailE,RailF,RailG,RailH,RailI,RailJ,RailK,RailL,RailM,RailN rail;
     linkStyle default stroke:#475569,stroke-width:1.5px;
 

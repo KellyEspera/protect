@@ -10,7 +10,7 @@ flowchart TB
     ReadNotices --> PublicDone([Public flow complete])
     SubmitNeeds --> PublicDone
 
-    Access -->|Staff| Login[Staff login]
+    Access -->|Staff| Login[Barangay Secretary / Tanod login]
     Login --> Auth{Credentials accepted?}
     Auth -->|No| Login
     Auth -->|Yes| Role{Role assigned?}
@@ -31,11 +31,11 @@ flowchart TB
     Choose --> Reports[DILG Reports] --> K((K))
     Choose --> Users[User Management] --> L((L))
     Choose --> Audit[System Audit & Backup/Restore] --> M((M))
-    Choose --> Ordinance[Ordinance Archive] --> O((O))
+    Choose --> Ordinance[Ordinance Archive] --> N((N))
 
     R((R: Dashboard)) -->|Return after module task| Dashboard
     P((P: Public portal)) -->|Public flow returns| PublicPortal
-    ConnectorGuide[ A–M and O enter their matching module flowcharts.<br/>Staff modules exit through R to Dashboard.<br/>Public announcement and needs flows exit through P. ]
+    ConnectorGuide[ A–N enter their matching module flowcharts.<br/>Staff modules exit through R to Dashboard.<br/>Public announcement and needs flows exit through P. ]
     ConnectorGuide -.-> R
 
     Logout([Staff logs out])
@@ -46,4 +46,4 @@ flowchart TB
     class Start,Open,PublicPortal,ReadNotices,SubmitNeeds,PublicDone,Login,Restricted,Dashboard,Resident,QR,GIS,Disaster,Crime,Hotspot,Beneficiary,Analytics,Predictive,AnnNeeds,Reports,Users,Audit,Ordinance,ConnectorGuide,Logout node;
     class Access,Auth,Role,Choose decision;
     classDef connector fill:#ffffff,stroke:#0f766e,stroke-width:2px,color:#0f172a;
-    class A,B,C,D,E,F,G,H,I,J,K,L,M,O,P,R connector;
+    class A,B,C,D,E,F,G,H,I,J,K,L,M,N,P,R connector;
